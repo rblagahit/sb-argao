@@ -1003,7 +1003,7 @@
             <h3 class="text-xl font-black text-slate-900">Complete Your Admin Profile</h3>
           </div>
         </div>
-        <p class="text-sm text-slate-600 mb-6">Your profile will be added as the first legislative member. Please complete all details below.</p>
+        <p class="text-sm text-slate-600 mb-6">Only <strong>Contact Email</strong> is required. Name and Role are optional — if provided, you will be listed as a legislative member.</p>
         
         <div class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
           <div>
@@ -1310,13 +1310,13 @@
       const document_ = document.getElementById('adminProfileDocument').value.trim();
       const additional = document.getElementById('adminProfileAdditional').value.trim();
       
-      if (!name || !role || !email) { showToast('Please fill in required fields','error'); return; }
-      
+      if (!email) { showToast('Contact Email is required','error'); return; }
+
       const btn = document.getElementById('completeProfileBtn');
       const original = btn.innerHTML;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
       btn.disabled = true;
-      
+
       try {
         // Save admin profile
         const adminProfileRef = doc(db,'artifacts',appId,'admin','profile');
@@ -1329,35 +1329,38 @@
           updatedAt: serverTimestamp()
         }, { merge: true });
 
-        // Create admin as first legislative member
-        const memberPayload = {
-          name,
-          role,
-          image: image || '',
-          committees,
-          bio: bio || '',
-          additionalInfo: additional || '',
-          document: document_ || '',
-          isAdmin: true,
-          isArchived: false,
-          timestamp: serverTimestamp()
-        };
+        // Create admin as first legislative member only if name is provided
+        if (name) {
+          const memberPayload = {
+            name,
+            role,
+            image: image || '',
+            committees,
+            bio: bio || '',
+            additionalInfo: additional || '',
+            document: document_ || '',
+            isAdmin: true,
+            isArchived: false,
+            timestamp: serverTimestamp()
+          };
 
-        const memberId = await (async () => {
-          const col = collection(db,'artifacts',appId,'public','data','members');
-          const snapshot = await getDocs(col);
-          const adminMember = snapshot.docs.find(d => d.data().isAdmin);
-          if (adminMember) {
-            await updateDoc(doc(db,'artifacts',appId,'public','data','members',adminMember.id), memberPayload);
-            return adminMember.id;
-          } else {
-            const docRef = await addDoc(col, memberPayload);
-            return docRef.id;
+          const memberId = await (async () => {
+            const col = collection(db,'artifacts',appId,'public','data','members');
+            const snapshot = await getDocs(col);
+            const adminMember = snapshot.docs.find(d => d.data().isAdmin);
+            if (adminMember) {
+              await updateDoc(doc(db,'artifacts',appId,'public','data','members',adminMember.id), memberPayload);
+              return adminMember.id;
+            } else {
+              const docRef = await addDoc(col, memberPayload);
+              return docRef.id;
+            }
+          })();
+
+          if (memberId) {
+            await setDoc(adminProfileRef, { memberId }, { merge: true });
           }
-        })();
-
-        // Update admin profile with member ID
-        await setDoc(adminProfileRef, { memberId }, { merge: true });
+        }
 
         showToast('Profile completed successfully!','success');
         document.getElementById('adminProfileModal').classList.add('hidden');
@@ -1492,11 +1495,6 @@
           if (adminSnap.exists()) adminEmail = adminSnap.data().contactEmail || '';
         } catch(e) { console.error(e); }
 
-        if (!adminEmail) {
-          showToast('Admin contact email is not configured. Please contact the office directly.','error');
-          return;
-        }
-
         const subject = `Document Copy Request: ${docData.title} (${docData.docId || ''})`;
         const body =
 `Dear Sangguniang Bayan of Argao,
@@ -1517,7 +1515,7 @@ Thank you.`;
 
         const mailto = `mailto:${adminEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         window.location.href = mailto;
-        showToast('Your email client is opening…','success');
+        showToast(adminEmail ? 'Your email client is opening…' : 'Opening email client — please add the office email address in the To field.','success');
         window.closeModal('documentRequestModal');
 
       } catch(e) {
@@ -2321,6 +2319,7 @@ Thank you.`;
         await setDoc(adminProfileRef, {
           uid: user.uid,
           name, role, contactEmail: email, image, bio,
+          isComplete: true,
           updatedAt: serverTimestamp(),
           updatedBy: user.email || user.uid || ''
         }, { merge: true });
