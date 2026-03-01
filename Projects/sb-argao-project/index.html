@@ -82,13 +82,6 @@
         </div>
 
         <div class="flex items-center gap-3">
-          <div class="hidden md:block text-right">
-            <p class="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">Presiding Officer</p>
-            <p class="text-sm font-extrabold text-slate-900 flex items-center justify-end gap-1.5">
-              <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse inline-block"></span>
-              Hon. Orvi G. Ortega
-            </p>
-          </div>
           <!-- Admin panel link — shown only when logged in -->
           <button id="adminPanelBtn" onclick="window.navigateTo('admin')"
                   class="hidden px-4 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-xl font-bold text-sm hover:bg-blue-100 transition-all items-center gap-2">
@@ -116,9 +109,7 @@
       <!-- HERO -->
       <div class="bg-gradient-to-br from-white via-blue-50/40 to-amber-50/30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 w-full">
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-
-            <!-- LEFT -->
+          <div class="max-w-4xl mx-auto text-center">
             <div>
               <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-bold mb-8">
                 <i class="fas fa-landmark text-xs"></i>
@@ -129,26 +120,26 @@
                 <span class="text-blue-600">Documents</span><br>
                 in Seconds
               </h1>
-              <p class="text-slate-500 text-lg leading-relaxed mb-10 max-w-md">
+              <p class="text-slate-500 text-lg leading-relaxed mb-10 max-w-2xl mx-auto">
                 Browse all ordinances and resolutions passed by the Sangguniang Bayan of Argao, Cebu.
               </p>
 
               <!-- SEARCH BAR -->
-              <div class="hero-search mb-10">
-                <div class="flex-1 flex items-center gap-3 pl-5">
-                  <i class="fas fa-search text-slate-400 text-lg flex-shrink-0"></i>
+              <div class="hero-search mb-10 max-w-4xl mx-auto">
+                <div class="flex-1 flex items-center gap-3 pl-6">
+                  <i class="fas fa-search text-slate-400 text-xl flex-shrink-0"></i>
                   <input type="text" id="searchInput"
                          placeholder="Search by title, ID, or tag…"
-                         class="flex-1 py-4 bg-transparent outline-none font-medium text-slate-800 placeholder-slate-400 text-base min-w-0">
+                         class="flex-1 py-5 bg-transparent outline-none font-medium text-slate-800 placeholder-slate-400 text-lg min-w-0">
                 </div>
                 <select id="typeFilter"
-                        class="hidden sm:block shrink-0 bg-blue-50 border-l border-slate-100 px-5 py-4 text-sm font-bold text-blue-700 outline-none cursor-pointer">
+                        class="hidden sm:block shrink-0 bg-blue-50 border-l border-slate-100 px-6 py-5 text-sm font-bold text-blue-700 outline-none cursor-pointer">
                   <option value="All">📋 All Types</option>
                   <option value="Ordinance">📜 Ordinances</option>
                   <option value="Resolution">📄 Resolutions</option>
                 </select>
                 <button onclick="renderDocs(true)"
-                        class="shrink-0 bg-amber-500 hover:bg-amber-600 text-white px-8 py-4 font-black text-sm tracking-wide transition-all flex items-center gap-2">
+                        class="shrink-0 bg-amber-500 hover:bg-amber-600 text-white px-9 py-5 font-black text-sm tracking-wide transition-all flex items-center gap-2">
                   <i class="fas fa-search text-xs"></i> Search
                 </button>
               </div>
@@ -171,12 +162,6 @@
                   <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-xl">📋</div>
                 </div>
               </div>
-            </div>
-
-            <!-- RIGHT: Seal -->
-            <div class="hidden lg:flex items-center justify-center">
-              <img src="./argao-seal.png" alt="Argao Official Seal"
-                   class="w-72 h-72 object-contain opacity-90 drop-shadow-2xl animate-float">
             </div>
 
           </div>
@@ -242,6 +227,16 @@
             </p>
             <h2 class="text-3xl font-black text-slate-900">Meet the Members</h2>
             <p class="text-slate-500 mt-1">Sangguniang Bayan of Argao, Cebu</p>
+          </div>
+          <div class="mb-8">
+            <div class="hero-search max-w-2xl">
+              <div class="flex-1 flex items-center gap-3 pl-5">
+                <i class="fas fa-search text-slate-400 text-base flex-shrink-0"></i>
+                <input type="text" id="memberSearchInput"
+                       placeholder="Search by name, role, or committee…"
+                       class="flex-1 py-4 bg-transparent outline-none font-medium text-slate-800 placeholder-slate-400 text-base min-w-0">
+              </div>
+            </div>
           </div>
           <div id="memberPublicGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
         </div>
@@ -329,6 +324,10 @@
         <button onclick="window.switchAdminTab('members')" id="tab-members"
                 class="admin-tab px-6 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all">
           <i class="fas fa-users mr-2"></i>Members
+        </button>
+        <button onclick="window.switchAdminTab('settings')" id="tab-settings"
+                class="admin-tab px-6 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all">
+          <i class="fas fa-sliders mr-2"></i>Settings
         </button>
       </div>
 
@@ -435,6 +434,7 @@
               </div>
             </div>
             <form id="memberForm" class="space-y-4">
+              <input type="hidden" id="memberEditId">
               <div>
                 <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-user mr-1"></i>Full Name</label>
                 <input type="text" id="memberName" required placeholder="e.g., Hon. Juan dela Cruz"
@@ -451,15 +451,39 @@
                        class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
                 <p class="text-[10px] text-slate-400 mt-1 ml-1">Leave blank to use initials avatar</p>
               </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-calendar-day mr-1"></i>Term Start</label>
+                  <input type="date" id="memberTermStart"
+                         class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+                </div>
+                <div>
+                  <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-calendar-check mr-1"></i>Term End</label>
+                  <input type="date" id="memberTermEnd"
+                         class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+                </div>
+              </div>
+              <div>
+                <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-sitemap mr-1"></i>Committees</label>
+                <input type="text" id="memberCommittees" placeholder="e.g., health, budget, education"
+                       class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+                <p class="text-[10px] text-slate-400 mt-1 ml-1">Separate committees with commas</p>
+              </div>
               <div>
                 <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-align-left mr-1"></i>Biography</label>
                 <textarea id="memberBio" rows="3" placeholder="Brief background and committee assignments…"
                           class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all resize-none"></textarea>
               </div>
-              <button type="submit" id="memberSubmitBtn"
-                      class="w-full py-4 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm shadow-lg hover:from-green-700 hover:to-teal-700 transition-all flex items-center justify-center gap-3">
-                <i class="fas fa-plus"></i> Add Member
-              </button>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button type="submit" id="memberSubmitBtn"
+                        class="w-full py-4 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm shadow-lg hover:from-green-700 hover:to-teal-700 transition-all flex items-center justify-center gap-3">
+                  <i class="fas fa-plus"></i> Add Member
+                </button>
+                <button type="button" id="memberCancelBtn" onclick="window.cancelMemberEdit()"
+                        class="hidden w-full py-4 bg-slate-100 text-slate-700 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-slate-200 transition-all">
+                  Cancel Edit
+                </button>
+              </div>
             </form>
           </div>
 
@@ -474,6 +498,31 @@
             <div id="adminMemberGrid" class="space-y-3 max-h-[520px] overflow-y-auto pr-2"></div>
           </div>
 
+        </div>
+      </div>
+
+      <!-- SETTINGS TAB -->
+      <div id="admin-tab-settings" class="hidden">
+        <div class="bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-slate-100">
+          <div class="flex items-center gap-3 mb-7">
+            <div class="w-12 h-12 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg">
+              <i class="fas fa-gavel"></i>
+            </div>
+            <div>
+              <h3 class="text-xl font-black text-slate-900">Document Notice Settings</h3>
+              <p class="text-sm text-slate-500">Edit the notice users must acknowledge before opening a document.</p>
+            </div>
+          </div>
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-file-contract mr-1"></i>Notice Text</label>
+            <textarea id="noticeTextInput" rows="6"
+                      class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all resize-y"></textarea>
+            <p class="text-[11px] text-slate-400 mt-2">This text appears in the public confirmation popup before redirect.</p>
+          </div>
+          <button type="button" id="saveNoticeBtn" onclick="window.saveNoticeSettings()"
+                  class="mt-6 px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:from-indigo-700 hover:to-blue-700 transition-all flex items-center gap-2">
+            <i class="fas fa-save"></i> Save Notice
+          </button>
         </div>
       </div>
 
@@ -493,13 +542,51 @@
     </div>
   </div>
 
+  <!-- Document Notice Modal -->
+  <div id="docNoticeModal"
+       class="fixed inset-0 z-[110] modal-overlay hidden flex items-center justify-center p-6"
+       onclick="if(event.target===this) window.closeModal('docNoticeModal')">
+    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative">
+      <button onclick="window.closeModal('docNoticeModal')"
+              class="absolute top-5 right-5 w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all">
+        <i class="fas fa-times text-sm"></i>
+      </button>
+      <div class="p-8">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center">
+            <i class="fas fa-triangle-exclamation"></i>
+          </div>
+          <div>
+            <p class="text-xs font-black uppercase tracking-widest text-amber-600">Notice Before Viewing</p>
+            <h3 class="text-xl font-black text-slate-900">Document Disclaimer</h3>
+          </div>
+        </div>
+        <p id="docNoticeText" class="text-sm text-slate-600 leading-relaxed bg-slate-50 border border-slate-200 rounded-2xl p-5"></p>
+        <label class="mt-5 flex items-start gap-3 p-4 rounded-2xl border border-slate-200 cursor-pointer">
+          <input id="docNoticeAgree" type="checkbox" class="mt-1 w-4 h-4 accent-blue-600">
+          <span class="text-sm font-semibold text-slate-700">I understand this notice and wish to continue.</span>
+        </label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+          <button onclick="window.closeModal('docNoticeModal')"
+                  class="w-full py-3.5 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-all">
+            Cancel
+          </button>
+          <button id="docNoticeContinueBtn" onclick="window.confirmDocumentNotice()" disabled
+                  class="w-full py-3.5 bg-blue-600 text-white rounded-2xl font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-all">
+            Continue to Document
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ FIREBASE + APP LOGIC ═══ -->
   <script type="module">
     import { initializeApp }                          from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
     import { getAuth, signInWithEmailAndPassword,
              onAuthStateChanged, signOut }            from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
     import { getFirestore, collection, onSnapshot,
-             addDoc, updateDoc, deleteDoc, doc, increment,
+             addDoc, updateDoc, setDoc, doc, increment,
              serverTimestamp, query,
              orderBy, limit }                         from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
@@ -517,10 +604,71 @@
     const appId = 'sb-argao';
 
     let user = null, localDocs = [], localMembers = [];
-    let unsubDocs, unsubMembers;
+    let memberSearchTerm = '';
+    let unsubDocs, unsubMembers, unsubSettings;
+    let pendingDocUrl = '', pendingDocId = '';
+
+    const DEFAULT_DOWNLOAD_NOTICE = 'Downloaded documents are for reference only. Under RA 7160, they are not official or binding unless authenticated by the Office of the Secretary to the Sangguniang Bayan with official seal and signature. Certified True Copies must be requested from the SB Secretary’s Office.';
+    let settingsState = { downloadNotice: DEFAULT_DOWNLOAD_NOTICE };
 
     const MEMBER_REF = collection(db,'artifacts',appId,'public','data','members');
     const DOC_REF    = collection(db,'artifacts',appId,'public','data','legislations');
+    const SETTINGS_DOC = doc(db,'artifacts',appId,'public','data','settings','general');
+
+    const escapeHtml = (str='') => str
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#39;');
+
+    const parseTags = (raw='') => raw.split(',').map(s=>s.trim()).filter(Boolean);
+    const normalizeText = (val='') => val.toLowerCase().trim();
+    const normalizeName = (name='') => normalizeText(name.replace(/^hon\.?\s+/i,''));
+    const normalizeTag = (tag='') => normalizeText(tag);
+    const formatDate = (dateStr='') => {
+      if (!dateStr) return '';
+      const dt = new Date(dateStr);
+      return Number.isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+    };
+    const isTermExpired = (member={}) => {
+      if (!member.termEnd) return false;
+      const end = new Date(member.termEnd);
+      if (Number.isNaN(end.getTime())) return false;
+      end.setHours(23,59,59,999);
+      return end.getTime() < Date.now();
+    };
+
+    function getMemberRelatedDocuments(member) {
+      const memberNameNorm = normalizeName(member.name||'');
+      const committeeTags = (member.committees||[]).map(normalizeTag).filter(Boolean);
+      return localDocs.filter(docData => {
+        const authorNameNorm = normalizeName(docData.authorName||'');
+        const coSponsorsNorm = (docData.coSponsors||[]).map(normalizeName);
+        const docTags = (docData.tags||[]).map(normalizeTag);
+
+        const isAuthor = docData.authorId === member.id || (!!memberNameNorm && authorNameNorm === memberNameNorm);
+        const isCoSponsor = !!memberNameNorm && coSponsorsNorm.includes(memberNameNorm);
+        const isCommittee = committeeTags.length > 0 && committeeTags.some(c => docTags.includes(c));
+        return isAuthor || isCoSponsor || isCommittee;
+      });
+    }
+
+    function resetMemberForm() {
+      const form = document.getElementById('memberForm');
+      if (form) form.reset();
+      document.getElementById('memberEditId').value = '';
+      document.getElementById('memberSubmitBtn').innerHTML = '<i class="fas fa-plus"></i> Add Member';
+      document.getElementById('memberCancelBtn').classList.add('hidden');
+    }
+
+    function syncNoticeUi() {
+      const noticeText = settingsState.downloadNotice || DEFAULT_DOWNLOAD_NOTICE;
+      const noticeLabel = document.getElementById('docNoticeText');
+      const noticeInput = document.getElementById('noticeTextInput');
+      if (noticeLabel) noticeLabel.textContent = noticeText;
+      if (noticeInput && document.activeElement !== noticeInput) noticeInput.value = noticeText;
+    }
 
     /* ── Toast ── */
     function showToast(msg, type='info') {
@@ -574,14 +722,17 @@
     window.switchAdminTab = (tab) => {
       document.getElementById('admin-tab-docs').classList.toggle('hidden', tab!=='docs');
       document.getElementById('admin-tab-members').classList.toggle('hidden', tab!=='members');
+      document.getElementById('admin-tab-settings').classList.toggle('hidden', tab!=='settings');
       document.getElementById('tab-docs').className    = `admin-tab px-6 py-3 font-bold text-sm border-b-2 transition-all ${tab==='docs'    ?'border-blue-600 text-blue-600':'border-transparent text-slate-400 hover:text-slate-700'}`;
       document.getElementById('tab-members').className = `admin-tab px-6 py-3 font-bold text-sm border-b-2 transition-all ${tab==='members' ?'border-blue-600 text-blue-600':'border-transparent text-slate-400 hover:text-slate-700'}`;
+      document.getElementById('tab-settings').className = `admin-tab px-6 py-3 font-bold text-sm border-b-2 transition-all ${tab==='settings' ?'border-blue-600 text-blue-600':'border-transparent text-slate-400 hover:text-slate-700'}`;
     };
 
     /* ── Sync ── */
     const startSync = () => {
       if (unsubDocs)    unsubDocs();
       if (unsubMembers) unsubMembers();
+      if (unsubSettings) unsubSettings();
       setLoading(true);
 
       unsubMembers = onSnapshot(
@@ -594,6 +745,23 @@
         query(DOC_REF, orderBy('timestamp','desc'), limit(200)),
         snap => { localDocs = snap.docs.map(d=>({id:d.id,...d.data()})); setLoading(false); renderUI(); updateStats(); },
         err  => { console.error(err); setLoading(false); showToast("Error loading documents",'error'); }
+      );
+
+      unsubSettings = onSnapshot(
+        SETTINGS_DOC,
+        snap => {
+          const incoming = snap.exists() ? snap.data() : {};
+          settingsState = {
+            ...settingsState,
+            downloadNotice: incoming.downloadNotice || DEFAULT_DOWNLOAD_NOTICE
+          };
+          syncNoticeUi();
+        },
+        err => {
+          console.error(err);
+          settingsState.downloadNotice = DEFAULT_DOWNLOAD_NOTICE;
+          syncNoticeUi();
+        }
       );
     };
 
@@ -623,6 +791,10 @@
         const aVM = (a.role||'').toLowerCase().includes('vice mayor');
         const bVM = (b.role||'').toLowerCase().includes('vice mayor');
         return aVM&&!bVM ? -1 : !aVM&&bVM ? 1 : 0;
+      }).filter(m => {
+        if (m.isArchived) return false;
+        const hay = `${m.name||''} ${m.role||''} ${(m.committees||[]).join(' ')}`.toLowerCase();
+        return !memberSearchTerm || hay.includes(memberSearchTerm);
       });
 
       if (!sorted.length) {
@@ -639,14 +811,19 @@
 
       grid.innerHTML = sorted.map(m => {
         const isVM  = (m.role||'').toLowerCase().includes('vice mayor');
+        const expired = isTermExpired(m);
         const init  = m.name.replace('Hon.','').trim().split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
         const fbUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(init)}&background=1e40af&color=fff&bold=true&size=256`;
         const bio   = m.bio || 'Legislative officer of the Sangguniang Bayan of Argao, Cebu.';
+        const committees = (m.committees||[]).map(c=>`<span class="tag-chip">${escapeHtml(c)}</span>`).join('');
+        const termStart = formatDate(m.termStart);
+        const termEnd = formatDate(m.termEnd);
 
         return `
-          <div class="group bg-white rounded-3xl overflow-hidden shadow-sm border ${isVM?'border-blue-200 ring-2 ring-blue-100':'border-slate-100'} hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <div class="group bg-white rounded-3xl overflow-hidden shadow-sm border ${isVM?'border-blue-200 ring-2 ring-blue-100':'border-slate-100'} ${expired?'opacity-60 grayscale':''} hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
             <div class="bg-gradient-to-br ${isVM?'from-blue-100 to-blue-50':'from-slate-100 to-slate-50'} pt-10 pb-4 px-6 flex flex-col items-center relative">
               ${isVM?`<span class="absolute top-4 right-4 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-blue-700 bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-full"><i class="fas fa-star text-[8px]"></i>Presiding</span>`:''}
+              ${expired?`<span class="absolute top-4 left-4 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-700 bg-slate-200 border border-slate-300 px-3 py-1.5 rounded-full"><i class="fas fa-hourglass-end text-[8px]"></i>Term Ended</span>`:''}
               <img src="${m.image||fbUrl}" alt="${m.name}"
                    class="w-32 h-32 rounded-2xl object-cover shadow-xl border-4 border-white"
                    onerror="this.onerror=null;this.src='${fbUrl}'">
@@ -655,6 +832,8 @@
               <span class="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full mb-3 ${isVM?'bg-blue-600 text-white':'bg-slate-100 text-slate-600'}">${m.role||'SB Member'}</span>
               <h3 class="text-lg font-black text-slate-900 leading-tight mb-3">${m.name}</h3>
               <p class="text-sm text-slate-500 leading-relaxed line-clamp-3 mb-5">${bio}</p>
+              ${(termStart || termEnd) ? `<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Term: ${escapeHtml(termStart||'N/A')} ${termEnd?`- ${escapeHtml(termEnd)}`:''}</p>` : ''}
+              ${committees ? `<div class="flex flex-wrap gap-1 mb-5">${committees}</div>` : ''}
               <button onclick="window.viewMember('${m.id}')"
                       class="w-full py-3 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 group-hover:bg-blue-600">
                 <i class="fas fa-user text-xs"></i> View Profile
@@ -669,7 +848,10 @@
       const sel = document.getElementById('newAuthor');
       if (!sel) return;
       sel.innerHTML = '<option value="">Select sponsor…</option>' +
-        localMembers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+        localMembers
+          .filter(m=>!m.isArchived)
+          .map(m=>`<option value="${m.id}">${m.name}</option>`)
+          .join('');
     }
 
     /* ── Admin member list ── */
@@ -685,8 +867,10 @@
                <p class="text-sm font-bold text-slate-500">No members yet</p>
              </div>`
           : localMembers.map(m => {
+              const expired = isTermExpired(m);
               const init  = m.name.replace('Hon.','').trim().split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
               const fbUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(init)}&background=1e40af&color=fff&bold=true&size=80`;
+              const committees = (m.committees||[]).slice(0,2).join(', ');
               return `
                 <div class="group bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all">
                   <div class="flex items-center gap-3">
@@ -694,12 +878,24 @@
                          onerror="this.onerror=null;this.src='${fbUrl}'">
                     <div class="flex-1 min-w-0 cursor-pointer" onclick="window.viewMember('${m.id}')">
                       <p class="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors truncate">${m.name}</p>
-                      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">${m.role||'SB Member'}</p>
+                      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">${m.role||'SB Member'}${expired?' · Term Ended':''}${m.isArchived?' · Archived':''}</p>
+                      ${committees ? `<p class="text-[10px] text-slate-400 truncate">Committee: ${escapeHtml(committees)}</p>` : ''}
                     </div>
-                    <button onclick="window.deleteMember('${m.id}','${m.name.replace(/'/g,"\\'")}') "
-                            class="flex-shrink-0 w-8 h-8 bg-red-50 hover:bg-red-600 text-red-400 hover:text-white rounded-xl flex items-center justify-center transition-all"
-                            title="Delete member">
-                      <i class="fas fa-trash-alt text-xs"></i>
+                    <button onclick="window.editMember('${m.id}')"
+                            class="flex-shrink-0 w-8 h-8 bg-blue-50 hover:bg-blue-600 text-blue-500 hover:text-white rounded-xl flex items-center justify-center transition-all"
+                            title="Edit member">
+                      <i class="fas fa-pen text-[10px]"></i>
+                    </button>
+                    <button onclick="window.toggleArchiveMember('${m.id}', ${m.isArchived ? 'false' : 'true'})"
+                            class="flex-shrink-0 w-8 h-8 ${m.isArchived?'bg-emerald-50 hover:bg-emerald-600 text-emerald-500 hover:text-white':'bg-amber-50 hover:bg-amber-600 text-amber-500 hover:text-white'} rounded-xl flex items-center justify-center transition-all"
+                            title="${m.isArchived?'Unarchive member':'Archive member'}">
+                      <i class="fas ${m.isArchived?'fa-box-open':'fa-box-archive'} text-[10px]"></i>
+                    </button>
+                    <button onclick="window.reactivateMember('${m.id}')"
+                            class="flex-shrink-0 w-8 h-8 bg-purple-50 hover:bg-purple-600 text-purple-500 hover:text-white rounded-xl flex items-center justify-center transition-all ${expired?'':'opacity-40'}"
+                            title="Reactivate term"
+                            ${expired?'':'disabled'}>
+                      <i class="fas fa-rotate-right text-[10px]"></i>
                     </button>
                   </div>
                 </div>`;
@@ -710,16 +906,41 @@
       if (adminEl) adminEl.textContent = localMembers.length;
     }
 
-    /* ── Delete member ── */
-    window.deleteMember = async (id, name) => {
+    /* ── Archive / Reactivate member ── */
+    window.toggleArchiveMember = async (id, archive) => {
       if (!user) { showToast("Admin login required",'error'); return; }
-      if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+      const member = localMembers.find(m=>m.id===id);
+      if (!member) return;
+      if (!confirm(`${archive ? 'Archive' : 'Unarchive'} "${member.name}"?`)) return;
       try {
-        await deleteDoc(doc(db,'artifacts',appId,'public','data','members',id));
-        showToast("Member removed",'success');
+        await updateDoc(doc(db,'artifacts',appId,'public','data','members',id), {
+          isArchived: !!archive,
+          updatedAt: serverTimestamp()
+        });
+        showToast(archive ? 'Member archived and hidden from public list.' : 'Member unarchived.', 'success');
       } catch(e) {
         console.error(e);
-        showToast("Error deleting member",'error');
+        showToast("Error updating archive state",'error');
+      }
+    };
+
+    window.reactivateMember = async (id) => {
+      if (!user) { showToast("Admin login required",'error'); return; }
+      const member = localMembers.find(m=>m.id===id);
+      if (!member) return;
+      if (!confirm(`Reactivate "${member.name}" for a new term?`)) return;
+      const today = new Date().toISOString().slice(0,10);
+      try {
+        await updateDoc(doc(db,'artifacts',appId,'public','data','members',id), {
+          isArchived: false,
+          termStart: today,
+          termEnd: '',
+          updatedAt: serverTimestamp()
+        });
+        showToast('Member reactivated. Update profile if needed.', 'success');
+      } catch(e) {
+        console.error(e);
+        showToast('Error reactivating member', 'error');
       }
     };
 
@@ -771,8 +992,11 @@
 
       if (scrollToResults) document.getElementById('documents')?.scrollIntoView({behavior:'smooth', block:'start'});
       grid.innerHTML = filtered.map((docData, i) => {
-        const author = localMembers.find(m=>m.id===docData.authorId) ||
-          { name:'SB Argao', image:'https://upload.wikimedia.org/wikipedia/commons/7/7e/Ph_seal_cebu_argao.png' };
+        const linkedAuthor = localMembers.find(m=>m.id===docData.authorId);
+        const author = linkedAuthor || {
+          name: docData.authorName || 'SB Argao',
+          image: docData.authorImage || 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Ph_seal_cebu_argao.png'
+        };
         const date = docData.timestamp?.toDate
           ? new Date(docData.timestamp.toDate()).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})
           : '';
@@ -806,13 +1030,13 @@
               </div>
             </div>
             <div class="p-6 bg-gradient-to-b from-white to-slate-50">
-              <a href="${docData.link}" target="_blank" rel="noopener noreferrer"
-                 onclick="window.incrementView('${docData.id}')"
+              <button type="button"
+                 onclick="window.openDocumentNotice('${encodeURIComponent(docData.link||'')}', '${docData.id}')"
                  class="group w-full bg-slate-900 text-white flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black uppercase text-xs hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-md hover:shadow-xl">
                 <span>View Document</span>
                 <i class="far fa-file-pdf group-hover:scale-110 transition-transform"></i>
                 <i class="fas fa-external-link-alt text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-              </a>
+              </button>
             </div>
           </div>`;
       }).join('');
@@ -824,8 +1048,28 @@
     window.viewMember = (id) => {
       const m = localMembers.find(x=>x.id===id);
       if (!m) return;
+      const expired = isTermExpired(m);
       const init  = m.name.replace('Hon.','').trim().split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
       const fbUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(init)}&background=1e40af&color=fff&bold=true&size=128`;
+      const committees = (m.committees||[]).map(c=>`<span class="tag-chip">${escapeHtml(c)}</span>`).join('');
+      const termStart = formatDate(m.termStart);
+      const termEnd = formatDate(m.termEnd);
+      const relatedDocs = getMemberRelatedDocuments(m);
+      const relatedHtml = relatedDocs.length
+        ? relatedDocs.map(d => {
+            const type = escapeHtml(d.type||'Document');
+            const title = escapeHtml(d.title||'Untitled');
+            const coSponsored = (d.coSponsors||[]).map(normalizeName).includes(normalizeName(m.name||''));
+            const committeeMatch = (m.committees||[]).map(normalizeTag).some(c => (d.tags||[]).map(normalizeTag).includes(c));
+            const labels = [
+              (d.authorId === m.id || normalizeName(d.authorName||'')===normalizeName(m.name||'')) ? 'Primary Sponsor' : '',
+              coSponsored ? 'Co-Sponsor' : '',
+              committeeMatch ? 'Committee' : ''
+            ].filter(Boolean).map(l=>`<span class="tag-chip">${l}</span>`).join('');
+            return `<button type="button" onclick="window.openDocumentNotice('${encodeURIComponent(d.link||'')}', '${d.id}')" class="w-full text-left block p-4 rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-sm transition-all"><p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">${type}</p><p class="text-sm font-bold text-slate-800 leading-snug mb-2">${title}</p>${labels?`<div class="flex flex-wrap gap-1">${labels}</div>`:''}</button>`;
+          }).join('')
+        : '<p class="text-slate-500 text-sm">No related documents found.</p>';
+
       document.getElementById('profileContent').innerHTML = `
         <div class="text-center">
           <div class="relative inline-block mb-5">
@@ -835,11 +1079,86 @@
           </div>
           <h2 class="text-xl font-black mb-1">${m.name}</h2>
           <p class="text-sm font-bold text-blue-600 uppercase tracking-wider mb-5">${m.role||'SB Member'}</p>
+          ${(termStart||termEnd) ? `<p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Term: ${escapeHtml(termStart||'N/A')} ${termEnd?`- ${escapeHtml(termEnd)}`:''}</p>` : ''}
+          ${expired ? '<p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4">Term has ended. You may update this profile in Admin to extend or archive the record.</p>' : ''}
+          ${committees ? `<div class="flex flex-wrap justify-center gap-1 mb-5">${committees}</div>` : ''}
           <div class="bg-slate-50 rounded-2xl p-5 text-left">
             <p class="text-slate-600 leading-relaxed text-sm">${m.bio||'No biography available.'}</p>
           </div>
+          <div class="mt-5 text-left">
+            <p class="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">Related Documents</p>
+            <div class="space-y-2 max-h-60 overflow-y-auto pr-1">${relatedHtml}</div>
+          </div>
         </div>`;
       document.getElementById('profileModal').classList.remove('hidden');
+    };
+
+    window.editMember = (id) => {
+      const member = localMembers.find(m => m.id === id);
+      if (!member) return;
+      document.getElementById('memberEditId').value = member.id;
+      document.getElementById('memberName').value = member.name || '';
+      document.getElementById('memberRole').value = member.role || '';
+      document.getElementById('memberImage').value = member.image || '';
+      document.getElementById('memberTermStart').value = member.termStart || '';
+      document.getElementById('memberTermEnd').value = member.termEnd || '';
+      document.getElementById('memberCommittees').value = (member.committees||[]).join(', ');
+      document.getElementById('memberBio').value = member.bio || '';
+      document.getElementById('memberSubmitBtn').innerHTML = '<i class="fas fa-save"></i> Update Member';
+      document.getElementById('memberCancelBtn').classList.remove('hidden');
+      document.getElementById('memberName').focus();
+    };
+
+    window.cancelMemberEdit = () => {
+      resetMemberForm();
+    };
+
+    window.openDocumentNotice = (encodedUrl, docId='') => {
+      const url = decodeURIComponent(encodedUrl || '');
+      if (!url) return;
+      pendingDocUrl = url;
+      pendingDocId = docId || '';
+      const agree = document.getElementById('docNoticeAgree');
+      const btn = document.getElementById('docNoticeContinueBtn');
+      if (agree) agree.checked = false;
+      if (btn) btn.disabled = true;
+      syncNoticeUi();
+      document.getElementById('docNoticeModal').classList.remove('hidden');
+    };
+
+    window.confirmDocumentNotice = () => {
+      if (!pendingDocUrl) return;
+      if (pendingDocId) window.incrementView(pendingDocId);
+      window.open(pendingDocUrl, '_blank', 'noopener,noreferrer');
+      pendingDocUrl = '';
+      pendingDocId = '';
+      window.closeModal('docNoticeModal');
+    };
+
+    window.saveNoticeSettings = async () => {
+      if (!user) { showToast('Admin login required','error'); return; }
+      const btn = document.getElementById('saveNoticeBtn');
+      const input = document.getElementById('noticeTextInput');
+      const noticeText = input?.value.trim() || DEFAULT_DOWNLOAD_NOTICE;
+      const original = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      btn.disabled = true;
+      try {
+        await setDoc(SETTINGS_DOC, {
+          downloadNotice: noticeText,
+          updatedAt: serverTimestamp(),
+          updatedBy: user.email || user.uid || ''
+        }, { merge: true });
+        settingsState.downloadNotice = noticeText;
+        syncNoticeUi();
+        showToast('Notice text updated', 'success');
+      } catch (e) {
+        console.error(e);
+        showToast('Error saving notice', 'error');
+      } finally {
+        btn.innerHTML = original;
+        btn.disabled = false;
+      }
     };
 
     /* ── Add Member Form ── */
@@ -849,20 +1168,46 @@
       const name  = document.getElementById('memberName').value.trim();
       const role  = document.getElementById('memberRole').value.trim();
       const image = document.getElementById('memberImage').value.trim();
+      const termStart = document.getElementById('memberTermStart').value;
+      const termEnd = document.getElementById('memberTermEnd').value;
+      const committees = parseTags(document.getElementById('memberCommittees').value);
       const bio   = document.getElementById('memberBio').value.trim();
+      const editId = document.getElementById('memberEditId').value;
       if (!name || !role) { showToast("Name and role are required",'error'); return; }
+      if (termStart && termEnd && new Date(termStart) > new Date(termEnd)) {
+        showToast("Term end must be after term start",'error');
+        return;
+      }
       const btn = document.getElementById('memberSubmitBtn');
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
       btn.disabled  = true;
       try {
-        await addDoc(MEMBER_REF, { name, role, image: image||'', bio: bio||'', timestamp: serverTimestamp() });
-        showToast("Member added successfully",'success');
-        e.target.reset();
+        const payload = {
+          name,
+          role,
+          image: image||'',
+          termStart: termStart || '',
+          termEnd: termEnd || '',
+          committees,
+          bio: bio||''
+        };
+        if (editId) {
+          await updateDoc(doc(db,'artifacts',appId,'public','data','members',editId), {
+            ...payload,
+            updatedAt: serverTimestamp()
+          });
+          showToast("Member updated successfully",'success');
+        } else {
+          await addDoc(MEMBER_REF, { ...payload, isArchived: false, timestamp: serverTimestamp() });
+          showToast("Member added successfully",'success');
+        }
+        resetMemberForm();
       } catch(err) {
         console.error(err);
-        showToast("Error adding member",'error');
+        showToast("Error saving member",'error');
       } finally {
-        btn.innerHTML = '<i class="fas fa-plus"></i> Add Member';
+        const isEditing = !!document.getElementById('memberEditId').value;
+        btn.innerHTML = isEditing ? '<i class="fas fa-save"></i> Update Member' : '<i class="fas fa-plus"></i> Add Member';
         btn.disabled  = false;
       }
     });
@@ -879,6 +1224,7 @@
                           ? (document.getElementById('customType').value.trim() || 'Custom')
                           : typeRaw;
       const authorId  = document.getElementById('newAuthor').value;
+      const selectedAuthor = localMembers.find(m=>m.id===authorId);
       const link      = document.getElementById('newLink').value.trim();
       const tagsRaw   = document.getElementById('newTags').value;
       const coSponRaw = document.getElementById('newCoSponsors').value;
@@ -894,7 +1240,20 @@
       btn.innerHTML = '<span>Publishing…</span> <i class="fas fa-spinner fa-spin"></i>';
       btn.disabled  = true;
       try {
-        await addDoc(DOC_REF, { title, docId, type, authorId, link, tags, coSponsors, views: 0, timestamp: serverTimestamp() });
+        await addDoc(DOC_REF, {
+          title,
+          docId,
+          type,
+          authorId,
+          authorName: selectedAuthor?.name || '',
+          authorImage: selectedAuthor?.image || '',
+          authorRole: selectedAuthor?.role || '',
+          link,
+          tags,
+          coSponsors,
+          views: 0,
+          timestamp: serverTimestamp()
+        });
         showToast("Document published successfully",'success');
         e.target.reset();
         document.getElementById('customTypeWrap').classList.add('hidden');
@@ -956,6 +1315,7 @@
 
     /* ── Init ── */
     startSync();
+    syncNoticeUi();
 
     document.getElementById('typeFilterMobile')?.addEventListener('change', e => {
       const tf = document.getElementById('typeFilter');
@@ -969,6 +1329,16 @@
       st = setTimeout(() => window.renderDocs(true), 280);
     });
     document.getElementById('typeFilter').addEventListener('change', () => window.renderDocs(true));
+
+    document.getElementById('memberSearchInput')?.addEventListener('input', (e) => {
+      memberSearchTerm = (e.target.value||'').toLowerCase().trim();
+      renderPublicMembers();
+    });
+
+    document.getElementById('docNoticeAgree')?.addEventListener('change', (e) => {
+      const btn = document.getElementById('docNoticeContinueBtn');
+      if (btn) btn.disabled = !e.target.checked;
+    });
   </script>
 </body>
 </html>
