@@ -479,6 +479,27 @@
             </p>
           </div>
         </div>
+
+        <!-- Document Management List -->
+        <div class="bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-slate-100 mt-8">
+          <div class="flex items-center gap-3 mb-8">
+            <div class="w-12 h-12 bg-gradient-to-br from-red-600 to-pink-600 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg">
+              <i class="fas fa-list"></i>
+            </div>
+            <div>
+              <h3 class="text-xl font-black text-slate-900">Manage Documents</h3>
+              <p class="text-sm text-slate-500">Edit or delete published documents</p>
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <input type="text" id="docSearchInput" placeholder="Search by title or document ID…" 
+                   class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
+                   onkeyup="window.renderDocumentManagementList()">
+          </div>
+
+          <div id="documentManagementList" class="space-y-3 max-h-[600px] overflow-y-auto pr-2"></div>
+        </div>
       </div>
 
       <!-- MEMBERS TAB -->
@@ -586,6 +607,42 @@
                   class="mt-6 px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:from-indigo-700 hover:to-blue-700 transition-all flex items-center gap-2">
             <i class="fas fa-save"></i> Save Notice
           </button>
+
+          <!-- Social Media Settings -->
+          <div class="mt-10 pt-10 border-t border-slate-200">
+            <div class="flex items-center gap-3 mb-7">
+              <div class="w-12 h-12 bg-gradient-to-br from-pink-600 to-rose-600 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg">
+                <i class="fas fa-share-alt"></i>
+              </div>
+              <div>
+                <h3 class="text-xl font-black text-slate-900">Social Media Links</h3>
+                <p class="text-sm text-slate-500">Add social media URLs (displayed in footer)</p>
+              </div>
+            </div>
+
+            <div class="space-y-5">
+              <div>
+                <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fab fa-facebook mr-1"></i>Facebook URL</label>
+                <input type="url" id="socialFacebookUrl" placeholder="https://facebook.com/…"
+                       class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              </div>
+              <div>
+                <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fab fa-twitter mr-1"></i>Twitter / X URL</label>
+                <input type="url" id="socialTwitterUrl" placeholder="https://twitter.com/…"
+                       class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              </div>
+              <div>
+                <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-envelope mr-1"></i>Email Contact</label>
+                <input type="email" id="socialEmailUrl" placeholder="contact@example.com"
+                       class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              </div>
+            </div>
+
+            <button type="button" id="saveSocialBtn" onclick="window.saveSocialMediaSettings()"
+                    class="mt-6 px-6 py-3.5 bg-gradient-to-r from-pink-600 to-rose-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:from-pink-700 hover:to-rose-700 transition-all flex items-center gap-2">
+              <i class="fas fa-save"></i> Save Social Media
+            </button>
+          </div>
         </div>
       </div>
 
@@ -643,13 +700,97 @@
     </div>
   </div>
 
+  <!-- Edit Document Modal -->
+  <div id="editDocumentModal"
+       class="fixed inset-0 z-[110] modal-overlay hidden flex items-center justify-center p-6 overflow-y-auto"
+       onclick="if(event.target===this) window.closeEditDocumentModal()">
+    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative my-8">
+      <button onclick="window.closeEditDocumentModal()"
+              class="absolute top-5 right-5 w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all">
+        <i class="fas fa-times text-sm"></i>
+      </button>
+      <div class="p-8">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center">
+            <i class="fas fa-file-edit"></i>
+          </div>
+          <div>
+            <p class="text-xs font-black uppercase tracking-widest text-blue-600">Edit Document</p>
+            <h3 class="text-xl font-black text-slate-900">Update Document Details</h3>
+          </div>
+        </div>
+        
+        <div class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Title</label>
+            <input type="text" id="editDocTitle" required placeholder="Document title"
+                   class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Document ID</label>
+              <input type="text" id="editDocId" required placeholder="ORD-2024-001"
+                     class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+            </div>
+            <div>
+              <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Type</label>
+              <select id="editDocType"
+                      class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 font-semibold text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+                <option value="Ordinance">Ordinance</option>
+                <option value="Resolution">Resolution</option>
+                <option value="Motion">Motion</option>
+                <option value="Proclamation">Proclamation</option>
+                <option value="Committee Report">Committee Report</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Primary Sponsor</label>
+            <select id="editDocAuthor" required
+                    class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 font-semibold text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              <option value="">Select sponsor…</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">PDF URL</label>
+            <input type="url" id="editDocLink" required placeholder="https://…"
+                   class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+          </div>
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Tags</label>
+            <input type="text" id="editDocTags" placeholder="e.g., health, infrastructure"
+                   class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+            <p class="text-[10px] text-slate-400 mt-1 ml-1">Separate tags with commas</p>
+          </div>
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Co-Sponsors</label>
+            <input type="text" id="editDocCoSponsors" placeholder="e.g., Hon. Santos, Hon. Reyes"
+                   class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+            <p class="text-[10px] text-slate-400 mt-1 ml-1">Separate names with commas</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+          <button type="button" onclick="window.closeEditDocumentModal()"
+                  class="w-full py-3.5 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-all">
+            Cancel
+          </button>
+          <button type="button" id="updateDocBtn" onclick="window.updateDocument()"
+                  class="w-full py-3.5 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
+            <i class="fas fa-save"></i> Update Document
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ FIREBASE + APP LOGIC ═══ -->
   <script type="module">
     import { initializeApp }                          from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
     import { getAuth, signInWithEmailAndPassword,
              onAuthStateChanged, signOut }            from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
     import { getFirestore, collection, onSnapshot,
-             addDoc, updateDoc, setDoc, doc, increment,
+             addDoc, updateDoc, setDoc, doc, increment, deleteDoc,
              serverTimestamp, query,
              orderBy, limit }                         from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
@@ -672,7 +813,12 @@
     let pendingDocUrl = '', pendingDocId = '';
 
     const DEFAULT_DOWNLOAD_NOTICE = 'Downloaded documents are for reference only. Under RA 7160, they are not official or binding unless authenticated by the Office of the Secretary to the Sangguniang Bayan with official seal and signature. Certified True Copies must be requested from the SB Secretary’s Office.';
-    let settingsState = { downloadNotice: DEFAULT_DOWNLOAD_NOTICE };
+    let settingsState = { 
+      downloadNotice: DEFAULT_DOWNLOAD_NOTICE,
+      socialFacebook: '',
+      socialTwitter: '',
+      socialEmail: ''
+    };
 
     const MEMBER_REF = collection(db,'artifacts',appId,'public','data','members');
     const DOC_REF    = collection(db,'artifacts',appId,'public','data','legislations');
@@ -948,14 +1094,19 @@
           const incoming = snap.exists() ? snap.data() : {};
           settingsState = {
             ...settingsState,
-            downloadNotice: incoming.downloadNotice || DEFAULT_DOWNLOAD_NOTICE
+            downloadNotice: incoming.downloadNotice || DEFAULT_DOWNLOAD_NOTICE,
+            socialFacebook: incoming.socialFacebook || '',
+            socialTwitter: incoming.socialTwitter || '',
+            socialEmail: incoming.socialEmail || ''
           };
           syncNoticeUi();
+          syncSocialMediaUi();
         },
         err => {
           console.error(err);
           settingsState.downloadNotice = DEFAULT_DOWNLOAD_NOTICE;
           syncNoticeUi();
+          syncSocialMediaUi();
         }
       );
     };
@@ -977,6 +1128,7 @@
       renderAuthorSelect();
       renderDocs();
       renderAdminMembers();
+      renderDocumentManagementList();
     }
 
     /* ── Public Members Section ── */
@@ -1043,12 +1195,14 @@
     /* ── Author select ── */
     function renderAuthorSelect() {
       const sel = document.getElementById('newAuthor');
-      if (!sel) return;
-      sel.innerHTML = '<option value="">Select sponsor…</option>' +
+      const editSel = document.getElementById('editDocAuthor');
+      const options = '<option value="">Select sponsor…</option>' +
         localMembers
           .filter(m=>!m.isArchived)
           .map(m=>`<option value="${m.id}">${m.name}</option>`)
           .join('');
+      if (sel) sel.innerHTML = options;
+      if (editSel) editSel.innerHTML = options;
     }
 
     /* ── Admin member list ── */
@@ -1356,6 +1510,191 @@
         btn.innerHTML = original;
         btn.disabled = false;
       }
+    };
+
+    /* ── Sync Social Media UI ── */
+    function syncSocialMediaUi() {
+      const fbInput = document.getElementById('socialFacebookUrl');
+      const twInput = document.getElementById('socialTwitterUrl');
+      const emlInput = document.getElementById('socialEmailUrl');
+      if (fbInput && document.activeElement !== fbInput) fbInput.value = settingsState.socialFacebook || '';
+      if (twInput && document.activeElement !== twInput) twInput.value = settingsState.socialTwitter || '';
+      if (emlInput && document.activeElement !== emlInput) emlInput.value = settingsState.socialEmail || '';
+    }
+
+    /* ── Save Social Media Settings ── */
+    window.saveSocialMediaSettings = async () => {
+      if (!user) { showToast('Admin login required','error'); return; }
+      const btn = document.getElementById('saveSocialBtn');
+      const fbUrl = document.getElementById('socialFacebookUrl').value.trim();
+      const twUrl = document.getElementById('socialTwitterUrl').value.trim();
+      const emlUrl = document.getElementById('socialEmailUrl').value.trim();
+      const original = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      btn.disabled = true;
+      try {
+        await setDoc(SETTINGS_DOC, {
+          socialFacebook: fbUrl,
+          socialTwitter: twUrl,
+          socialEmail: emlUrl,
+          updatedAt: serverTimestamp(),
+          updatedBy: user.email || user.uid || ''
+        }, { merge: true });
+        settingsState.socialFacebook = fbUrl;
+        settingsState.socialTwitter = twUrl;
+        settingsState.socialEmail = emlUrl;
+        syncSocialMediaUi();
+        showToast('Social media links updated', 'success');
+      } catch (e) {
+        console.error(e);
+        showToast('Error saving social media links', 'error');
+      } finally {
+        btn.innerHTML = original;
+        btn.disabled = false;
+      }
+    };
+
+    /* ── Document Management List ── */
+    window.renderDocumentManagementList = () => {
+      const container = document.getElementById('documentManagementList');
+      if (!container) return;
+      const searchTerm = (document.getElementById('docSearchInput')?.value || '').toLowerCase().trim();
+      const filtered = localDocs.filter(doc => {
+        const inTitle = (doc.title||'').toLowerCase().includes(searchTerm);
+        const inId = (doc.docId||'').toLowerCase().includes(searchTerm);
+        return !searchTerm || inTitle || inId;
+      });
+      if (!filtered.length) {
+        container.innerHTML = `
+          <div class="bg-slate-50 p-6 rounded-2xl text-center border-2 border-dashed border-slate-200">
+            <i class="fas fa-file-slash text-2xl text-slate-400 mb-3"></i>
+            <p class="text-sm font-bold text-slate-500">No documents found</p>
+          </div>`;
+        return;
+      }
+      container.innerHTML = filtered.map(doc => {
+        const typeColors = {
+          'Ordinance': 'bg-blue-100 text-blue-700',
+          'Resolution': 'bg-purple-100 text-purple-700',
+          'Motion': 'bg-amber-100 text-amber-700',
+          'Proclamation': 'bg-rose-100 text-rose-700',
+          'Committee Report': 'bg-teal-100 text-teal-700'
+        };
+        const typeBg = typeColors[doc.type] || 'bg-slate-100 text-slate-700';
+        const views = doc.views || 0;
+        return `
+          <div class="group bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-[10px] font-bold px-2 py-1 rounded-full ${typeBg}">${escapeHtml(doc.type||'Document')}</span>
+                  <span class="text-[10px] font-semibold text-slate-500"><i class="fas fa-eye mr-1"></i>${views}</span>
+                </div>
+                <p class="font-bold text-slate-900 text-sm line-clamp-1">${escapeHtml(doc.title||'Untitled')}</p>
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider mt-1">${escapeHtml(doc.docId||'N/A')}</p>
+                <p class="text-[10px] text-slate-400 mt-1">Author: ${escapeHtml(doc.authorName||'Unknown')}</p>
+              </div>
+              <div class="flex gap-2 flex-shrink-0">
+                <button onclick="window.openEditDocumentModal('${doc.id}')"
+                        class="w-8 h-8 bg-blue-50 hover:bg-blue-600 text-blue-500 hover:text-white rounded-xl flex items-center justify-center transition-all"
+                        title="Edit document">
+                  <i class="fas fa-pen text-[10px]"></i>
+                </button>
+                <button onclick="window.deleteDocument('${doc.id}')"
+                        class="w-8 h-8 bg-red-50 hover:bg-red-600 text-red-500 hover:text-white rounded-xl flex items-center justify-center transition-all"
+                        title="Delete document">
+                  <i class="fas fa-trash text-[10px]"></i>
+                </button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    };
+
+    /* ── Delete Document ── */
+    window.deleteDocument = async (docId) => {
+      if (!user) { showToast('Admin login required','error'); return; }
+      const docData = localDocs.find(d => d.id === docId);
+      if (!docData) return;
+      if (!confirm(`Delete document "${docData.title}"?\n\nThis action cannot be undone.`)) return;
+      try {
+        await deleteDoc(doc(db,'artifacts',appId,'public','data','legislations',docId));
+        showToast('Document deleted successfully', 'success');
+        window.renderDocumentManagementList();
+      } catch(e) {
+        console.error(e);
+        showToast('Error deleting document', 'error');
+      }
+    };
+
+    /* ── Edit Document Modal ── */
+    let editingDocId = '';
+    window.openEditDocumentModal = (docId) => {
+      if (!user) { showToast('Admin login required','error'); return; }
+      const doc = localDocs.find(d => d.id === docId);
+      if (!doc) return;
+      editingDocId = docId;
+      document.getElementById('editDocTitle').value = doc.title || '';
+      document.getElementById('editDocId').value = doc.docId || '';
+      document.getElementById('editDocType').value = doc.type || 'Ordinance';
+      document.getElementById('editDocAuthor').value = doc.authorId || '';
+      document.getElementById('editDocLink').value = doc.link || '';
+      document.getElementById('editDocTags').value = (doc.tags || []).join(', ');
+      document.getElementById('editDocCoSponsors').value = (doc.coSponsors || []).join(', ');
+      document.getElementById('editDocumentModal').classList.remove('hidden');
+    };
+
+    /* ── Update Document ── */
+    window.updateDocument = async () => {
+      if (!user || !editingDocId) { showToast('Admin login required','error'); return; }
+      const title = document.getElementById('editDocTitle').value.trim();
+      const docId = document.getElementById('editDocId').value.trim();
+      const type = document.getElementById('editDocType').value;
+      const authorId = document.getElementById('editDocAuthor').value;
+      const link = document.getElementById('editDocLink').value.trim();
+      const tagsRaw = document.getElementById('editDocTags').value;
+      const coSponRaw = document.getElementById('editDocCoSponsors').value;
+      
+      if (!title || !docId || !type || !authorId || !link) { showToast('Please fill in all required fields','error'); return; }
+      try { new URL(link); } catch { showToast('Please enter a valid URL','error'); return; }
+
+      const tags = tagsRaw.split(',').map(t=>t.trim().toLowerCase()).filter(Boolean);
+      const coSponsors = coSponRaw.split(',').map(s=>s.trim()).filter(Boolean);
+      const selectedAuthor = localMembers.find(m=>m.id===authorId);
+
+      const btn = document.getElementById('updateDocBtn');
+      const original = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+      btn.disabled = true;
+      try {
+        await updateDoc(doc(db,'artifacts',appId,'public','data','legislations',editingDocId), {
+          title,
+          docId,
+          type,
+          authorId,
+          authorName: selectedAuthor?.name || '',
+          authorImage: selectedAuthor?.image || '',
+          authorRole: selectedAuthor?.role || '',
+          link,
+          tags,
+          coSponsors,
+          updatedAt: serverTimestamp()
+        });
+        showToast('Document updated successfully', 'success');
+        window.closeEditDocumentModal();
+        window.renderDocumentManagementList();
+      } catch(e) {
+        console.error(e);
+        showToast('Error updating document', 'error');
+      } finally {
+        btn.innerHTML = original;
+        btn.disabled = false;
+      }
+    };
+
+    window.closeEditDocumentModal = () => {
+      editingDocId = '';
+      document.getElementById('editDocumentModal').classList.add('hidden');
     };
 
     /* ── Add Member Form ── */
