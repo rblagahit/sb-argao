@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Firebase local cache/artifacts
+.firebase/
+.firebaserc
+
+# OS files
+.DS_Store
+
+# Build output
+dist/
+
+# Local environment overrides
+.env
+.env.local
