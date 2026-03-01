@@ -147,7 +147,7 @@
                   <option value="Ordinance">📜 Ordinances</option>
                   <option value="Resolution">📄 Resolutions</option>
                 </select>
-                <button onclick="renderDocs()"
+                <button onclick="renderDocs(true)"
                         class="shrink-0 bg-amber-500 hover:bg-amber-600 text-white px-8 py-4 font-black text-sm tracking-wide transition-all flex items-center gap-2">
                   <i class="fas fa-search text-xs"></i> Search
                 </button>
@@ -483,7 +483,7 @@
     import { getAuth, signInWithEmailAndPassword,
              onAuthStateChanged, signOut }            from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
     import { getFirestore, collection, onSnapshot,
-             addDoc, updateDoc, doc, increment,
+             addDoc, updateDoc, deleteDoc, doc, increment,
              serverTimestamp, query,
              orderBy, limit }                         from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
@@ -683,16 +683,19 @@
               const init  = m.name.replace('Hon.','').trim().split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
               const fbUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(init)}&background=1e40af&color=fff&bold=true&size=80`;
               return `
-                <div class="group bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
-                     onclick="window.viewMember('${m.id}')">
+                <div class="group bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all">
                   <div class="flex items-center gap-3">
-                    <img src="${m.image||fbUrl}" class="w-12 h-12 rounded-xl object-cover border-2 border-white shadow-sm"
+                    <img src="${m.image||fbUrl}" class="w-12 h-12 rounded-xl object-cover border-2 border-white shadow-sm flex-shrink-0"
                          onerror="this.onerror=null;this.src='${fbUrl}'">
-                    <div class="flex-1">
-                      <p class="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors">${m.name}</p>
-                      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${m.role||'SB Member'}</p>
+                    <div class="flex-1 min-w-0 cursor-pointer" onclick="window.viewMember('${m.id}')">
+                      <p class="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors truncate">${m.name}</p>
+                      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">${m.role||'SB Member'}</p>
                     </div>
-                    <i class="fas fa-chevron-right text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all text-xs"></i>
+                    <button onclick="window.deleteMember('${m.id}','${m.name.replace(/'/g,"\\'")}') "
+                            class="flex-shrink-0 w-8 h-8 bg-red-50 hover:bg-red-600 text-red-400 hover:text-white rounded-xl flex items-center justify-center transition-all"
+                            title="Delete member">
+                      <i class="fas fa-trash-alt text-xs"></i>
+                    </button>
                   </div>
                 </div>`;
             }).join('');
@@ -701,6 +704,19 @@
       if (countEl) countEl.textContent = localMembers.length;
       if (adminEl) adminEl.textContent = localMembers.length;
     }
+
+    /* ── Delete member ── */
+    window.deleteMember = async (id, name) => {
+      if (!user) { showToast("Admin login required",'error'); return; }
+      if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+      try {
+        await deleteDoc(doc(db,'artifacts',appId,'public','data','members',id));
+        showToast("Member removed",'success');
+      } catch(e) {
+        console.error(e);
+        showToast("Error deleting member",'error');
+      }
+    };
 
     /* ── Hit counter ── */
     window.incrementView = async (docId) => {
@@ -712,7 +728,7 @@
     };
 
     /* ── Document grid ── */
-    window.renderDocs = function renderDocs() {
+    window.renderDocs = function renderDocs(scrollToResults=false) {
       const grid  = document.getElementById('documentGrid');
       const empty = document.getElementById('emptyState');
       if (!grid) return;
@@ -735,6 +751,7 @@
       if (!filtered.length) {
         grid.innerHTML = '';
         empty?.classList.remove('hidden');
+        if (scrollToResults) document.getElementById('documents')?.scrollIntoView({behavior:'smooth', block:'start'});
         return;
       }
       empty?.classList.add('hidden');
@@ -747,6 +764,7 @@
         'Committee Report':'bg-gradient-to-r from-teal-600 to-teal-700'
       };
 
+      if (scrollToResults) document.getElementById('documents')?.scrollIntoView({behavior:'smooth', block:'start'});
       grid.innerHTML = filtered.map((docData, i) => {
         const author = localMembers.find(m=>m.id===docData.authorId) ||
           { name:'SB Argao', image:'https://upload.wikimedia.org/wikipedia/commons/7/7e/Ph_seal_cebu_argao.png' };
@@ -937,15 +955,15 @@
     document.getElementById('typeFilterMobile')?.addEventListener('change', e => {
       const tf = document.getElementById('typeFilter');
       if (tf) tf.value = e.target.value;
-      renderDocs();
+      renderDocs(true);
     });
 
     let st;
     document.getElementById('searchInput').addEventListener('input', () => {
       clearTimeout(st);
-      st = setTimeout(window.renderDocs, 280);
+      st = setTimeout(() => window.renderDocs(true), 280);
     });
-    document.getElementById('typeFilter').addEventListener('change', window.renderDocs);
+    document.getElementById('typeFilter').addEventListener('change', () => window.renderDocs(true));
   </script>
 </body>
 </html>
