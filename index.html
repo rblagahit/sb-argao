@@ -3,20 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Official Legislative Information System of the Sangguniang Bayan of Argao, Cebu. Search and access ordinances, resolutions, and legislative documents.">
-  <meta name="keywords" content="Sangguniang Bayan, Argao, Cebu, legislative documents, ordinances, resolutions, government">
+  <meta name="description" content="Official Legislative Information System of the Sangguniang Bayan of Argao, Cebu. Browse, search, and request certified copies of ordinances, resolutions, and legislative documents.">
+  <meta name="keywords" content="Sangguniang Bayan, Argao, Cebu, LGU Argao, legislative documents, ordinances, resolutions, government transparency, RA 7160, local government">
   <meta name="author" content="Sangguniang Bayan of Argao">
   <meta name="robots" content="index, follow">
   <meta name="language" content="English">
+  <meta name="geo.region" content="PH-CEB">
+  <meta name="geo.placename" content="Argao, Cebu, Philippines">
   <meta property="og:title" content="Sangguniang Bayan of Argao · Legislative Information System">
-  <meta property="og:description" content="Official Legislative Information System - Browse all ordinances and resolutions passed by the Sangguniang Bayan of Argao, Cebu.">
+  <meta property="og:description" content="Browse all ordinances and resolutions of the Sangguniang Bayan of Argao, Cebu. Transparent access to local legislative documents under RA 7160.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://sb-argao.web.app">
   <meta property="og:image" content="https://sb-argao.web.app/argao-seal.png">
+  <meta property="og:locale" content="en_PH">
+  <meta property="og:site_name" content="Sangguniang Bayan of Argao">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Sangguniang Bayan of Argao">
-  <meta name="twitter:description" content="Official Legislative Information System">
+  <meta name="twitter:title" content="Sangguniang Bayan of Argao · Legislative Information System">
+  <meta name="twitter:description" content="Browse all ordinances and resolutions passed by the Sangguniang Bayan of Argao, Cebu.">
+  <meta name="twitter:image" content="https://sb-argao.web.app/argao-seal.png">
   <link rel="canonical" href="https://sb-argao.web.app">
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml">
   <link id="dynamicFavicon" rel="icon" href="./argao-seal.png">
   <title>Sangguniang Bayan of Argao · Legislative Information System</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -94,6 +100,7 @@
           <a onclick="window.navigateTo('public')" href="#" class="hover:text-blue-600 transition-colors">Home</a>
           <a href="#documents" class="hover:text-blue-600 transition-colors">Documents</a>
           <a href="#members-section" class="hover:text-blue-600 transition-colors">Members</a>
+          <a onclick="window.navigateTo('contact')" href="#" class="hover:text-blue-600 transition-colors">Contact</a>
         </div>
 
         <div class="flex items-center gap-3">
@@ -644,6 +651,24 @@
               <img id="sealPreviewImg" src="" alt="Seal preview" class="w-14 h-14 object-contain rounded-xl border border-slate-200 bg-white">
               <p class="text-xs text-slate-500 font-semibold">Seal preview</p>
             </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-phone mr-1"></i>Contact Number 1</label>
+                <input type="tel" id="brandingContactPhone1" placeholder="e.g., (032) 123-4567"
+                       class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              </div>
+              <div>
+                <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-mobile-alt mr-1"></i>Contact Number 2</label>
+                <input type="tel" id="brandingContactPhone2" placeholder="e.g., +63 9xx xxx xxxx"
+                       class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              </div>
+            </div>
+            <div>
+              <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-at mr-1"></i>Public Contact Email</label>
+              <input type="email" id="brandingContactEmail" placeholder="e.g., sbargao@lgu.gov.ph"
+                     class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              <p class="text-[10px] text-slate-400 mt-1 ml-1">Displayed on the public Contact page. Separate from the document-request email in Admin Profile.</p>
+            </div>
           </div>
 
           <button type="button" id="saveBrandingBtn" onclick="window.saveBrandingSettings()"
@@ -1175,7 +1200,10 @@
       orgName: '',
       municipality: '',
       province: '',
-      sealUrl: ''
+      sealUrl: '',
+      contactPhone1: '',
+      contactPhone2: '',
+      contactEmail: ''
     };
 
     const MEMBER_REF = collection(db,'artifacts',appId,'public','data','members');
@@ -1706,7 +1734,10 @@ Thank you.`;
             orgName: incoming.orgName || '',
             municipality: incoming.municipality || '',
             province: incoming.province || '',
-            sealUrl: incoming.sealUrl || ''
+            sealUrl: incoming.sealUrl || '',
+            contactPhone1: incoming.contactPhone1 || '',
+            contactPhone2: incoming.contactPhone2 || '',
+            contactEmail: incoming.contactEmail || ''
           };
           syncNoticeUi();
           syncSocialMediaUi();
@@ -2211,17 +2242,57 @@ Thank you.`;
       if (favicon) favicon.href = sealUrl;
 
       // Admin form inputs (don't overwrite if user is actively editing)
-      const inpOrg  = document.getElementById('brandingOrgName');
-      const inpMun  = document.getElementById('brandingMunicipality');
-      const inpProv = document.getElementById('brandingProvince');
-      const inpSeal = document.getElementById('brandingSealUrl');
-      if (inpOrg  && document.activeElement !== inpOrg)  inpOrg.value  = settingsState.orgName     || '';
-      if (inpMun  && document.activeElement !== inpMun)  inpMun.value  = settingsState.municipality || '';
-      if (inpProv && document.activeElement !== inpProv) inpProv.value = settingsState.province    || '';
-      if (inpSeal && document.activeElement !== inpSeal) inpSeal.value = settingsState.sealUrl     || '';
+      const inpOrg    = document.getElementById('brandingOrgName');
+      const inpMun    = document.getElementById('brandingMunicipality');
+      const inpProv   = document.getElementById('brandingProvince');
+      const inpSeal   = document.getElementById('brandingSealUrl');
+      const inpPhone1 = document.getElementById('brandingContactPhone1');
+      const inpPhone2 = document.getElementById('brandingContactPhone2');
+      const inpCEmail = document.getElementById('brandingContactEmail');
+      if (inpOrg    && document.activeElement !== inpOrg)    inpOrg.value    = settingsState.orgName      || '';
+      if (inpMun    && document.activeElement !== inpMun)    inpMun.value    = settingsState.municipality || '';
+      if (inpProv   && document.activeElement !== inpProv)   inpProv.value   = settingsState.province     || '';
+      if (inpSeal   && document.activeElement !== inpSeal)   inpSeal.value   = settingsState.sealUrl      || '';
+      if (inpPhone1 && document.activeElement !== inpPhone1) inpPhone1.value = settingsState.contactPhone1 || '';
+      if (inpPhone2 && document.activeElement !== inpPhone2) inpPhone2.value = settingsState.contactPhone2 || '';
+      if (inpCEmail && document.activeElement !== inpCEmail) inpCEmail.value = settingsState.contactEmail  || '';
 
       // Seal preview
       if (inpSeal) updateSealPreview(inpSeal.value);
+
+      // Contact page elements
+      const cpSeal = document.getElementById('contactPageSealImg');
+      const cpName = document.getElementById('contactPageOrgName');
+      const cpCity = document.getElementById('contactPageCityProv');
+      if (cpSeal) cpSeal.src = sealUrl;
+      if (cpName) cpName.textContent = orgName;
+      if (cpCity) cpCity.textContent = cityProv;
+
+      const setContactItem = (wrapId, textId, value, href) => {
+        const wrap = document.getElementById(wrapId);
+        const el   = document.getElementById(textId);
+        if (!wrap || !el) return;
+        if (value) { wrap.classList.remove('hidden'); el.textContent = value; if (href) el.href = href; }
+        else        { wrap.classList.add('hidden'); }
+      };
+      setContactItem('cpPhone1Wrap','cpPhone1', settingsState.contactPhone1, `tel:${settingsState.contactPhone1}`);
+      setContactItem('cpPhone2Wrap','cpPhone2', settingsState.contactPhone2, `tel:${settingsState.contactPhone2}`);
+      setContactItem('cpEmailWrap', 'cpEmail',  settingsState.contactEmail,  `mailto:${settingsState.contactEmail}`);
+      setContactItem('cpSocialEmailWrap','cpSocialEmail', settingsState.socialEmail, `mailto:${settingsState.socialEmail}`);
+      const hasPhone = settingsState.contactPhone1 || settingsState.contactPhone2;
+      const hasEmail = settingsState.contactEmail  || settingsState.socialEmail;
+      const hasSocial = settingsState.socialFacebook || settingsState.socialTwitter;
+      const cpNoPhone  = document.getElementById('cpNoPhoneMsg');
+      const cpNoEmail  = document.getElementById('cpNoEmailMsg');
+      const cpNoSocial = document.getElementById('cpNoSocialMsg');
+      if (cpNoPhone)  cpNoPhone.classList.toggle('hidden', !!hasPhone);
+      if (cpNoEmail)  cpNoEmail.classList.toggle('hidden', !!hasEmail);
+      if (cpNoSocial) cpNoSocial.classList.toggle('hidden', !!hasSocial);
+
+      const cpFb = document.getElementById('cpFbLink');
+      const cpTw = document.getElementById('cpTwLink');
+      if (cpFb) { cpFb.href = settingsState.socialFacebook || '#'; cpFb.classList.toggle('hidden', !settingsState.socialFacebook); }
+      if (cpTw) { cpTw.href = settingsState.socialTwitter  || '#'; cpTw.classList.toggle('hidden', !settingsState.socialTwitter); }
     }
 
     function updateSealPreview(url) {
@@ -2239,10 +2310,13 @@ Thank you.`;
     /* ── Save Branding Settings ── */
     window.saveBrandingSettings = async () => {
       if (!user) { showToast('Admin login required','error'); return; }
-      const orgName     = document.getElementById('brandingOrgName').value.trim();
-      const municipality = document.getElementById('brandingMunicipality').value.trim();
-      const province    = document.getElementById('brandingProvince').value.trim();
-      const sealUrl     = document.getElementById('brandingSealUrl').value.trim();
+      const orgName       = document.getElementById('brandingOrgName').value.trim();
+      const municipality  = document.getElementById('brandingMunicipality').value.trim();
+      const province      = document.getElementById('brandingProvince').value.trim();
+      const sealUrl       = document.getElementById('brandingSealUrl').value.trim();
+      const contactPhone1 = document.getElementById('brandingContactPhone1').value.trim();
+      const contactPhone2 = document.getElementById('brandingContactPhone2').value.trim();
+      const contactEmail  = document.getElementById('brandingContactEmail').value.trim();
       const btn = document.getElementById('saveBrandingBtn');
       const original = btn.innerHTML;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
@@ -2250,13 +2324,17 @@ Thank you.`;
       try {
         await setDoc(SETTINGS_DOC, {
           orgName, municipality, province, sealUrl,
+          contactPhone1, contactPhone2, contactEmail,
           updatedAt: serverTimestamp(),
           updatedBy: user.email || user.uid || ''
         }, { merge: true });
-        settingsState.orgName     = orgName;
-        settingsState.municipality = municipality;
-        settingsState.province    = province;
-        settingsState.sealUrl     = sealUrl;
+        settingsState.orgName       = orgName;
+        settingsState.municipality  = municipality;
+        settingsState.province      = province;
+        settingsState.sealUrl       = sealUrl;
+        settingsState.contactPhone1 = contactPhone1;
+        settingsState.contactPhone2 = contactPhone2;
+        settingsState.contactEmail  = contactEmail;
         syncBrandingUi();
         showToast('Branding updated', 'success');
       } catch(e) {
@@ -2339,7 +2417,7 @@ Thank you.`;
         showToast('Profile saved successfully!','success');
       } catch(e) {
         console.error(e);
-        showToast('Error saving profile','error');
+        showToast(`Error saving profile: ${e.code || e.message}`,'error');
       } finally {
         btn.innerHTML = original;
         btn.disabled = false;
@@ -2692,6 +2770,138 @@ Thank you.`;
     });
   </script>
 
+  <!-- ═══ CONTACT VIEW ═══ -->
+  <section id="view-contact" class="view-section hidden">
+
+    <!-- Hero -->
+    <div class="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white py-20 px-4 text-center relative overflow-hidden">
+      <div class="absolute inset-0 opacity-10" style="background-image:radial-gradient(circle at 30% 50%,#3b82f6 0%,transparent 60%),radial-gradient(circle at 70% 50%,#8b5cf6 0%,transparent 60%)"></div>
+      <div class="relative max-w-2xl mx-auto">
+        <img id="contactPageSealImg" src="./argao-seal.png" alt="Organization Seal"
+             class="w-20 h-20 mx-auto mb-5 object-contain drop-shadow-lg">
+        <h1 id="contactPageOrgName"
+            class="text-3xl md:text-4xl font-black mb-2 leading-tight">Sangguniang Bayan of Argao</h1>
+        <p id="contactPageCityProv"
+           class="text-blue-300 font-semibold text-lg mb-1">Argao, Cebu</p>
+        <p class="text-slate-400 text-sm">Get in touch with our office</p>
+      </div>
+    </div>
+
+    <!-- Contact Content -->
+    <div class="bg-slate-50 min-h-[60vh] py-16 px-4">
+      <div class="max-w-4xl mx-auto">
+
+        <!-- Back button -->
+        <button onclick="window.navigateTo('public')"
+                class="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors mb-10">
+          <i class="fas fa-arrow-left"></i> Back to Home
+        </button>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <!-- Contact Numbers -->
+          <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+            <h2 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
+              <i class="fas fa-phone text-blue-500"></i> Contact Numbers
+            </h2>
+            <div id="cpPhone1Wrap" class="hidden flex items-center gap-4 mb-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+              <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-phone text-blue-600 text-sm"></i>
+              </div>
+              <div>
+                <p class="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-0.5">Telephone</p>
+                <a id="cpPhone1" href="#" class="font-bold text-slate-800 hover:text-blue-600 transition-colors"></a>
+              </div>
+            </div>
+            <div id="cpPhone2Wrap" class="hidden flex items-center gap-4 mb-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+              <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-mobile-alt text-blue-600 text-sm"></i>
+              </div>
+              <div>
+                <p class="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-0.5">Mobile</p>
+                <a id="cpPhone2" href="#" class="font-bold text-slate-800 hover:text-blue-600 transition-colors"></a>
+              </div>
+            </div>
+            <p class="text-sm text-slate-400 italic" id="cpNoPhoneMsg">Contact numbers not yet configured.</p>
+          </div>
+
+          <!-- Email Addresses -->
+          <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+            <h2 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
+              <i class="fas fa-envelope text-purple-500"></i> Email Addresses
+            </h2>
+            <div id="cpEmailWrap" class="hidden flex items-center gap-4 mb-4 p-4 bg-purple-50 rounded-2xl border border-purple-100">
+              <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-at text-purple-600 text-sm"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-0.5">General Inquiries</p>
+                <a id="cpEmail" href="#" class="font-bold text-slate-800 hover:text-purple-600 transition-colors break-all text-sm"></a>
+              </div>
+            </div>
+            <div id="cpSocialEmailWrap" class="hidden flex items-center gap-4 mb-4 p-4 bg-purple-50 rounded-2xl border border-purple-100">
+              <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-envelope text-purple-600 text-sm"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-0.5">Official Email</p>
+                <a id="cpSocialEmail" href="#" class="font-bold text-slate-800 hover:text-purple-600 transition-colors break-all text-sm"></a>
+              </div>
+            </div>
+            <p class="text-sm text-slate-400 italic" id="cpNoEmailMsg">Email address not yet configured.</p>
+          </div>
+
+          <!-- Social Media -->
+          <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+            <h2 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
+              <i class="fas fa-share-nodes text-pink-500"></i> Social Media
+            </h2>
+            <div class="flex flex-col gap-3">
+              <a id="cpFbLink" href="#" target="_blank"
+                 class="hidden items-center gap-3 p-4 bg-blue-50 rounded-2xl border border-blue-100 hover:bg-blue-100 transition-colors">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <i class="fab fa-facebook text-white text-sm"></i>
+                </div>
+                <span class="font-bold text-slate-800 text-sm">Follow us on Facebook</span>
+              </a>
+              <a id="cpTwLink" href="#" target="_blank"
+                 class="hidden items-center gap-3 p-4 bg-sky-50 rounded-2xl border border-sky-100 hover:bg-sky-100 transition-colors">
+                <div class="w-10 h-10 bg-sky-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <i class="fab fa-twitter text-white text-sm"></i>
+                </div>
+                <span class="font-bold text-slate-800 text-sm">Follow us on Twitter / X</span>
+              </a>
+              <p class="text-sm text-slate-400 italic" id="cpNoSocialMsg">Social media not yet configured.</p>
+            </div>
+          </div>
+
+          <!-- Document Request CTA -->
+          <div class="bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl p-8 text-white">
+            <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-5">
+              <i class="fas fa-file-lines text-xl"></i>
+            </div>
+            <h2 class="font-black text-lg mb-2">Request a Document</h2>
+            <p class="text-blue-100 text-sm mb-5 leading-relaxed">Need a certified copy of an ordinance or resolution? Browse our document library and submit a request directly.</p>
+            <button onclick="window.navigateTo('public')"
+                    class="bg-white text-blue-700 font-black text-sm px-5 py-3 rounded-2xl hover:bg-blue-50 transition-colors flex items-center gap-2">
+              <i class="fas fa-search"></i> Browse Documents
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Office Note -->
+        <div class="mt-8 bg-amber-50 border border-amber-200 rounded-2xl p-6 flex items-start gap-4">
+          <i class="fas fa-circle-info text-amber-500 mt-0.5 flex-shrink-0"></i>
+          <p class="text-sm text-amber-800 leading-relaxed">
+            For official certified copies of legislative documents, please visit our office in person or send a written request. Processing time is within <strong>5 calendar days</strong> from receipt of request, in accordance with RA 7160.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
   <!-- ═══ FOOTER ═══ -->
   <footer class="bg-slate-900 text-slate-100 border-t border-slate-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -2733,6 +2943,7 @@ Thank you.`;
             <li><a onclick="window.navigateTo('public')" href="#" class="text-slate-400 hover:text-white transition-colors">Home</a></li>
             <li><a href="#documents" class="text-slate-400 hover:text-white transition-colors">Documents</a></li>
             <li><a href="#members-section" class="text-slate-400 hover:text-white transition-colors">Members</a></li>
+            <li><a onclick="window.navigateTo('contact')" href="#" class="text-slate-400 hover:text-white transition-colors">Contact Us</a></li>
             <li><a onclick="window.navigateTo('login')" href="#" class="text-slate-400 hover:text-white transition-colors">Admin Portal</a></li>
           </ul>
         </div>
