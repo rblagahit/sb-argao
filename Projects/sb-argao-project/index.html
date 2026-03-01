@@ -784,13 +784,163 @@
     </div>
   </div>
 
+  <!-- Admin Profile Completion Modal -->
+  <div id="adminProfileModal"
+       class="fixed inset-0 z-[120] modal-overlay hidden flex items-center justify-center p-6 overflow-y-auto"
+       onclick="if(event.target===this) return false">
+    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative my-8">
+      <div class="p-8">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 text-white flex items-center justify-center">
+            <i class="fas fa-user-check"></i>
+          </div>
+          <div>
+            <p class="text-xs font-black uppercase tracking-widest text-slate-500">First-Time Setup</p>
+            <h3 class="text-xl font-black text-slate-900">Complete Your Admin Profile</h3>
+          </div>
+        </div>
+        <p class="text-sm text-slate-600 mb-6">Your profile will be added as the first legislative member. Please complete all details below.</p>
+        
+        <div class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Full Name</label>
+            <input type="text" id="adminProfileName" placeholder="e.g., Hon. Juan dela Cruz" required
+                   class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+          </div>
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Position / Role</label>
+            <input type="text" id="adminProfileRole" placeholder="e.g., Mayor, Vice Mayor, Councilor" required
+                   class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+          </div>
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Contact Email</label>
+            <input type="email" id="adminProfileEmail" placeholder="admin@example.com" required
+                   class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+            <p class="text-[10px] text-slate-400 mt-1 ml-1">For document requests notifications</p>
+          </div>
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Profile Photo URL</label>
+            <input type="url" id="adminProfileImage" placeholder="https://… (optional)"
+                   class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+          </div>
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Committees</label>
+            <input type="text" id="adminProfileCommittees" placeholder="e.g., health, budget, education" 
+                   class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+            <p class="text-[10px] text-slate-400 mt-1 ml-1">Separate committees with commas</p>
+          </div>
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Biography / Background</label>
+            <textarea id="adminProfileBio" placeholder="Brief background and qualifications…" rows="3"
+                      class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all resize-none"></textarea>
+          </div>
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Document / File (Optional)</label>
+            <input type="text" id="adminProfileDocument" placeholder="https://… (PDF link for your document file)"
+                   class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+          </div>
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Additional Information</label>
+            <textarea id="adminProfileAdditional" placeholder="Any additional information (max 300 characters)…" rows="3" maxlength="300"
+                      class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all resize-none"></textarea>
+            <p class="text-[10px] text-slate-400 mt-1 ml-1"><span id="charCount">0</span>/300 characters</p>
+          </div>
+        </div>
+
+        <div class="flex gap-3 mt-6">
+          <button type="button" id="completeProfileBtn" onclick="window.completeAdminProfile()"
+                  class="flex-1 py-3.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl font-bold hover:from-blue-700 hover:to-purple-700 transition-all flex items-center justify-center gap-2">
+            <i class="fas fa-check"></i> Complete Profile
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Document Details Modal -->
+  <div id="documentDetailsModal"
+       class="fixed inset-0 z-[110] modal-overlay hidden flex items-center justify-center p-6 overflow-y-auto"
+       onclick="if(event.target===this) window.closeModal('documentDetailsModal')">
+    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative my-8">
+      <button onclick="window.closeModal('documentDetailsModal')"
+              class="absolute top-5 right-5 w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all">
+        <i class="fas fa-times text-sm"></i>
+      </button>
+      <div id="documentDetailsContent" class="p-8 max-h-[600px] overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <!-- Document Request Copy Modal -->
+  <div id="documentRequestModal"
+       class="fixed inset-0 z-[110] modal-overlay hidden flex items-center justify-center p-6 overflow-y-auto"
+       onclick="if(event.target===this) window.closeModal('documentRequestModal')">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden relative my-8">
+      <button onclick="window.closeModal('documentRequestModal')"
+              class="absolute top-5 right-5 w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all">
+        <i class="fas fa-times text-sm"></i>
+      </button>
+      <div class="p-8">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center">
+            <i class="fas fa-file-download"></i>
+          </div>
+          <div>
+            <p class="text-xs font-black uppercase tracking-widest text-blue-600">Request Certified Copy</p>
+            <h3 class="text-lg font-black text-slate-900">Document Copy Request</h3>
+          </div>
+        </div>
+        
+        <div id="requestDocumentTitle" class="text-sm font-bold text-slate-700 bg-blue-50 p-3 rounded-2xl mb-5 border border-blue-200"></div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Your Email</label>
+            <input type="email" id="requestEmail" placeholder="your@email.com" required
+                   class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+          </div>
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Contact Number</label>
+            <input type="tel" id="requestPhone" placeholder="+63 9xxxxxxxxx" required
+                   class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+          </div>
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Expected Delivery Time</label>
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center gap-3">
+              <i class="fas fa-calendar text-blue-600"></i>
+              <div>
+                <p class="font-bold text-slate-900">Within 5 calendar days</p>
+                <p class="text-xs text-slate-500">From date of request</p>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">Special Requests (Optional)</label>
+            <textarea id="requestNotes" placeholder="e.g., sealed copy for court proceedings" rows="2"
+                      class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all resize-none"></textarea>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+          <button type="button" onclick="window.closeModal('documentRequestModal')"
+                  class="w-full py-3.5 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-all">
+            Cancel
+          </button>
+          <button type="button" id="sendRequestBtn" onclick="window.submitDocumentRequest()"
+                  class="w-full py-3.5 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
+            <i class="fas fa-paper-plane"></i> Send Request
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ FIREBASE + APP LOGIC ═══ -->
   <script type="module">
     import { initializeApp }                          from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
     import { getAuth, signInWithEmailAndPassword,
              onAuthStateChanged, signOut }            from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
     import { getFirestore, collection, onSnapshot,
-             addDoc, updateDoc, setDoc, doc, increment, deleteDoc,
+             addDoc, updateDoc, setDoc, doc, increment, deleteDoc, getDoc, getDocs,
              serverTimestamp, query,
              orderBy, limit }                         from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
@@ -924,6 +1074,238 @@
           .catch(()=> showToast("Error logging out",'error'));
       } else {
         window.navigateTo('login');
+      }
+    };
+
+    /* ── Admin Profile Completion ── */
+    window.checkAdminProfileComplete = async () => {
+      if (!user) return;
+      try {
+        const adminProfileRef = doc(db,'artifacts',appId,'admin','profile');
+        const snap = await getDoc(adminProfileRef);
+        if (!snap.exists() || !snap.data().isComplete) {
+          document.getElementById('adminProfileModal').classList.remove('hidden');
+        }
+      } catch(e) {
+        console.error(e);
+      }
+    };
+
+    window.completeAdminProfile = async () => {
+      if (!user) { showToast('Not logged in','error'); return; }
+      const name = document.getElementById('adminProfileName').value.trim();
+      const role = document.getElementById('adminProfileRole').value.trim();
+      const email = document.getElementById('adminProfileEmail').value.trim();
+      const image = document.getElementById('adminProfileImage').value.trim();
+      const committees = (document.getElementById('adminProfileCommittees').value || '').split(',').map(c=>c.trim()).filter(Boolean);
+      const bio = document.getElementById('adminProfileBio').value.trim();
+      const document_ = document.getElementById('adminProfileDocument').value.trim();
+      const additional = document.getElementById('adminProfileAdditional').value.trim();
+      
+      if (!name || !role || !email) { showToast('Please fill in required fields','error'); return; }
+      
+      const btn = document.getElementById('completeProfileBtn');
+      const original = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      btn.disabled = true;
+      
+      try {
+        // Save admin profile
+        const adminProfileRef = doc(db,'artifacts',appId,'admin','profile');
+        await setDoc(adminProfileRef, {
+          uid: user.uid,
+          email,
+          contactEmail: email,
+          isComplete: true,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        // Create admin as first legislative member
+        const memberPayload = {
+          name,
+          role,
+          image: image || '',
+          committees,
+          bio: bio || '',
+          additionalInfo: additional || '',
+          document: document_ || '',
+          isAdmin: true,
+          isArchived: false,
+          timestamp: serverTimestamp()
+        };
+
+        const memberId = await (async () => {
+          const col = collection(db,'artifacts',appId,'public','data','members');
+          const snapshot = await getDocs(col);
+          const adminMember = snapshot.docs.find(d => d.data().isAdmin);
+          if (adminMember) {
+            await updateDoc(doc(db,'artifacts',appId,'public','data','members',adminMember.id), memberPayload);
+            return adminMember.id;
+          } else {
+            const docRef = await addDoc(col, memberPayload);
+            return docRef.id;
+          }
+        })();
+
+        // Update admin profile with member ID
+        await setDoc(adminProfileRef, { memberId }, { merge: true });
+
+        showToast('Profile completed successfully!','success');
+        document.getElementById('adminProfileModal').classList.add('hidden');
+      } catch(e) {
+        console.error(e);
+        showToast('Error completing profile','error');
+      } finally {
+        btn.innerHTML = original;
+        btn.disabled = false;
+      }
+    };
+
+    /* ── Document Details Modal ── */
+    window.openDocumentDetails = (docId) => {
+      const doc = localDocs.find(d => d.id === docId);
+      if (!doc) return;
+      
+      const linkedAuthor = localMembers.find(m => m.id === doc.authorId);
+      const author = linkedAuthor || {
+        name: doc.authorName || 'SB Argao',
+        image: doc.authorImage || 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Ph_seal_cebu_argao.png'
+      };
+      
+      const date = doc.timestamp?.toDate
+        ? new Date(doc.timestamp.toDate()).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})
+        : 'N/A';
+      
+      const tags = (doc.tags||[]).map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('');
+      const coSponsors = (doc.coSponsors||[]).filter(Boolean).join(', ');
+      const views = doc.views || 0;
+      
+      const typeColors = {
+        'Ordinance':'from-blue-600 to-blue-700',
+        'Resolution':'from-purple-600 to-purple-700',
+        'Motion':'from-amber-500 to-amber-600',
+        'Proclamation':'from-rose-500 to-rose-600',
+        'Committee Report':'from-teal-600 to-teal-700'
+      };
+      const typeBg = typeColors[doc.type] || 'from-slate-700 to-slate-800';
+      const imgFb = `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name)}&background=2563eb&color=fff&bold=true`;
+
+      const content = `
+        <div class="space-y-6">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="inline-flex items-center gap-1.5 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest bg-gradient-to-r ${typeBg} text-white shadow-sm">
+                <i class="fas fa-file-alt text-xs"></i>${escapeHtml(doc.type)}
+              </span>
+              <span class="view-badge"><i class="fas fa-eye"></i>${views}</span>
+            </div>
+            <h2 class="text-2xl font-black text-slate-900 leading-snug mb-3">${escapeHtml(doc.title||'Untitled')}</h2>
+            <p class="text-sm text-slate-600 mb-3"><strong>Document ID:</strong> ${escapeHtml(doc.docId||'N/A')}</p>
+            <p class="text-sm text-slate-600"><strong>Date:</strong> ${date}</p>
+          </div>
+          
+          <div class="border-t border-slate-200 pt-6">
+            <h3 class="text-sm font-black uppercase tracking-widest text-slate-400 mb-4">Primary Sponsor</h3>
+            <div class="flex items-center gap-3">
+              <img src="${author.image}"
+                   class="w-12 h-12 rounded-xl object-cover bg-slate-100 ring-2 ring-white shadow-sm"
+                   onerror="this.src='${imgFb}'">
+              <div>
+                <p class="text-sm font-black text-slate-900">${escapeHtml(author.name)}</p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">${escapeHtml(author.role||'SB Member')}</p>
+                ${coSponsors ? `<p class="text-xs text-slate-600 mt-1"><strong>Co-Sponsors:</strong> ${escapeHtml(coSponsors)}</p>` : ''}
+              </div>
+            </div>
+          </div>
+          
+          ${tags ? `<div class="border-t border-slate-200 pt-6">
+            <h3 class="text-sm font-black uppercase tracking-widest text-slate-400 mb-3">Categories</h3>
+            <div class="flex flex-wrap gap-2">${tags}</div>
+          </div>` : ''}
+          
+          <div class="border-t border-slate-200 pt-6 space-y-3">
+            <button type="button"
+                   onclick="window.openDocumentNotice('${encodeURIComponent(doc.link||'')}', '${doc.id}')"
+                   class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold uppercase text-sm hover:bg-blue-600 transition-all flex items-center justify-center gap-2">
+              <i class="far fa-file-pdf"></i> View Full Document
+            </button>
+            <button type="button"
+                   onclick="window.openDocumentRequest('${doc.id}')"
+                   class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold uppercase text-sm hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
+              <i class="fas fa-file-download"></i> Request Copy of Document
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('documentDetailsContent').innerHTML = content;
+      document.getElementById('documentDetailsModal').classList.remove('hidden');
+    };
+
+    /* ── Document Request Modal ── */
+    let requestingDocId = '';
+    window.openDocumentRequest = (docId) => {
+      const doc = localDocs.find(d => d.id === docId);
+      if (!doc) return;
+      requestingDocId = docId;
+      document.getElementById('requestDocumentTitle').textContent = `📄 ${escapeHtml(doc.title||'Document')}`;
+      document.getElementById('requestEmail').value = '';
+      document.getElementById('requestPhone').value = '';
+      document.getElementById('requestNotes').value = '';
+      document.getElementById('documentRequestModal').classList.remove('hidden');
+    };
+
+    window.submitDocumentRequest = async () => {
+      const email = document.getElementById('requestEmail').value.trim();
+      const phone = document.getElementById('requestPhone').value.trim();
+      const notes = document.getElementById('requestNotes').value.trim();
+      const doc = localDocs.find(d => d.id === requestingDocId);
+      
+      if (!email || !phone) { showToast('Please fill in all required fields','error'); return; }
+      if (!doc) { showToast('Document not found','error'); return; }
+      
+      const btn = document.getElementById('sendRequestBtn');
+      const original = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+      btn.disabled = true;
+      
+      try {
+        // Get admin email from settings
+        let adminEmail = 'admin@sb-argao.com';
+        try {
+          const settingsSnap = await getDoc(doc(db,'artifacts',appId,'admin','profile'));
+          if (settingsSnap.exists() && settingsSnap.data().contactEmail) {
+            adminEmail = settingsSnap.data().contactEmail;
+          }
+        } catch(e) {}
+        
+        // Store request in Firestore
+        const requestsRef = collection(db,'artifacts',appId,'public','data','requests');
+        await addDoc(requestsRef, {
+          docId: requestingDocId,
+          docTitle: doc.title,
+          docId_: doc.docId,
+          requesterEmail: email,
+          requesterPhone: phone,
+          notes: notes || '',
+          adminEmail: adminEmail,
+          status: 'pending',
+          expectedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+          timestamp: serverTimestamp()
+        });
+        
+        // Send email via Firebase Function or email service
+        // For now, we'll show a success message
+        showToast('Your request has been submitted! You will receive a copy within 5 calendar days.','success');
+        window.closeModal('documentRequestModal');
+        
+      } catch(e) {
+        console.error(e);
+        showToast('Error submitting request','error');
+      } finally {
+        btn.innerHTML = original;
+        btn.disabled = false;
       }
     };
 
@@ -1367,7 +1749,7 @@
                 </span>
                 <span class="view-badge"><i class="fas fa-eye"></i>${views}</span>
               </div>
-              <h3 class="text-lg font-extrabold text-slate-900 mb-3 leading-snug line-clamp-3">${docData.title}</h3>
+              <h3 class="text-lg font-extrabold text-slate-900 mb-3 leading-snug line-clamp-3 cursor-pointer hover:text-blue-600 transition-colors" onclick="window.openDocumentDetails('${docData.id}')">${docData.title}</h3>
               ${tags ? `<div class="flex flex-wrap gap-1 mb-4">${tags}</div>` : ''}
               <div class="flex items-center gap-3">
                 <img src="${author.image}"
@@ -1382,11 +1764,10 @@
             </div>
             <div class="p-6 bg-gradient-to-b from-white to-slate-50">
               <button type="button"
-                 onclick="window.openDocumentNotice('${encodeURIComponent(docData.link||'')}', '${docData.id}')"
-                 class="group w-full bg-slate-900 text-white flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black uppercase text-xs hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-md hover:shadow-xl">
-                <span>View Document</span>
-                <i class="far fa-file-pdf group-hover:scale-110 transition-transform"></i>
-                <i class="fas fa-external-link-alt text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                 onclick="window.openDocumentDetails('${docData.id}')"
+                 class="group w-full bg-slate-900 text-white flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black uppercase text-xs hover:bg-blue-600 transition-all duration-300 shadow-md hover:shadow-xl">
+                <span>View Details</span>
+                <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
               </button>
             </div>
           </div>`;
@@ -1839,6 +2220,7 @@
         navBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i><span class="hidden sm:inline ml-1">Logout</span>';
         adminPanelBtn.classList.remove('hidden');
         adminPanelBtn.classList.add('flex');
+        window.checkAdminProfileComplete();
       } else {
         navBtn.innerHTML = '<span class="relative z-10 flex items-center gap-2"><i class="fas fa-lock text-xs"></i><span class="hidden sm:inline">Admin</span></span><div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>';
         adminPanelBtn.classList.add('hidden');
@@ -1852,6 +2234,14 @@
     /* ── Init ── */
     startSync();
     syncNoticeUi();
+
+    // Character counter for admin profile additional info
+    const additionalField = document.getElementById('adminProfileAdditional');
+    if (additionalField) {
+      additionalField.addEventListener('input', (e) => {
+        document.getElementById('charCount').textContent = e.target.value.length;
+      });
+    }
 
     document.getElementById('typeFilterMobile')?.addEventListener('change', e => {
       const tf = document.getElementById('typeFilter');
