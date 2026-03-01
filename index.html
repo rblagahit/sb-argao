@@ -2114,6 +2114,14 @@
       if (fbInput && document.activeElement !== fbInput) fbInput.value = settingsState.socialFacebook || '';
       if (twInput && document.activeElement !== twInput) twInput.value = settingsState.socialTwitter || '';
       if (emlInput && document.activeElement !== emlInput) emlInput.value = settingsState.socialEmail || '';
+
+      // Update footer social links
+      const footerFb  = document.getElementById('footerFacebookLink');
+      const footerTw  = document.getElementById('footerTwitterLink');
+      const footerEml = document.getElementById('footerEmailLink');
+      if (footerFb)  { footerFb.href  = settingsState.socialFacebook || '#'; footerFb.target  = settingsState.socialFacebook ? '_blank' : ''; }
+      if (footerTw)  { footerTw.href  = settingsState.socialTwitter  || '#'; footerTw.target  = settingsState.socialTwitter  ? '_blank' : ''; }
+      if (footerEml) { footerEml.href = settingsState.socialEmail ? `mailto:${settingsState.socialEmail}` : '#'; }
     }
 
     /* ── Save Social Media Settings ── */
@@ -2550,6 +2558,7 @@
           'auth/invalid-email':'Invalid email format.',
           'auth/user-not-found':'Invalid email or password.',
           'auth/wrong-password':'Invalid email or password.',
+          'auth/invalid-credential':'Invalid email or password.',
           'auth/too-many-requests':'Too many attempts. Try later.'
         };
         showToast("Login failed. "+(msgs[err.code]||"Check your credentials."),'error');
@@ -2643,13 +2652,13 @@
             Official Legislative Information System providing transparent access to ordinances and resolutions of the Sangguniang Bayan of Argao, Cebu. <strong>2026</strong>
           </p>
           <div class="flex gap-3">
-            <a href="#" title="Facebook" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-blue-600 flex items-center justify-center transition-all">
+            <a id="footerFacebookLink" href="#" title="Facebook" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-blue-600 flex items-center justify-center transition-all">
               <i class="fas fa-facebook text-sm"></i>
             </a>
-            <a href="#" title="Twitter" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-blue-400 flex items-center justify-center transition-all">
+            <a id="footerTwitterLink" href="#" title="Twitter" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-blue-400 flex items-center justify-center transition-all">
               <i class="fas fa-twitter text-sm"></i>
             </a>
-            <a href="mailto:sb-office@argao.gov.ph" title="Email" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-blue-500 flex items-center justify-center transition-all">
+            <a id="footerEmailLink" href="#" title="Email" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-blue-500 flex items-center justify-center transition-all">
               <i class="fas fa-envelope text-sm"></i>
             </a>
           </div>
