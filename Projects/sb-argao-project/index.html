@@ -8,238 +8,190 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
   <style>
-    * {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    }
+    * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
 
-    /* Custom animations */
     @keyframes float {
       0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
+      50% { transform: translateY(-12px); }
     }
-
-    @keyframes pulse-glow {
-      0%, 100% { opacity: 1; filter: brightness(1); }
-      50% { opacity: 0.9; filter: brightness(1.1); }
-    }
-
     @keyframes slide-in {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
     @keyframes shimmer {
       0% { background-position: -1000px 0; }
       100% { background-position: 1000px 0; }
     }
-
-    .animate-float {
-      animation: float 3s ease-in-out infinite;
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes fadein {
+      from { bottom: 0; opacity: 0; transform: translateX(-50%) scale(0.9); }
+      to   { bottom: 30px; opacity: 1; transform: translateX(-50%) scale(1); }
+    }
+    @keyframes fadeout {
+      from { bottom: 30px; opacity: 1; transform: translateX(-50%) scale(1); }
+      to   { bottom: 0; opacity: 0; transform: translateX(-50%) scale(0.9); }
+    }
+    @keyframes blobFloat {
+      0%, 100% { border-radius: 40% 60% 55% 45% / 50% 45% 55% 50%; transform: translateY(0); }
+      50%       { border-radius: 55% 45% 40% 60% / 45% 55% 50% 50%; transform: translateY(-16px); }
     }
 
-    .animate-pulse-glow {
-      animation: pulse-glow 2s ease-in-out infinite;
-    }
-
-    .animate-slide-in {
-      animation: slide-in 0.5s ease-out forwards;
-    }
+    .animate-float  { animation: float 3s ease-in-out infinite; }
+    .animate-blob   { animation: blobFloat 6s ease-in-out infinite; }
 
     .doc-card {
       animation: slide-in 0.5s ease-out forwards;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
     .doc-card:hover {
       transform: translateY(-8px);
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,.22);
     }
 
+    /* Glass nav */
     .glass-effect {
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
     }
 
+    /* Gradient border for login */
     .gradient-border {
-      position: relative;
       border-radius: 1.5rem;
-      background: linear-gradient(60deg, #f79533, #f37055, #ef4e7b, #a166ab, #5073b8, #1098ad, #07b39b, #6fba82);
+      background: linear-gradient(60deg,#f79533,#f37055,#ef4e7b,#a166ab,#5073b8,#1098ad,#07b39b,#6fba82);
       padding: 2px;
     }
+    .gradient-border-content { background: white; border-radius: 1.4rem; }
 
-    .gradient-border-content {
-      background: white;
-      border-radius: 1.5rem;
-      height: 100%;
-      width: 100%;
-    }
-
+    /* Shimmer skeleton */
     .shimmer {
-      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);
       background-size: 1000px 100%;
       animation: shimmer 2s infinite;
     }
 
+    /* Toast */
     #toast {
-      visibility: hidden;
-      min-width: 300px;
-      background: #1e293b;
-      color: white;
-      text-align: center;
-      border-radius: 100px;
-      padding: 16px 24px;
-      position: fixed;
-      z-index: 9999;
-      left: 50%;
-      bottom: 30px;
-      transform: translateX(-50%);
-      font-weight: 500;
-      font-size: 0.875rem;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      visibility: hidden; min-width: 300px; background: #1e293b; color: white;
+      text-align: center; border-radius: 100px; padding: 16px 24px;
+      position: fixed; z-index: 9999; left: 50%; bottom: 30px;
+      transform: translateX(-50%); font-weight: 500; font-size: .875rem;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,.5);
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      border: 1px solid rgba(255,255,255,.1);
     }
-
-    #toast.show {
-      visibility: visible;
-      animation: fadein 0.3s, fadeout 0.3s 2.7s;
-    }
-
+    #toast.show    { visibility: visible; animation: fadein .3s, fadeout .3s 2.7s; }
     #toast.success { background: #059669; }
-    #toast.error { background: #dc2626; }
-    #toast.info { background: #2563eb; }
+    #toast.error   { background: #dc2626; }
+    #toast.info    { background: #2563eb; }
 
-    @keyframes fadein {
-      from { bottom: 0; opacity: 0; transform: translateX(-50%) scale(0.9); }
-      to { bottom: 30px; opacity: 1; transform: translateX(-50%) scale(1); }
-    }
-
-    @keyframes fadeout {
-      from { bottom: 30px; opacity: 1; transform: translateX(-50%) scale(1); }
-      to { bottom: 0; opacity: 0; transform: translateX(-50%) scale(0.9); }
-    }
-
+    /* Modal */
     .modal-overlay {
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0,0,0,.55);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
     }
 
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+    /* Hero search bar */
+    .hero-search {
+      background: white;
+      border-radius: 1.1rem;
+      box-shadow: 0 8px 40px rgba(0,0,0,.12);
+      display: flex;
+      align-items: center;
+      overflow: hidden;
     }
 
-    .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid #e2e8f0;
-      border-top: 3px solid #2563eb;
+    /* Member hero card */
+    .member-hero-card {
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .member-hero-card:hover {
+      transform: translateY(-6px) scale(1.04);
+      box-shadow: 0 20px 40px -10px rgba(0,0,0,.18);
+    }
+
+    /* Stat pill */
+    .stat-pill { transition: transform .25s ease; }
+    .stat-pill:hover { transform: translateY(-4px); }
+
+    /* Floating decoration dots */
+    .hero-dot {
+      position: absolute;
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      pointer-events: none;
+      z-index: 0;
     }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* Scrollbar styling */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: #f1f5f9;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #94a3b8;
-      border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: #64748b;
-    }
-
-    /* Member card hover effect */
-    .member-chip {
-      transition: all 0.2s ease;
-    }
-
-    .member-chip:hover {
-      transform: scale(1.05);
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white !important;
-    }
-
-    .member-chip:hover img {
-      border-color: white;
-    }
-
-    /* Stats card */
-    .stat-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      transition: all 0.3s ease;
-    }
-
-    .stat-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 25px -5px rgba(102, 126, 234, 0.3);
+    /* Floating card */
+    .float-card {
+      position: absolute;
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 12px 40px rgba(0,0,0,.12);
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .85rem 1.1rem;
+      z-index: 20;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col bg-slate-50">
-  <!-- Toast Notification -->
+<body class="min-h-screen flex flex-col bg-white">
+
+  <!-- Toast -->
   <div id="toast" class="shadow-2xl">
     <i class="fas fa-info-circle"></i>
     <span>Message</span>
   </div>
 
-  <!-- Navigation -->
-  <nav class="glass-effect sticky top-0 z-50 border-b border-white/20">
+  <!-- ─── Navigation ─── -->
+  <nav class="glass-effect sticky top-0 z-50 border-b border-slate-100 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-20">
+
         <!-- Logo -->
         <div class="flex items-center gap-4 cursor-pointer group" onclick="window.navigateTo('public')">
           <div class="relative">
             <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Ph_seal_cebu_argao.png"
                  alt="Argao Seal"
-                 class="w-12 h-12 object-contain transform group-hover:scale-110 transition-transform duration-300">
+                 class="w-11 h-11 object-contain transform group-hover:scale-110 transition-transform duration-300">
             <div class="absolute -inset-1 bg-blue-500 rounded-full opacity-0 group-hover:opacity-20 blur transition-opacity"></div>
           </div>
           <div>
-            <h1 class="font-black text-2xl tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-              SB ARGAO
-            </h1>
+            <h1 class="font-black text-xl tracking-tight text-slate-900">SB ARGAO</h1>
             <p class="text-[10px] font-semibold text-blue-600 tracking-widest uppercase flex items-center gap-1">
-              <span class="w-1 h-1 bg-blue-600 rounded-full animate-pulse"></span>
+              <span class="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse inline-block"></span>
               Legislative Information System
             </p>
           </div>
         </div>
 
-        <!-- Right side -->
-        <div class="flex items-center gap-6">
+        <!-- Nav links -->
+        <div class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-500">
+          <a href="#" class="hover:text-blue-600 transition-colors">Home</a>
+          <a href="#documents" class="hover:text-blue-600 transition-colors">Documents</a>
+          <a href="#members-section" class="hover:text-blue-600 transition-colors">Members</a>
+        </div>
+
+        <!-- Right -->
+        <div class="flex items-center gap-5">
           <div class="hidden md:block text-right">
             <p class="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">Presiding Officer</p>
-            <p class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-              <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <p class="text-sm font-extrabold text-slate-900 flex items-center justify-end gap-2">
+              <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse inline-block"></span>
               Hon. Orvi G. Ortega
             </p>
           </div>
-
-          <!-- Theme toggle (optional) -->
-          <button class="w-10 h-10 bg-white/50 backdrop-blur rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-all border border-white/20 shadow-sm">
-            <i class="fas fa-moon text-sm"></i>
-          </button>
-
-          <!-- Auth button -->
           <button id="navBtn" onclick="window.handleNavAction()"
                   class="relative group overflow-hidden px-5 py-2.5 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-xl font-semibold text-sm hover:shadow-lg transition-all duration-300 flex items-center gap-2">
             <span class="relative z-10 flex items-center gap-2">
@@ -254,162 +206,245 @@
   </nav>
 
   <div id="mainContent" class="flex-1">
-    <!-- PUBLIC VIEW -->
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  PUBLIC VIEW                                -->
+    <!-- ═══════════════════════════════════════════ -->
     <section id="view-public" class="view-section">
-      <!-- Stats Bar -->
-      <div class="bg-white border-b border-slate-100 py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex items-center gap-4 overflow-x-auto no-scrollbar pb-2">
-            <div class="flex items-center gap-2 text-sm font-medium text-slate-600 bg-slate-100 px-4 py-2 rounded-full">
-              <i class="fas fa-layer-group text-blue-600"></i>
-              <span id="totalDocs">0</span> Total Documents
+
+      <!-- ── HERO ─────────────────────────────────── -->
+      <div class="relative overflow-hidden bg-gradient-to-br from-white via-blue-50/40 to-amber-50/30"
+           style="min-height: 88vh; display: flex; align-items: center;">
+
+        <!-- Decorative dots -->
+        <span class="hero-dot w-5 h-5 bg-amber-400"  style="top:14%;left:40%"></span>
+        <span class="hero-dot w-4 h-4 bg-red-400"    style="top:68%;left:57%"></span>
+        <span class="hero-dot w-7 h-7 bg-green-400 animate-float"  style="bottom:10%;left:48%"></span>
+        <span class="hero-dot w-4 h-4 bg-amber-300"  style="top:7%;right:10%"></span>
+        <span class="hero-dot w-5 h-5 bg-pink-400"   style="top:40%;left:2%"></span>
+        <span class="hero-dot w-6 h-6 bg-blue-300 animate-float" style="bottom:18%;right:4%;animation-delay:.8s"></span>
+        <span class="hero-dot w-3 h-3 bg-purple-400" style="top:25%;right:30%"></span>
+
+        <!-- Amber blob background on right -->
+        <div class="absolute right-0 top-1/2 -translate-y-1/2 w-[48%] h-[80%] bg-gradient-to-br from-amber-300 to-amber-500 opacity-[0.12] animate-blob pointer-events-none" style="border-radius:40% 60% 55% 45% / 50% 45% 55% 50%;"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full relative z-10">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+
+            <!-- ── LEFT: Copy + Search + Stats ── -->
+            <div>
+              <!-- Eyebrow badge -->
+              <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-bold mb-8">
+                <i class="fas fa-landmark text-xs"></i>
+                Argao, Cebu · Official Legislative Portal
+              </div>
+
+              <!-- Headline -->
+              <h1 class="text-5xl lg:text-[3.8rem] font-black text-slate-900 leading-[1.08] mb-6">
+                Find Legislative<br>
+                <span class="text-blue-600">Documents</span><br>
+                in Seconds
+              </h1>
+
+              <!-- Sub text -->
+              <p class="text-slate-500 text-lg leading-relaxed mb-10 max-w-md">
+                Browse all ordinances and resolutions passed by<br class="hidden sm:block">
+                the Sangguniang Bayan of Argao, Cebu.
+              </p>
+
+              <!-- ── SEARCH BAR (Foodix-style) ── -->
+              <div class="hero-search mb-10">
+                <!-- Icon + input -->
+                <div class="flex-1 flex items-center gap-3 pl-5">
+                  <i class="fas fa-search text-slate-400 text-lg flex-shrink-0"></i>
+                  <input type="text" id="searchInput"
+                         placeholder="Search documents or ID…"
+                         class="flex-1 py-4 bg-transparent outline-none font-medium text-slate-800 placeholder-slate-400 text-base min-w-0">
+                </div>
+                <!-- Type filter -->
+                <select id="typeFilter"
+                        class="hidden sm:block shrink-0 bg-blue-50 border-l border-slate-100 px-5 py-4 text-sm font-bold text-blue-700 outline-none cursor-pointer">
+                  <option value="All">📋 All Types</option>
+                  <option value="Ordinance">📜 Ordinances</option>
+                  <option value="Resolution">📄 Resolutions</option>
+                </select>
+                <!-- Search button -->
+                <button class="shrink-0 bg-amber-500 hover:bg-amber-600 text-white px-8 py-4 font-black text-sm tracking-wide transition-all shadow-inner flex items-center gap-2">
+                  <i class="fas fa-search text-xs"></i>
+                  Search
+                </button>
+              </div>
+
+              <!-- ── STAT CARDS (Foodix style) ── -->
+              <div class="grid grid-cols-3 gap-4">
+                <div class="stat-pill bg-red-50 border border-red-100 rounded-2xl p-5">
+                  <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Docs</p>
+                  <p class="text-3xl font-black text-slate-900 mb-3" id="totalDocs">0</p>
+                  <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-xl">📄</div>
+                </div>
+                <div class="stat-pill bg-amber-50 border border-amber-100 rounded-2xl p-5">
+                  <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Ordinances</p>
+                  <p class="text-3xl font-black text-slate-900 mb-3" id="ordinanceCount">0</p>
+                  <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-xl">📜</div>
+                </div>
+                <div class="stat-pill bg-green-50 border border-green-100 rounded-2xl p-5">
+                  <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Resolutions</p>
+                  <p class="text-3xl font-black text-slate-900 mb-3" id="resolutionCount">0</p>
+                  <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-xl">📋</div>
+                </div>
+              </div>
             </div>
-            <div class="flex items-center gap-2 text-sm font-medium text-slate-600 bg-slate-100 px-4 py-2 rounded-full">
-              <i class="fas fa-file-alt text-emerald-600"></i>
-              <span id="ordinanceCount">0</span> Ordinances
+
+            <!-- ── RIGHT: Member Photos (hero element) ── -->
+            <div class="relative flex items-center justify-center min-h-[520px]">
+
+              <!-- Floating card: Open Access -->
+              <div class="float-card top-4 left-0 lg:-left-4">
+                <div class="w-11 h-11 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <i class="fas fa-unlock-alt text-green-600 text-lg"></i>
+                </div>
+                <div>
+                  <p class="font-black text-slate-900 text-sm leading-none">Open Access</p>
+                  <p class="text-xs text-slate-400 mt-0.5">Public Documents</p>
+                </div>
+              </div>
+
+              <!-- Floating card: SB Argao -->
+              <div class="float-card bottom-4 right-0 lg:-right-4">
+                <div class="w-11 h-11 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <i class="fas fa-file-alt text-blue-600 text-lg"></i>
+                </div>
+                <div>
+                  <p class="font-black text-slate-900 text-sm leading-none">Sangguniang Bayan</p>
+                  <p class="text-xs text-slate-400 mt-0.5">Argao, Cebu</p>
+                </div>
+              </div>
+
+              <!-- Member grid — rendered by JS -->
+              <div id="memberHeroDisplay" class="w-full px-4 lg:px-0"></div>
             </div>
-            <div class="flex items-center gap-2 text-sm font-medium text-slate-600 bg-slate-100 px-4 py-2 rounded-full">
-              <i class="fas fa-file-contract text-purple-600"></i>
-              <span id="resolutionCount">0</span> Resolutions
-            </div>
+
           </div>
         </div>
-      </div>
+      </div><!-- /hero -->
 
-      <!-- Members Row -->
-      <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 py-8 overflow-hidden">
+      <!-- ── DOCUMENTS SECTION ───────────────────── -->
+      <div id="documents" class="bg-slate-50 py-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex items-center gap-4 mb-4">
-            <h3 class="text-xs font-black uppercase text-blue-600 tracking-widest flex items-center gap-2">
-              <i class="fas fa-users"></i>
-              SANGGUNIANG BAYAN MEMBERS
-            </h3>
-            <div class="h-px flex-1 bg-gradient-to-r from-blue-200 to-transparent"></div>
-          </div>
-          <div id="memberRow" class="flex gap-3 items-center overflow-x-auto no-scrollbar pb-4">
-            <!-- Members will be rendered here -->
-          </div>
-        </div>
-      </div>
 
-      <!-- Main Content -->
-      <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <!-- Search and Filter Section -->
-        <div class="flex flex-col md:flex-row gap-6 justify-between items-center mb-16">
-          <div class="relative w-full md:w-96 group">
-            <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
-            <input type="text" id="searchInput"
-                   placeholder="Search by title or document ID..."
-                   class="w-full pl-14 pr-6 py-5 bg-white rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition-all shadow-sm">
+          <!-- Section header -->
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
+            <div>
+              <p class="text-xs font-black uppercase text-blue-600 tracking-widest mb-2 flex items-center gap-2">
+                <i class="fas fa-layer-group"></i> Document Library
+              </p>
+              <h2 class="text-3xl font-black text-slate-900">All Documents</h2>
+              <p class="text-slate-500 mt-1">Ordinances and resolutions from the Sangguniang Bayan of Argao</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <!-- Mobile type filter -->
+              <select id="typeFilterMobile"
+                      class="sm:hidden bg-white px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold outline-none shadow-sm cursor-pointer">
+                <option value="All">📋 All Types</option>
+                <option value="Ordinance">📜 Ordinances</option>
+                <option value="Resolution">📄 Resolutions</option>
+              </select>
+              <button onclick="window.clearFilters()"
+                      class="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-red-500 transition-colors bg-white px-5 py-3 rounded-xl border border-slate-200 shadow-sm">
+                <i class="fas fa-times"></i>
+                Clear
+              </button>
+            </div>
           </div>
 
-          <div class="flex gap-3 w-full md:w-auto">
-            <select id="typeFilter" class="flex-1 md:flex-none bg-white px-6 py-5 rounded-2xl border border-slate-200 text-sm font-semibold outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition-all shadow-sm cursor-pointer">
-              <option value="All">📋 All Records</option>
-              <option value="Ordinance">📜 Ordinances</option>
-              <option value="Resolution">📄 Resolutions</option>
-            </select>
+          <!-- Loading skeleton -->
+          <div id="documentsLoading" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <!-- 6 skeleton cards -->
+              <div class="bg-white rounded-3xl overflow-hidden shadow-sm" style="height:280px">
+                <div class="p-8"><div class="shimmer h-6 w-24 rounded-full mb-6"></div><div class="shimmer h-7 w-full mb-3 rounded-lg"></div><div class="shimmer h-7 w-3/4 mb-8 rounded-lg"></div><div class="flex gap-4"><div class="shimmer w-12 h-12 rounded-xl"></div><div class="flex-1"><div class="shimmer h-4 w-32 mb-2 rounded"></div><div class="shimmer h-3 w-20 rounded"></div></div></div></div>
+                <div class="p-8 pt-0"><div class="shimmer h-14 w-full rounded-2xl"></div></div>
+              </div>
+              <div class="bg-white rounded-3xl overflow-hidden shadow-sm" style="height:280px">
+                <div class="p-8"><div class="shimmer h-6 w-24 rounded-full mb-6"></div><div class="shimmer h-7 w-full mb-3 rounded-lg"></div><div class="shimmer h-7 w-3/4 mb-8 rounded-lg"></div><div class="flex gap-4"><div class="shimmer w-12 h-12 rounded-xl"></div><div class="flex-1"><div class="shimmer h-4 w-32 mb-2 rounded"></div><div class="shimmer h-3 w-20 rounded"></div></div></div></div>
+                <div class="p-8 pt-0"><div class="shimmer h-14 w-full rounded-2xl"></div></div>
+              </div>
+              <div class="bg-white rounded-3xl overflow-hidden shadow-sm" style="height:280px">
+                <div class="p-8"><div class="shimmer h-6 w-24 rounded-full mb-6"></div><div class="shimmer h-7 w-full mb-3 rounded-lg"></div><div class="shimmer h-7 w-3/4 mb-8 rounded-lg"></div><div class="flex gap-4"><div class="shimmer w-12 h-12 rounded-xl"></div><div class="flex-1"><div class="shimmer h-4 w-32 mb-2 rounded"></div><div class="shimmer h-3 w-20 rounded"></div></div></div></div>
+                <div class="p-8 pt-0"><div class="shimmer h-14 w-full rounded-2xl"></div></div>
+              </div>
+            </div>
+          </div>
 
-            <button onclick="window.clearFilters()" class="px-6 py-5 bg-slate-100 rounded-2xl text-slate-600 hover:bg-slate-200 transition-all font-semibold text-sm flex items-center gap-2">
-              <i class="fas fa-times"></i>
-              <span class="hidden sm:inline">Clear</span>
+          <!-- Document grid -->
+          <div id="documentGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+
+          <!-- Empty state -->
+          <div id="emptyState" class="hidden text-center py-24">
+            <div class="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-6 animate-float shadow-md">
+              <i class="fas fa-search text-4xl text-slate-300"></i>
+            </div>
+            <h3 class="text-2xl font-black text-slate-900 mb-3">No documents found</h3>
+            <p class="text-slate-500 max-w-md mx-auto">Try adjusting your search or filter to find what you're looking for.</p>
+            <button onclick="window.clearFilters()"
+                    class="mt-8 px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all inline-flex items-center gap-3 shadow-lg">
+              <i class="fas fa-times"></i> Clear Filters
             </button>
           </div>
-        </div>
 
-        <!-- Loading State -->
-        <div id="documentsLoading" class="hidden">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1,2,3,4,5,6].map(i => `
-              <div class="bg-white rounded-3xl overflow-hidden shadow-sm">
-                <div class="p-8 border-b border-slate-100">
-                  <div class="shimmer h-6 w-20 rounded-full mb-6"></div>
-                  <div class="shimmer h-8 w-full mb-4 rounded-lg"></div>
-                  <div class="shimmer h-8 w-3/4 mb-8 rounded-lg"></div>
-                  <div class="flex items-center gap-4">
-                    <div class="shimmer w-12 h-12 rounded-xl"></div>
-                    <div class="flex-1">
-                      <div class="shimmer h-4 w-32 mb-2 rounded"></div>
-                      <div class="shimmer h-3 w-20 rounded"></div>
-                    </div>
-                  </div>
-                </div>
-                <div class="p-8">
-                  <div class="shimmer h-14 w-full rounded-2xl"></div>
-                </div>
+        </div>
+      </div><!-- /documents section -->
+
+    </section><!-- /view-public -->
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  LOGIN VIEW                                 -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section id="view-login" class="view-section hidden min-h-[80vh] flex items-center justify-center px-4 relative overflow-hidden">
+      <!-- Decorative blurs -->
+      <div class="absolute top-20 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-float"></div>
+      <div class="absolute bottom-20 right-10 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-float" style="animation-delay:1s"></div>
+
+      <div class="w-full max-w-md relative">
+        <div class="gradient-border">
+          <div class="gradient-border-content p-12">
+            <div class="text-center mb-10">
+              <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl shadow-lg transform rotate-3 hover:rotate-0 transition-transform">
+                <i class="fas fa-shield-alt"></i>
               </div>
-            `).join('')}
-          </div>
-        </div>
-
-        <!-- Document Grid -->
-        <div id="documentGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
-
-        <!-- Empty State -->
-        <div id="emptyState" class="hidden text-center py-20">
-          <div class="w-32 h-32 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-float">
-            <i class="fas fa-search text-4xl text-slate-400"></i>
-          </div>
-          <h3 class="text-2xl font-black text-slate-900 mb-3">No documents found</h3>
-          <p class="text-slate-500 max-w-md mx-auto">Try adjusting your search or filter to find what you're looking for.</p>
-          <button onclick="window.clearFilters()" class="mt-6 px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all inline-flex items-center gap-3">
-            <i class="fas fa-times"></i>
-            Clear Filters
-          </button>
-        </div>
-      </main>
-    </section>
-
-    <!-- LOGIN VIEW -->
-    <section id="view-login" class="view-section hidden min-h-[80vh] flex items-center justify-center px-4">
-      <div class="w-full max-w-md">
-        <!-- Decorative elements -->
-        <div class="absolute top-20 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-float"></div>
-        <div class="absolute bottom-20 right-10 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-float" style="animation-delay: 1s"></div>
-
-        <div class="relative">
-          <div class="gradient-border">
-            <div class="gradient-border-content p-12">
-              <div class="text-center mb-10">
-                <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl shadow-lg transform rotate-3 hover:rotate-0 transition-transform">
-                  <i class="fas fa-shield-alt"></i>
-                </div>
-                <h3 class="text-2xl font-black text-slate-900 mb-2">Admin Portal</h3>
-                <p class="text-slate-500 text-sm">Sign in to manage legislative documents</p>
-              </div>
-
-              <form id="loginForm" class="space-y-4">
-                <div class="relative group">
-                  <i class="fas fa-envelope absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
-                  <input type="email" id="loginEmail" placeholder="Admin Email" required
-                         class="w-full pl-14 pr-6 py-5 bg-slate-50 rounded-2xl outline-none border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
-                </div>
-
-                <div class="relative group">
-                  <i class="fas fa-lock absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
-                  <input type="password" id="loginPass" placeholder="Password" required
-                         class="w-full pl-14 pr-6 py-5 bg-slate-50 rounded-2xl outline-none border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
-                </div>
-
-                <button type="submit" id="loginBtn"
-                        class="w-full py-5 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl font-black shadow-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 uppercase tracking-widest text-xs flex items-center justify-center gap-3">
-                  <span>Access Dashboard</span>
-                  <i class="fas fa-arrow-right"></i>
-                </button>
-
-                <button type="button" onclick="window.navigateTo('public')"
-                        class="w-full py-4 text-slate-400 rounded-2xl font-bold hover:text-blue-600 transition-all text-xs uppercase tracking-widest flex items-center justify-center gap-2">
-                  <i class="fas fa-arrow-left"></i>
-                  Back to Public View
-                </button>
-              </form>
+              <h3 class="text-2xl font-black text-slate-900 mb-2">Admin Portal</h3>
+              <p class="text-slate-500 text-sm">Sign in to manage legislative documents</p>
             </div>
+
+            <form id="loginForm" class="space-y-4">
+              <div class="relative group">
+                <i class="fas fa-envelope absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
+                <input type="email" id="loginEmail" placeholder="Admin Email" required
+                       class="w-full pl-14 pr-6 py-5 bg-slate-50 rounded-2xl outline-none border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              </div>
+              <div class="relative group">
+                <i class="fas fa-lock absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
+                <input type="password" id="loginPass" placeholder="Password" required
+                       class="w-full pl-14 pr-6 py-5 bg-slate-50 rounded-2xl outline-none border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              </div>
+              <button type="submit" id="loginBtn"
+                      class="w-full py-5 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl font-black shadow-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 uppercase tracking-widest text-xs flex items-center justify-center gap-3">
+                <span>Access Dashboard</span>
+                <i class="fas fa-arrow-right"></i>
+              </button>
+              <button type="button" onclick="window.navigateTo('public')"
+                      class="w-full py-4 text-slate-400 rounded-2xl font-bold hover:text-blue-600 transition-all text-xs uppercase tracking-widest flex items-center justify-center gap-2">
+                <i class="fas fa-arrow-left"></i> Back to Public View
+              </button>
+            </form>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ADMIN VIEW -->
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  ADMIN VIEW                                 -->
+    <!-- ═══════════════════════════════════════════ -->
     <section id="view-admin" class="view-section hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <!-- Admin Header -->
       <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
@@ -422,8 +457,6 @@
           </div>
           <p class="text-slate-500">Manage members and legislative documents</p>
         </div>
-
-        <!-- Quick Stats -->
         <div class="flex gap-4">
           <div class="bg-white px-6 py-4 rounded-2xl shadow-sm border border-slate-100">
             <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Members</p>
@@ -441,14 +474,11 @@
         <div class="lg:col-span-1 space-y-6">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
-              <i class="fas fa-users text-blue-600"></i>
-              SB Members
+              <i class="fas fa-users text-blue-600"></i> SB Members
             </h3>
             <span class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full" id="memberCount">0</span>
           </div>
-
-          <div id="adminMemberGrid" class="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar"></div>
-
+          <div id="adminMemberGrid" class="space-y-3 max-h-[600px] overflow-y-auto pr-2"></div>
           <button onclick="window.triggerSeed()"
                   class="w-full py-4 bg-gradient-to-r from-slate-50 to-white text-slate-600 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold uppercase tracking-widest hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center gap-3 group">
             <i class="fas fa-plus-circle text-slate-400 group-hover:text-blue-600"></i>
@@ -478,7 +508,6 @@
                        placeholder="e.g., An Ordinance Establishing the Digital Transformation Program"
                        class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
               </div>
-
               <div>
                 <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">
                   <i class="fas fa-hashtag mr-2"></i>Document ID
@@ -486,26 +515,25 @@
                 <input type="text" id="newDocId" required placeholder="ORD-2024-001"
                        class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
               </div>
-
               <div>
                 <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">
                   <i class="fas fa-tag mr-2"></i>Document Type
                 </label>
-                <select id="newType" required class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 font-semibold text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+                <select id="newType" required
+                        class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 font-semibold text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
                   <option value="Ordinance">📜 Ordinance</option>
                   <option value="Resolution">📄 Resolution</option>
                 </select>
               </div>
-
               <div>
                 <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">
                   <i class="fas fa-user-tie mr-2"></i>Primary Sponsor
                 </label>
-                <select id="newAuthor" required class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 font-semibold text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+                <select id="newAuthor" required
+                        class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 font-semibold text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
                   <option value="">Select sponsor...</option>
                 </select>
               </div>
-
               <div class="md:col-span-2">
                 <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider">
                   <i class="fas fa-link mr-2"></i>PDF URL
@@ -513,7 +541,6 @@
                 <input type="url" id="newLink" required placeholder="https://..."
                        class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
               </div>
-
               <div class="md:col-span-2">
                 <button type="submit" id="submitBtn"
                         class="w-full py-5 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl font-black uppercase tracking-widest text-sm shadow-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300 flex items-center justify-center gap-3 group">
@@ -526,11 +553,14 @@
         </div>
       </div>
     </section>
-  </div>
 
-  <!-- Profile Modal -->
-  <div id="profileModal" class="fixed inset-0 z-[100] modal-overlay hidden flex items-center justify-center p-6" onclick="if(event.target === this) window.closeModal('profileModal')">
-    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative transform transition-all animate-slide-in">
+  </div><!-- /mainContent -->
+
+  <!-- ── Profile Modal ── -->
+  <div id="profileModal"
+       class="fixed inset-0 z-[100] modal-overlay hidden flex items-center justify-center p-6"
+       onclick="if(event.target===this) window.closeModal('profileModal')">
+    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative transform transition-all">
       <button onclick="window.closeModal('profileModal')"
               class="absolute top-6 right-6 w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-all">
         <i class="fas fa-times"></i>
@@ -539,17 +569,16 @@
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer class="mt-auto bg-white border-t border-slate-100 py-16">
+  <!-- ── Footer ── -->
+  <footer class="mt-auto bg-white border-t border-slate-100 py-14">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
       <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Ph_seal_cebu_argao.png"
-           alt="Argao Seal"
-           class="w-16 h-16 mx-auto mb-6 opacity-50">
+           alt="Argao Seal" class="w-14 h-14 mx-auto mb-5 opacity-40">
       <p class="text-sm font-medium text-slate-400 max-w-2xl mx-auto leading-relaxed">
         ♻️ If this resonates, share it!<br>
         ➕ Follow Rodel Lagahit for insights on growth, leadership and navigating career transitions.
       </p>
-      <div class="flex justify-center gap-6 mt-8 text-xs text-slate-400">
+      <div class="flex justify-center gap-6 mt-7 text-xs text-slate-400">
         <a href="#" class="hover:text-blue-600 transition-colors">Privacy Policy</a>
         <a href="#" class="hover:text-blue-600 transition-colors">Terms of Service</a>
         <a href="#" class="hover:text-blue-600 transition-colors">Contact</a>
@@ -557,12 +586,17 @@
     </div>
   </footer>
 
+  <!-- ═══════════════════════════════════════════ -->
+  <!--  FIREBASE + APP LOGIC                       -->
+  <!-- ═══════════════════════════════════════════ -->
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-    import { getFirestore, collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+    import { initializeApp }                          from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+    import { getAuth, signInWithEmailAndPassword,
+             onAuthStateChanged, signOut }            from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+    import { getFirestore, collection, onSnapshot,
+             addDoc, serverTimestamp, query,
+             orderBy, limit }                         from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyCiPtF6zCmrtnHs3CJMM9CrA7dyDynYwdA",
       authDomain: "sb-argao.firebaseapp.com",
@@ -571,63 +605,40 @@
       appId: "1:839376133163:web:80dad979ea44bb960e1e6e"
     };
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    const app   = initializeApp(firebaseConfig);
+    const auth  = getAuth(app);
+    const db    = getFirestore(app);
     const appId = 'sb-argao';
 
-    // State
-    let user = null;
-    let localDocs = [];
-    let localMembers = [];
+    let user = null, localDocs = [], localMembers = [];
     let unsubDocs, unsubMembers;
 
-    // References
-    const MEMBER_REF = collection(db, 'artifacts', appId, 'public', 'data', 'members');
-    const DOC_REF = collection(db, 'artifacts', appId, 'public', 'data', 'legislations');
+    const MEMBER_REF = collection(db,'artifacts',appId,'public','data','members');
+    const DOC_REF    = collection(db,'artifacts',appId,'public','data','legislations');
 
-    // Enhanced Toast
+    /* ── Toast ── */
     function showToast(msg, type = 'info') {
-      const t = document.getElementById('toast');
+      const t    = document.getElementById('toast');
       const icon = t.querySelector('i');
       const span = t.querySelector('span');
-
-      // Set icon based on type
-      icon.className = 'fas';
-      if (type === 'success') icon.className += ' fa-check-circle';
-      else if (type === 'error') icon.className += ' fa-exclamation-circle';
-      else icon.className += ' fa-info-circle';
-
+      icon.className = 'fas ' + (type==='success' ? 'fa-check-circle' : type==='error' ? 'fa-exclamation-circle' : 'fa-info-circle');
       span.textContent = msg;
       t.className = `show ${type}`;
-
-      setTimeout(() => {
-        t.className = '';
-        t.classList.remove('show', 'success', 'error', 'info');
-      }, 3000);
+      setTimeout(() => { t.className = ''; }, 3000);
     }
 
-    // Loading States
-    function setLoading(isLoading) {
+    /* ── Loading ── */
+    function setLoading(on) {
       const loader = document.getElementById('documentsLoading');
-      const grid = document.getElementById('documentGrid');
-      const empty = document.getElementById('emptyState');
-
-      if (loader && grid && empty) {
-        if (isLoading) {
-          loader.classList.remove('hidden');
-          grid.classList.add('hidden');
-          empty.classList.add('hidden');
-        } else {
-          loader.classList.add('hidden');
-          grid.classList.remove('hidden');
-          empty.classList.add('hidden');
-        }
-      }
+      const grid   = document.getElementById('documentGrid');
+      const empty  = document.getElementById('emptyState');
+      if (!loader || !grid || !empty) return;
+      loader.classList.toggle('hidden', !on);
+      grid.classList.toggle('hidden', on);
+      if (on) empty.classList.add('hidden');
     }
 
-    // Navigation
+    /* ── Navigation ── */
     window.navigateTo = (view) => {
       document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
       document.getElementById(`view-${view}`).classList.remove('hidden');
@@ -636,155 +647,171 @@
 
     window.clearFilters = () => {
       document.getElementById('searchInput').value = '';
-      document.getElementById('typeFilter').value = 'All';
+      const tf = document.getElementById('typeFilter');
+      const tfm = document.getElementById('typeFilterMobile');
+      if (tf)  tf.value  = 'All';
+      if (tfm) tfm.value = 'All';
       renderDocs();
     };
 
     window.handleNavAction = () => {
       if (user) {
-        signOut(auth).then(() => {
-          showToast("Logged out successfully", 'success');
-          window.navigateTo('public');
-        }).catch((error) => {
-          showToast("Error logging out", 'error');
-        });
+        signOut(auth)
+          .then(() => { showToast("Logged out successfully",'success'); window.navigateTo('public'); })
+          .catch(() => showToast("Error logging out",'error'));
       } else {
         window.navigateTo('login');
       }
     };
 
-    // Data Sync
+    /* ── Sync ── */
     const startSync = () => {
-      if (unsubDocs) unsubDocs();
+      if (unsubDocs)    unsubDocs();
       if (unsubMembers) unsubMembers();
-
       setLoading(true);
 
-      const membersQuery = query(MEMBER_REF, orderBy('name'), limit(50));
-      const docsQuery = query(DOC_REF, orderBy('timestamp', 'desc'), limit(100));
+      unsubMembers = onSnapshot(
+        query(MEMBER_REF, orderBy('name'), limit(50)),
+        (snap) => { localMembers = snap.docs.map(d=>({id:d.id,...d.data()})); renderUI(); },
+        (err)  => { console.error(err); showToast("Error loading members",'error'); }
+      );
 
-      unsubMembers = onSnapshot(membersQuery, (snap) => {
-        localMembers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderUI();
-      }, (err) => {
-        console.error("Member sync error:", err);
-        showToast("Error loading members", 'error');
-      });
-
-      unsubDocs = onSnapshot(docsQuery, (snap) => {
-        localDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        setLoading(false);
-        renderUI();
-        updateStats();
-      }, (err) => {
-        console.error("Doc sync error:", err);
-        setLoading(false);
-        showToast("Error loading documents", 'error');
-      });
+      unsubDocs = onSnapshot(
+        query(DOC_REF, orderBy('timestamp','desc'), limit(100)),
+        (snap) => { localDocs = snap.docs.map(d=>({id:d.id,...d.data()})); setLoading(false); renderUI(); updateStats(); },
+        (err)  => { console.error(err); setLoading(false); showToast("Error loading documents",'error'); }
+      );
     };
 
-    // Update Statistics
+    /* ── Stats ── */
     function updateStats() {
-      const total = document.getElementById('totalDocs');
-      const ordinance = document.getElementById('ordinanceCount');
-      const resolution = document.getElementById('resolutionCount');
-      const adminDocCount = document.getElementById('adminDocCount');
-
-      if (total) total.textContent = localDocs.length;
-      if (ordinance) ordinance.textContent = localDocs.filter(d => d.type === 'Ordinance').length;
-      if (resolution) resolution.textContent = localDocs.filter(d => d.type === 'Resolution').length;
-      if (adminDocCount) adminDocCount.textContent = localDocs.length;
+      const set = (id,v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+      set('totalDocs',       localDocs.length);
+      set('ordinanceCount',  localDocs.filter(d=>d.type==='Ordinance').length);
+      set('resolutionCount', localDocs.filter(d=>d.type==='Resolution').length);
+      set('adminDocCount',   localDocs.length);
     }
 
-    // Render Functions
+    /* ── Render all ── */
     function renderUI() {
-      renderMembers();
+      renderMemberHero();
       renderAuthorSelect();
       renderDocs();
       renderAdminMembers();
     }
 
-    function renderMembers() {
-      const mRow = document.getElementById('memberRow');
-      if (!mRow) return;
+    /* ── Hero member grid (RIGHT column, big photos) ── */
+    function renderMemberHero() {
+      const container = document.getElementById('memberHeroDisplay');
+      if (!container) return;
 
       if (localMembers.length === 0) {
-        mRow.innerHTML = `
-          <div class="flex items-center gap-3 bg-white/80 backdrop-blur border border-blue-100 py-3 px-6 rounded-2xl">
-            <i class="fas fa-archive text-blue-400"></i>
-            <span class="text-sm font-semibold text-slate-600">Public Archive Mode</span>
-          </div>
-        `;
-      } else {
-        mRow.innerHTML = localMembers.map(m => `
-          <div class="member-chip flex items-center gap-3 bg-white border border-slate-200 py-2 px-4 rounded-full cursor-pointer hover:shadow-md transition-all flex-shrink-0"
-               onclick="window.viewMember('${m.id}')">
-            <img src="${m.image}"
-                 class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
-                 onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=2563eb&color=fff&bold=true'">
-            <span class="text-xs font-bold text-slate-800">${m.name}</span>
-          </div>
-        `).join('');
-      }
-    }
-
-    function renderAuthorSelect() {
-      const authSel = document.getElementById('newAuthor');
-      if (authSel) {
-        authSel.innerHTML = '<option value="">Select sponsor...</option>' +
-          localMembers.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-      }
-    }
-
-    function renderAdminMembers() {
-      const adminGrid = document.getElementById('adminMemberGrid');
-      const memberCount = document.getElementById('memberCount');
-      const adminMemberCount = document.getElementById('adminMemberCount');
-
-      if (adminGrid) {
-        if (localMembers.length === 0) {
-          adminGrid.innerHTML = `
-            <div class="bg-slate-50 p-6 rounded-2xl text-center border-2 border-dashed border-slate-200">
-              <i class="fas fa-users-slash text-3xl text-slate-400 mb-3"></i>
-              <p class="text-sm font-medium text-slate-500">No members yet</p>
-              <p class="text-xs text-slate-400 mt-1">Click "Add Sample Members" to get started</p>
-            </div>
-          `;
-        } else {
-          adminGrid.innerHTML = localMembers.map(m => `
-            <div class="group bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
-                 onclick="window.viewMember('${m.id}')">
-              <div class="flex items-center gap-3">
-                <img src="${m.image}"
-                     class="w-12 h-12 rounded-xl object-cover border-2 border-white shadow-sm group-hover:scale-105 transition-transform"
-                     onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=2563eb&color=fff&bold=true'">
-                <div class="flex-1">
-                  <p class="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors">${m.name}</p>
-                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${m.role || 'SB Member'}</p>
-                </div>
-                <i class="fas fa-chevron-right text-slate-300 group-hover:text-blue-600 transition-all group-hover:translate-x-1"></i>
+        container.innerHTML = `
+          <div class="flex flex-col items-center justify-center gap-6 py-8">
+            <div class="relative">
+              <div class="w-52 h-52 bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl flex items-center justify-center shadow-2xl border-4 border-white">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Ph_seal_cebu_argao.png"
+                     alt="Argao Seal" class="w-36 h-36 object-contain opacity-70">
+              </div>
+              <div class="absolute -bottom-3 -right-3 w-12 h-12 bg-amber-400 rounded-full flex items-center justify-center shadow-lg animate-float">
+                <i class="fas fa-star text-white"></i>
               </div>
             </div>
-          `).join('');
-        }
+            <p class="text-sm font-semibold text-slate-400 text-center tracking-wide">
+              SB Members will appear here
+            </p>
+          </div>`;
+        return;
       }
 
-      if (memberCount) memberCount.textContent = localMembers.length;
-      if (adminMemberCount) adminMemberCount.textContent = localMembers.length;
+      const show = localMembers.slice(0, 6);
+      const extra = localMembers.length - 6;
+
+      container.innerHTML = `
+        <div class="mb-5 flex items-center gap-2">
+          <span class="text-xs font-black uppercase text-blue-600 tracking-widest flex items-center gap-2">
+            <i class="fas fa-users"></i>
+            Sangguniang Bayan Members
+          </span>
+          <span class="ml-auto text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">${localMembers.length}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-4" id="members-section">
+          ${show.map(m => `
+            <div class="member-hero-card bg-white rounded-2xl p-4 shadow-md border border-slate-100 cursor-pointer text-center"
+                 onclick="window.viewMember('${m.id}')">
+              <img src="${m.image}"
+                   alt="${m.name}"
+                   class="w-20 h-20 rounded-xl object-cover mx-auto mb-3 shadow-sm border-2 border-slate-50"
+                   onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=2563eb&color=fff&bold=true'">
+              <p class="text-xs font-black text-slate-800 leading-snug">${m.name.replace('Hon. ','')}</p>
+              <p class="text-[10px] text-slate-400 font-medium mt-0.5">${m.role || 'SB Member'}</p>
+            </div>
+          `).join('')}
+          ${extra > 0 ? `
+            <div class="bg-blue-50 rounded-2xl p-4 border-2 border-dashed border-blue-200 flex items-center justify-center cursor-default">
+              <div class="text-center">
+                <p class="text-2xl font-black text-blue-600">+${extra}</p>
+                <p class="text-[10px] text-blue-400 font-semibold uppercase tracking-wide">more</p>
+              </div>
+            </div>` : ''}
+        </div>`;
     }
 
+    /* ── Author select (admin form) ── */
+    function renderAuthorSelect() {
+      const sel = document.getElementById('newAuthor');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">Select sponsor...</option>' +
+        localMembers.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+    }
+
+    /* ── Admin member list ── */
+    function renderAdminMembers() {
+      const grid   = document.getElementById('adminMemberGrid');
+      const countEl = document.getElementById('memberCount');
+      const adminEl = document.getElementById('adminMemberCount');
+
+      if (grid) {
+        grid.innerHTML = localMembers.length === 0
+          ? `<div class="bg-slate-50 p-6 rounded-2xl text-center border-2 border-dashed border-slate-200">
+               <i class="fas fa-users-slash text-3xl text-slate-400 mb-3"></i>
+               <p class="text-sm font-medium text-slate-500">No members yet</p>
+               <p class="text-xs text-slate-400 mt-1">Click "Add Sample Members" to get started</p>
+             </div>`
+          : localMembers.map(m => `
+              <div class="group bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
+                   onclick="window.viewMember('${m.id}')">
+                <div class="flex items-center gap-3">
+                  <img src="${m.image}" class="w-12 h-12 rounded-xl object-cover border-2 border-white shadow-sm group-hover:scale-105 transition-transform"
+                       onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=2563eb&color=fff&bold=true'">
+                  <div class="flex-1">
+                    <p class="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors">${m.name}</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${m.role||'SB Member'}</p>
+                  </div>
+                  <i class="fas fa-chevron-right text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"></i>
+                </div>
+              </div>`).join('');
+      }
+
+      if (countEl) countEl.textContent = localMembers.length;
+      if (adminEl) adminEl.textContent = localMembers.length;
+    }
+
+    /* ── Document grid ── */
     function renderDocs() {
-      const grid = document.getElementById('documentGrid');
+      const grid  = document.getElementById('documentGrid');
       const empty = document.getElementById('emptyState');
       if (!grid) return;
 
-      const term = document.getElementById('searchInput').value.toLowerCase();
-      const typeFilter = document.getElementById('typeFilter').value;
+      const term = document.getElementById('searchInput')?.value.toLowerCase() ?? '';
+      const tf   = document.getElementById('typeFilter');
+      const tfm  = document.getElementById('typeFilterMobile');
+      const type = (tf?.value !== 'All' ? tf?.value : tfm?.value) ?? 'All';
 
       const filtered = localDocs.filter(d => {
-        const matchesSearch = (d.title?.toLowerCase().includes(term) || d.docId?.toLowerCase().includes(term));
-        const matchesType = typeFilter === 'All' || d.type === typeFilter;
-        return matchesSearch && matchesType;
+        const matchSearch = d.title?.toLowerCase().includes(term) || d.docId?.toLowerCase().includes(term);
+        const matchType   = type === 'All' || d.type === type;
+        return matchSearch && matchType;
       });
 
       if (filtered.length === 0) {
@@ -792,36 +819,30 @@
         empty?.classList.remove('hidden');
         return;
       }
-
       empty?.classList.add('hidden');
 
-      grid.innerHTML = filtered.map((doc, index) => {
-        const author = localMembers.find(m => m.id === doc.authorId) || {
-          name: "SB Argao",
-          image: "https://upload.wikimedia.org/wikipedia/commons/7/7e/Ph_seal_cebu_argao.png"
-        };
+      const typeColors = {
+        Ordinance:  'bg-gradient-to-r from-blue-600 to-blue-700',
+        Resolution: 'bg-gradient-to-r from-purple-600 to-purple-700'
+      };
 
-        const date = doc.timestamp?.toDate ? new Date(doc.timestamp.toDate()).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        }) : '';
+      grid.innerHTML = filtered.map((doc, i) => {
+        const author = localMembers.find(m => m.id === doc.authorId) ||
+          { name: 'SB Argao', image: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Ph_seal_cebu_argao.png' };
 
-        const typeColors = {
-          'Ordinance': 'bg-gradient-to-r from-blue-600 to-blue-700',
-          'Resolution': 'bg-gradient-to-r from-purple-600 to-purple-700'
-        };
+        const date = doc.timestamp?.toDate
+          ? new Date(doc.timestamp.toDate()).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})
+          : '';
 
         return `
-          <div class="doc-card bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-slate-100" style="animation-delay: ${index * 0.05}s">
+          <div class="doc-card bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-slate-100"
+               style="animation-delay:${i*0.05}s">
             <div class="p-8 border-b border-slate-100">
-              <span class="inline-flex items-center gap-2 text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest ${typeColors[doc.type] || 'bg-slate-900'} text-white shadow-lg">
-                <i class="fas ${doc.type === 'Ordinance' ? 'fa-file-alt' : 'fa-file-contract'} text-xs"></i>
+              <span class="inline-flex items-center gap-2 text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest ${typeColors[doc.type]||'bg-slate-900'} text-white shadow-md">
+                <i class="fas ${doc.type==='Ordinance'?'fa-file-alt':'fa-file-contract'} text-xs"></i>
                 ${doc.type}
               </span>
-              <h3 class="text-xl font-extrabold text-slate-900 mt-6 mb-6 leading-[1.4] line-clamp-3">
-                ${doc.title}
-              </h3>
+              <h3 class="text-xl font-extrabold text-slate-900 mt-6 mb-6 leading-[1.4] line-clamp-3">${doc.title}</h3>
               <div class="flex items-center gap-4">
                 <img src="${author.image}"
                      class="w-12 h-12 rounded-xl object-cover bg-slate-100 ring-4 ring-white shadow-md"
@@ -830,35 +851,30 @@
                   <p class="text-sm font-black text-slate-900">${author.name}</p>
                   <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                     <span>Primary Sponsor</span>
-                    ${date ? `<span class="w-1 h-1 bg-slate-300 rounded-full"></span><span>${date}</span>` : ''}
+                    ${date?`<span class="w-1 h-1 bg-slate-300 rounded-full"></span><span>${date}</span>`:''}
                   </p>
                 </div>
               </div>
             </div>
             <div class="p-8 bg-gradient-to-b from-white to-slate-50">
               <a href="${doc.link}" target="_blank" rel="noopener noreferrer"
-                 class="group w-full bg-slate-900 text-white flex items-center justify-center gap-3 py-4 rounded-2xl font-black uppercase text-xs hover:from-blue-600 hover:to-purple-600 hover:bg-gradient-to-r transition-all duration-300 shadow-md hover:shadow-xl">
+                 class="group w-full bg-slate-900 text-white flex items-center justify-center gap-3 py-4 rounded-2xl font-black uppercase text-xs hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-md hover:shadow-xl">
                 <span>View Document</span>
                 <i class="far fa-file-pdf group-hover:scale-110 transition-transform"></i>
                 <i class="fas fa-external-link-alt text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
               </a>
             </div>
-          </div>
-        `;
+          </div>`;
       }).join('');
     }
 
-    // Global Helpers
-    window.closeModal = (id) => {
-      document.getElementById(id).classList.add('hidden');
-    };
+    /* ── Modals ── */
+    window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
 
     window.viewMember = (id) => {
       const m = localMembers.find(x => x.id === id);
       if (!m) return;
-
-      const modalContent = document.getElementById('profileContent');
-      modalContent.innerHTML = `
+      document.getElementById('profileContent').innerHTML = `
         <div class="text-center">
           <div class="relative inline-block">
             <img src="${m.image}"
@@ -867,206 +883,123 @@
             <div class="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 border-4 border-white rounded-full"></div>
           </div>
           <h2 class="text-2xl font-black mb-2">${m.name}</h2>
-          <p class="text-sm font-bold text-blue-600 uppercase tracking-wider mb-6">${m.role || 'SB Member'}</p>
+          <p class="text-sm font-bold text-blue-600 uppercase tracking-wider mb-6">${m.role||'SB Member'}</p>
           <div class="bg-slate-50 rounded-2xl p-6 text-left">
-            <p class="text-slate-600 leading-relaxed">${m.bio || 'No biography available.'}</p>
+            <p class="text-slate-600 leading-relaxed">${m.bio||'No biography available.'}</p>
           </div>
           <div class="flex justify-center gap-4 mt-6">
-            <button class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-blue-600 hover:text-white transition-all">
-              <i class="fab fa-facebook-f"></i>
-            </button>
-            <button class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-blue-600 hover:text-white transition-all">
-              <i class="fab fa-twitter"></i>
-            </button>
-            <button class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-blue-600 hover:text-white transition-all">
-              <i class="fab fa-linkedin-in"></i>
-            </button>
+            <button class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-blue-600 hover:text-white transition-all"><i class="fab fa-facebook-f"></i></button>
+            <button class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-blue-600 hover:text-white transition-all"><i class="fab fa-twitter"></i></button>
+            <button class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-blue-600 hover:text-white transition-all"><i class="fab fa-linkedin-in"></i></button>
           </div>
-        </div>
-      `;
-
+        </div>`;
       document.getElementById('profileModal').classList.remove('hidden');
     };
 
+    /* ── Seed members ── */
     window.triggerSeed = async () => {
-      if (!user) {
-        showToast("Admin login required", 'error');
-        return;
-      }
-
+      if (!user) { showToast("Admin login required",'error'); return; }
       const members = [
-        {
-          name: "Hon. Rodel Lagahit",
-          role: "Vice Mayor",
-          image: "https://i.pravatar.cc/150?u=rodel",
-          bio: "Advocating for digital transformation and good governance. Leading the charge in modernizing legislative processes through technology."
-        },
-        {
-          name: "Hon. Maria Santos",
-          role: "Councilor",
-          image: "https://i.pravatar.cc/150?u=maria",
-          bio: "Chairperson, Committee on Education. Passionate about improving educational infrastructure and youth development programs."
-        },
-        {
-          name: "Hon. Jose Reyes",
-          role: "Councilor",
-          image: "https://i.pravatar.cc/150?u=jose",
-          bio: "Chairperson, Committee on Infrastructure. Focused on sustainable urban development and public works projects."
-        },
-        {
-          name: "Hon. Ana Cruz",
-          role: "Councilor",
-          image: "https://i.pravatar.cc/150?u=ana",
-          bio: "Chairperson, Committee on Health. Dedicated to improving healthcare access and public health initiatives."
-        },
-        {
-          name: "Hon. Pedro Martinez",
-          role: "Councilor",
-          image: "https://i.pravatar.cc/150?u=pedro",
-          bio: "Chairperson, Committee on Agriculture. Promoting sustainable farming and food security programs."
-        }
+        { name:"Hon. Rodel Lagahit",  role:"Vice Mayor",  image:"https://i.pravatar.cc/150?u=rodel",  bio:"Advocating for digital transformation and good governance. Leading the charge in modernizing legislative processes through technology." },
+        { name:"Hon. Maria Santos",   role:"Councilor",   image:"https://i.pravatar.cc/150?u=maria",  bio:"Chairperson, Committee on Education. Passionate about improving educational infrastructure and youth development programs." },
+        { name:"Hon. Jose Reyes",     role:"Councilor",   image:"https://i.pravatar.cc/150?u=jose",   bio:"Chairperson, Committee on Infrastructure. Focused on sustainable urban development and public works projects." },
+        { name:"Hon. Ana Cruz",       role:"Councilor",   image:"https://i.pravatar.cc/150?u=ana",    bio:"Chairperson, Committee on Health. Dedicated to improving healthcare access and public health initiatives." },
+        { name:"Hon. Pedro Martinez", role:"Councilor",   image:"https://i.pravatar.cc/150?u=pedro",  bio:"Chairperson, Committee on Agriculture. Promoting sustainable farming and food security programs." }
       ];
-
       try {
-        for (const item of members) {
-          await addDoc(MEMBER_REF, {
-            ...item,
-            timestamp: serverTimestamp()
-          });
-        }
-        showToast("Members added successfully", 'success');
-      } catch (error) {
-        console.error("Error adding members:", error);
-        showToast("Error adding members", 'error');
+        for (const item of members) await addDoc(MEMBER_REF, { ...item, timestamp: serverTimestamp() });
+        showToast("Members added successfully",'success');
+      } catch (err) {
+        console.error(err);
+        showToast("Error adding members",'error');
       }
     };
 
-    // Login Form
+    /* ── Login ── */
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-
-      const email = document.getElementById('loginEmail').value.trim();
-      const pass = document.getElementById('loginPass').value;
-      const loginBtn = document.getElementById('loginBtn');
-
-      if (!email || !pass) {
-        showToast("Please enter both email and password", 'error');
-        return;
-      }
-
-      const originalText = loginBtn.innerHTML;
-      loginBtn.innerHTML = '<span>Logging in...</span> <i class="fas fa-spinner fa-spin"></i>';
-      loginBtn.disabled = true;
-
+      const email    = document.getElementById('loginEmail').value.trim();
+      const pass     = document.getElementById('loginPass').value;
+      const btn      = document.getElementById('loginBtn');
+      const original = btn.innerHTML;
+      if (!email || !pass) { showToast("Please enter both email and password",'error'); return; }
+      btn.innerHTML = '<span>Logging in...</span> <i class="fas fa-spinner fa-spin"></i>';
+      btn.disabled  = true;
       try {
         await signInWithEmailAndPassword(auth, email, pass);
-        showToast("Welcome, Admin", 'success');
+        showToast("Welcome, Admin",'success');
         window.navigateTo('admin');
       } catch (err) {
-        console.error("Login error:", err);
-        let errorMsg = "Login failed. ";
-        switch (err.code) {
-          case 'auth/invalid-email':
-            errorMsg += "Invalid email format.";
-            break;
-          case 'auth/user-not-found':
-          case 'auth/wrong-password':
-            errorMsg += "Invalid email or password.";
-            break;
-          case 'auth/too-many-requests':
-            errorMsg += "Too many attempts. Please try again later.";
-            break;
-          default:
-            errorMsg += "Check your credentials.";
-        }
-        showToast(errorMsg, 'error');
+        const msgs = {
+          'auth/invalid-email':   'Invalid email format.',
+          'auth/user-not-found':  'Invalid email or password.',
+          'auth/wrong-password':  'Invalid email or password.',
+          'auth/too-many-requests': 'Too many attempts. Try later.'
+        };
+        showToast("Login failed. " + (msgs[err.code] || "Check your credentials."),'error');
       } finally {
-        loginBtn.innerHTML = originalText;
-        loginBtn.disabled = false;
+        btn.innerHTML = original;
+        btn.disabled  = false;
       }
     });
 
-    // Upload Form
+    /* ── Upload ── */
     document.getElementById('uploadForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-
-      if (!user) {
-        showToast("Session expired. Please re-login.", 'error');
-        window.navigateTo('login');
-        return;
-      }
-
-      const title = document.getElementById('newTitle').value.trim();
-      const docId = document.getElementById('newDocId').value.trim();
-      const type = document.getElementById('newType').value;
+      if (!user) { showToast("Session expired. Please re-login.",'error'); window.navigateTo('login'); return; }
+      const title    = document.getElementById('newTitle').value.trim();
+      const docId    = document.getElementById('newDocId').value.trim();
+      const type     = document.getElementById('newType').value;
       const authorId = document.getElementById('newAuthor').value;
-      const link = document.getElementById('newLink').value.trim();
+      const link     = document.getElementById('newLink').value.trim();
+      if (!title || !docId || !type || !authorId || !link) { showToast("Please fill in all fields",'error'); return; }
+      try { new URL(link); } catch { showToast("Please enter a valid URL",'error'); return; }
 
-      if (!title || !docId || !type || !authorId || !link) {
-        showToast("Please fill in all fields", 'error');
-        return;
-      }
-
+      const btn      = document.getElementById('submitBtn');
+      const original = btn.innerHTML;
+      btn.innerHTML  = '<span>Publishing...</span> <i class="fas fa-spinner fa-spin"></i>';
+      btn.disabled   = true;
       try {
-        new URL(link);
-      } catch {
-        showToast("Please enter a valid URL", 'error');
-        return;
-      }
-
-      const submitBtn = document.getElementById('submitBtn');
-      const originalText = submitBtn.innerHTML;
-      submitBtn.innerHTML = '<span>Publishing...</span> <i class="fas fa-spinner fa-spin"></i>';
-      submitBtn.disabled = true;
-
-      try {
-        const data = {
-          title,
-          docId,
-          type,
-          authorId,
-          link,
-          timestamp: serverTimestamp()
-        };
-
-        await addDoc(DOC_REF, data);
-        showToast("Document published successfully", 'success');
+        await addDoc(DOC_REF, { title, docId, type, authorId, link, timestamp: serverTimestamp() });
+        showToast("Document published successfully",'success');
         e.target.reset();
       } catch (err) {
-        console.error("Publish error:", err);
-        showToast("Publish error. Check permissions.", 'error');
+        console.error(err);
+        showToast("Publish error. Check permissions.",'error');
       } finally {
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
+        btn.innerHTML = original;
+        btn.disabled  = false;
       }
     });
 
-    // Auth State
+    /* ── Auth state ── */
     onAuthStateChanged(auth, (u) => {
       user = u;
-      const navBtn = document.getElementById('navBtn');
-
-      if (u) {
-        navBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i><span class="hidden sm:inline">Logout</span>';
-      } else {
-        navBtn.innerHTML = '<i class="fas fa-lock text-xs"></i><span class="hidden sm:inline">Admin</span>';
-      }
-
+      const btn = document.getElementById('navBtn');
+      btn.innerHTML = u
+        ? '<i class="fas fa-sign-out-alt"></i><span class="hidden sm:inline ml-1">Logout</span>'
+        : '<span class="relative z-10 flex items-center gap-2"><i class="fas fa-lock text-xs"></i><span class="hidden sm:inline">Admin</span></span><div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>';
       if (u && !document.getElementById('view-login').classList.contains('hidden')) {
         window.navigateTo('admin');
       }
     });
 
-    // Initialize
+    /* ── Init ── */
     startSync();
 
-    // Debounced search
-    let searchTimeout;
-    document.getElementById('searchInput').addEventListener('input', () => {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(renderDocs, 300);
+    // Sync mobile filter
+    document.getElementById('typeFilterMobile')?.addEventListener('change', (e) => {
+      const tf = document.getElementById('typeFilter');
+      if (tf) tf.value = e.target.value;
+      renderDocs();
     });
 
+    // Debounced search
+    let st;
+    document.getElementById('searchInput').addEventListener('input', () => {
+      clearTimeout(st);
+      st = setTimeout(renderDocs, 280);
+    });
     document.getElementById('typeFilter').addEventListener('change', renderDocs);
   </script>
 </body>
