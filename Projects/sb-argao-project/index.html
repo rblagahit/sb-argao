@@ -173,9 +173,10 @@
               </div>
             </div>
 
-            <!-- RIGHT: Legislative Officers -->
-            <div class="flex items-start justify-center">
-              <div id="memberHeroDisplay" class="w-full"></div>
+            <!-- RIGHT: Seal -->
+            <div class="hidden lg:flex items-center justify-center">
+              <img src="./argao-seal.png" alt="Argao Official Seal"
+                   class="w-72 h-72 object-contain opacity-90 drop-shadow-2xl animate-float">
             </div>
 
           </div>
@@ -231,6 +232,21 @@
           </div>
         </div>
       </div>
+
+      <!-- MEMBERS -->
+      <div id="members-section" class="bg-white py-16 border-t border-slate-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="mb-12">
+            <p class="text-xs font-black uppercase text-blue-600 tracking-widest mb-2 flex items-center gap-2">
+              <i class="fas fa-users"></i> Legislative Officers
+            </p>
+            <h2 class="text-3xl font-black text-slate-900">Meet the Members</h2>
+            <p class="text-slate-500 mt-1">Sangguniang Bayan of Argao, Cebu</p>
+          </div>
+          <div id="memberPublicGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+        </div>
+      </div>
+
     </section>
 
     <!-- ═══ LOGIN VIEW ═══ -->
@@ -592,16 +608,16 @@
 
     /* ── Render ── */
     function renderUI() {
-      renderMemberHero();
+      renderPublicMembers();
       renderAuthorSelect();
       renderDocs();
       renderAdminMembers();
     }
 
-    /* ── Hero: Legislative Officers ── */
-    function renderMemberHero() {
-      const container = document.getElementById('memberHeroDisplay');
-      if (!container) return;
+    /* ── Public Members Section ── */
+    function renderPublicMembers() {
+      const grid = document.getElementById('memberPublicGrid');
+      if (!grid) return;
 
       const sorted = [...localMembers].sort((a,b) => {
         const aVM = (a.role||'').toLowerCase().includes('vice mayor');
@@ -609,54 +625,43 @@
         return aVM&&!bVM ? -1 : !aVM&&bVM ? 1 : 0;
       });
 
-      const header = `
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <i class="fas fa-users text-white text-xs"></i>
-            </div>
-            <span class="text-sm font-black uppercase text-slate-800 tracking-wider">Legislative Officers</span>
-          </div>
-          <span class="text-xs font-bold text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full">${localMembers.length} Members</span>
-        </div>`;
-
       if (!sorted.length) {
-        container.innerHTML = header + `
-          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-8 text-center">
-            <div class="w-14 h-14 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <i class="fas fa-user-tie text-slate-400 text-2xl"></i>
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-16">
+            <div class="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+              <i class="fas fa-user-tie text-slate-400 text-3xl"></i>
             </div>
-            <p class="text-sm font-bold text-slate-500">No officers listed yet</p>
-            <p class="text-xs text-slate-400 mt-1">Add members from the Admin Panel.</p>
+            <p class="text-lg font-bold text-slate-500">No officers listed yet</p>
+            <p class="text-sm text-slate-400 mt-1">Check back later or contact the office.</p>
           </div>`;
         return;
       }
 
-      const cards = sorted.map((m,i) => {
+      grid.innerHTML = sorted.map(m => {
         const isVM  = (m.role||'').toLowerCase().includes('vice mayor');
         const init  = m.name.replace('Hon.','').trim().split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
-        const fbUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(init)}&background=1e40af&color=fff&bold=true&size=80`;
+        const fbUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(init)}&background=1e40af&color=fff&bold=true&size=256`;
+        const bio   = m.bio || 'Legislative officer of the Sangguniang Bayan of Argao, Cebu.';
+
         return `
-          <div class="member-hero-card bg-white border ${isVM?'border-blue-300 ring-2 ring-blue-100':'border-slate-100'} rounded-2xl p-3 cursor-pointer shadow-sm hover:shadow-md hover:border-blue-300 transition-all flex flex-col items-center text-center gap-2"
-               onclick="window.viewMember('${m.id}')">
-            <div class="relative">
+          <div class="group bg-white rounded-3xl overflow-hidden shadow-sm border ${isVM?'border-blue-200 ring-2 ring-blue-100':'border-slate-100'} hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div class="bg-gradient-to-br ${isVM?'from-blue-100 to-blue-50':'from-slate-100 to-slate-50'} pt-10 pb-4 px-6 flex flex-col items-center relative">
+              ${isVM?`<span class="absolute top-4 right-4 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-blue-700 bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-full"><i class="fas fa-star text-[8px]"></i>Presiding</span>`:''}
               <img src="${m.image||fbUrl}" alt="${m.name}"
-                   class="w-14 h-14 rounded-xl object-cover shadow-sm border-2 ${isVM?'border-blue-400':'border-white'}"
+                   class="w-32 h-32 rounded-2xl object-cover shadow-xl border-4 border-white"
                    onerror="this.onerror=null;this.src='${fbUrl}'">
-              ${isVM?`<span class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center shadow"><i class="fas fa-star text-white" style="font-size:8px"></i></span>`:''}
             </div>
-            <div class="min-w-0 w-full">
-              <p class="text-[11px] font-black text-slate-900 leading-tight truncate px-1">${m.name.replace('Hon.','').trim()}</p>
-              <p class="text-[9px] font-semibold mt-0.5 ${isVM?'text-blue-600':'text-slate-400'} uppercase tracking-wide truncate px-1">${m.role||'SB Member'}</p>
+            <div class="p-6">
+              <span class="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full mb-3 ${isVM?'bg-blue-600 text-white':'bg-slate-100 text-slate-600'}">${m.role||'SB Member'}</span>
+              <h3 class="text-lg font-black text-slate-900 leading-tight mb-3">${m.name}</h3>
+              <p class="text-sm text-slate-500 leading-relaxed line-clamp-3 mb-5">${bio}</p>
+              <button onclick="window.viewMember('${m.id}')"
+                      class="w-full py-3 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 group-hover:bg-blue-600">
+                <i class="fas fa-user text-xs"></i> View Profile
+              </button>
             </div>
           </div>`;
       }).join('');
-
-      container.innerHTML = `
-        ${header}
-        <div class="overflow-y-auto" style="max-height:480px">
-          <div class="grid grid-cols-4 gap-2.5" id="members-section">${cards}</div>
-        </div>`;
     }
 
     /* ── Author select ── */
