@@ -116,8 +116,7 @@
                 Argao, Cebu · Official Legislative Portal
               </div>
               <h1 class="text-5xl lg:text-[3.6rem] font-black text-slate-900 leading-[1.08] mb-5">
-                Find Legislative<br>
-                <span class="text-blue-600">Documents</span><br>
+                Find Legislative <span class="text-blue-600">Documents</span><br>
                 in Seconds
               </h1>
               <p class="text-slate-500 text-lg leading-relaxed mb-10 max-w-2xl mx-auto">
@@ -145,21 +144,22 @@
               </div>
 
               <!-- STATS -->
-              <div class="grid grid-cols-3 gap-4">
-                <div class="stat-pill bg-red-50 border border-red-100 rounded-2xl p-5">
-                  <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Docs</p>
-                  <p class="text-3xl font-black text-slate-900 mb-3" id="totalDocs">0</p>
-                  <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-xl">📄</div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="stat-pill bg-red-50 border border-red-100 rounded-2xl p-4">
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Docs</p>
+                  <p class="text-2xl font-black text-slate-900" id="totalDocs">0</p>
                 </div>
-                <div class="stat-pill bg-amber-50 border border-amber-100 rounded-2xl p-5">
-                  <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Ordinances</p>
-                  <p class="text-3xl font-black text-slate-900 mb-3" id="ordinanceCount">0</p>
-                  <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-xl">📜</div>
+                <div class="stat-pill bg-amber-50 border border-amber-100 rounded-2xl p-4">
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Ordinances</p>
+                  <p class="text-2xl font-black text-slate-900" id="ordinanceCount">0</p>
                 </div>
-                <div class="stat-pill bg-green-50 border border-green-100 rounded-2xl p-5">
-                  <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Resolutions</p>
-                  <p class="text-3xl font-black text-slate-900 mb-3" id="resolutionCount">0</p>
-                  <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-xl">📋</div>
+                <div class="stat-pill bg-green-50 border border-green-100 rounded-2xl p-4">
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Resolutions</p>
+                  <p class="text-2xl font-black text-slate-900" id="resolutionCount">0</p>
+                </div>
+                <div class="stat-pill bg-blue-50 border border-blue-100 rounded-2xl p-4">
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Views</p>
+                  <p class="text-2xl font-black text-slate-900" id="totalViews">0</p>
                 </div>
               </div>
             </div>
@@ -339,11 +339,25 @@
               <i class="fas fa-plus"></i>
             </div>
             <div>
-              <h3 class="text-xl font-black text-slate-900">Upload New Document</h3>
-              <p class="text-sm text-slate-500">Fill in all fields then publish</p>
+              <h3 class="text-xl font-black text-slate-900">Upload Documents</h3>
+              <p class="text-sm text-slate-500">Add documents individually or batch upload via Excel</p>
             </div>
           </div>
 
+          <!-- Tabs for single/batch upload -->
+          <div class="flex gap-2 mb-8 border-b border-slate-200">
+            <button type="button" onclick="window.switchUploadType('single')" id="tab-upload-single"
+                    class="upload-tab px-4 py-2 font-bold text-sm border-b-2 border-blue-600 text-blue-600 transition-all">
+              <i class="fas fa-file mr-1"></i>Single Document
+            </button>
+            <button type="button" onclick="window.switchUploadType('batch')" id="tab-upload-batch"
+                    class="upload-tab px-4 py-2 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all">
+              <i class="fas fa-file-excel mr-1"></i>Batch Upload (Excel)
+            </button>
+          </div>
+
+          <!-- Single Document Form -->
+          <div id="upload-type-single">
           <form id="uploadForm" class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <!-- Title -->
             <div class="md:col-span-2">
@@ -415,6 +429,41 @@
               </button>
             </div>
           </form>
+          </div>
+
+          <!-- Batch Upload Form -->
+          <div id="upload-type-batch" class="hidden">
+            <div class="bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 p-8 mb-6">
+              <div class="text-center">
+                <i class="fas fa-cloud-upload-alt text-4xl text-slate-300 mb-3"></i>
+                <p class="text-sm font-bold text-slate-600 mb-2">Upload Excel File</p>
+                <input type="file" id="batchUploadFile" accept=".xlsx,.xls,.csv" 
+                       class="hidden" onchange="window.handleBatchFileSelect(event)">
+                <button type="button" onclick="document.getElementById('batchUploadFile').click()"
+                        class="px-6 py-2 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all text-sm">
+                  <i class="fas fa-folder-open mr-1"></i>Select Excel File
+                </button>
+                <p class="text-[11px] text-slate-400 mt-3">Supported: .xlsx, .xls, .csv</p>
+              </div>
+            </div>
+            <div id="batchExcelPreview" class="hidden mb-6">
+              <p class="text-sm font-bold text-slate-700 mb-3">Preview (first 5 rows)</p>
+              <div id="batchExcelTable" class="overflow-x-auto bg-slate-50 rounded-2xl p-4 border border-slate-200"></div>
+            </div>
+            <div id="batchUploadStatus" class="hidden mb-4 p-4 rounded-2xl text-sm font-bold"></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button type="button" id="batchCancelBtn" onclick="window.cancelBatchUpload()" class="hidden py-3 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-all">
+                Cancel
+              </button>
+              <button type="button" id="batchSubmitBtn" onclick="window.submitBatchUpload()" disabled
+                      class="py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-upload mr-1"></i>Import Documents
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+              <strong>Excel Format:</strong> Columns should be: Title, Document ID, Type, Sponsor ID, PDF URL, Tags (comma-separated), Co-Sponsors (comma-separated)
+            </p>
+          </div>
         </div>
       </div>
 
@@ -728,6 +777,138 @@
       document.getElementById('tab-settings').className = `admin-tab px-6 py-3 font-bold text-sm border-b-2 transition-all ${tab==='settings' ?'border-blue-600 text-blue-600':'border-transparent text-slate-400 hover:text-slate-700'}`;
     };
 
+    /* ── Upload Type Switcher ── */
+    window.switchUploadType = (type) => {
+      document.getElementById('upload-type-single').classList.toggle('hidden', type !== 'single');
+      document.getElementById('upload-type-batch').classList.toggle('hidden', type !== 'batch');
+      document.getElementById('tab-upload-single').className = `upload-tab px-4 py-2 font-bold text-sm border-b-2 transition-all ${type === 'single' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-700'}`;
+      document.getElementById('tab-upload-batch').className = `upload-tab px-4 py-2 font-bold text-sm border-b-2 transition-all ${type === 'batch' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-700'}`;
+    };
+
+    let batchFileData = [];
+
+    window.handleBatchFileSelect = async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const fileName = file.name.toLowerCase();
+      try {
+        if (fileName.endsWith('.csv')) {
+          const text = await file.text();
+          batchFileData = window.parseCSV(text);
+        } else {
+          showToast('Please upload a .csv file. Excel import coming soon.', 'info');
+          return;
+        }
+        if (batchFileData.length === 0) {
+          showToast('No valid records found in the file', 'error');
+          return;
+        }
+        window.showBatchPreview();
+        document.getElementById('batchSubmitBtn').disabled = false;
+      } catch (e) {
+        console.error(e);
+        showToast('Error reading file: ' + e.message, 'error');
+      }
+    };
+
+    window.parseCSV = (text) => {
+      const lines = text.trim().split('\n');
+      const headers = lines[0]?.split(',').map(h => h.trim().toLowerCase()) || [];
+      const expectedHeaders = ['title', 'document id', 'type', 'sponsor id', 'pdf url', 'tags', 'co-sponsors'];
+      const records = [];
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        const cells = lines[i].split(',').map(c => c.trim());
+        if (cells.length < 5) continue;
+        records.push({
+          title: cells[0] || '',
+          docId: cells[1] || '',
+          type: cells[2] || 'Ordinance',
+          sponsorId: cells[3] || '',
+          link: cells[4] || '',
+          tags: cells[5] ? cells[5].split(';').map(t => t.trim()) : [],
+          coSponsors: cells[6] ? cells[6].split(';').map(s => s.trim()) : []
+        });
+      }
+      return records;
+    };
+
+    window.showBatchPreview = () => {
+      const preview = document.getElementById('batchExcelPreview');
+      const table = document.getElementById('batchExcelTable');
+      const rows = batchFileData.slice(0, 5);
+      const html = `
+        <table class="w-full text-sm">
+          <thead><tr class="border-b border-slate-300 text-left">
+            <th class="p-2 font-bold">Title</th>
+            <th class="p-2 font-bold">Doc ID</th>
+            <th class="p-2 font-bold">Type</th>
+            <th class="p-2 font-bold">Sponsor</th>
+          </tr></thead>
+          <tbody>
+            ${rows.map(r => `<tr class="border-b border-slate-200"><td class="p-2 text-xs">${escapeHtml(r.title)}</td><td class="p-2 text-xs">${escapeHtml(r.docId)}</td><td class="p-2 text-xs">${escapeHtml(r.type)}</td><td class="p-2 text-xs">${escapeHtml(r.sponsorId)}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      `;
+      table.innerHTML = html;
+      preview.classList.remove('hidden');
+      document.getElementById('batchCancelBtn').classList.remove('hidden');
+    };
+
+    window.submitBatchUpload = async () => {
+      if (!user) { showToast('Admin login required', 'error'); return; }
+      const btn = document.getElementById('batchSubmitBtn');
+      const status = document.getElementById('batchUploadStatus');
+      const original = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...';
+      btn.disabled = true;
+      status.className = 'hidden';
+      let imported = 0, failed = 0;
+      for (const row of batchFileData) {
+        try {
+          if (!row.title || !row.docId || !row.type || !row.sponsorId || !row.link) {
+            failed++;
+            continue;
+          }
+          const sponsor = localMembers.find(m => m.id === row.sponsorId);
+          await addDoc(DOC_REF, {
+            title: row.title,
+            docId: row.docId,
+            type: row.type,
+            authorId: row.sponsorId,
+            authorName: sponsor?.name || '',
+            authorImage: sponsor?.image || '',
+            authorRole: sponsor?.role || '',
+            link: row.link,
+            tags: row.tags || [],
+            coSponsors: row.coSponsors || [],
+            views: 0,
+            timestamp: serverTimestamp()
+          });
+          imported++;
+        } catch (e) {
+          console.error(e);
+          failed++;
+        }
+      }
+      status.innerHTML = `<span class="text-green-700 bg-green-50 border border-green-200">✓ Imported ${imported} documents${failed > 0 ? ` (${failed} failed)` : ''}</span>`;
+      status.classList.remove('hidden');
+      btn.innerHTML = original;
+      btn.disabled = false;
+      if (imported > 0) {
+        setTimeout(() => window.cancelBatchUpload(), 2000);
+      }
+    };
+
+    window.cancelBatchUpload = () => {
+      batchFileData = [];
+      document.getElementById('batchUploadFile').value = '';
+      document.getElementById('batchExcelPreview').classList.add('hidden');
+      document.getElementById('batchUploadStatus').classList.add('hidden');
+      document.getElementById('batchSubmitBtn').disabled = true;
+      document.getElementById('batchCancelBtn').classList.add('hidden');
+    };
+
     /* ── Sync ── */
     const startSync = () => {
       if (unsubDocs)    unsubDocs();
@@ -772,6 +953,8 @@
       set('ordinanceCount', localDocs.filter(d=>d.type==='Ordinance').length);
       set('resolutionCount',localDocs.filter(d=>d.type==='Resolution').length);
       set('adminDocCount',  localDocs.length);
+      const totalViews = localDocs.reduce((sum, d) => sum + (d.views || 0), 0);
+      set('totalViews', totalViews);
     }
 
     /* ── Render ── */
