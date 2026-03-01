@@ -343,6 +343,10 @@
                 class="admin-tab px-6 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all">
           <i class="fas fa-sliders mr-2"></i>Settings
         </button>
+        <button onclick="window.switchAdminTab('profile')" id="tab-profile"
+                class="admin-tab px-6 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all">
+          <i class="fas fa-user-circle mr-2"></i>My Profile
+        </button>
       </div>
 
       <!-- DOCS TAB -->
@@ -641,6 +645,154 @@
             <button type="button" id="saveSocialBtn" onclick="window.saveSocialMediaSettings()"
                     class="mt-6 px-6 py-3.5 bg-gradient-to-r from-pink-600 to-rose-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:from-pink-700 hover:to-rose-700 transition-all flex items-center gap-2">
               <i class="fas fa-save"></i> Save Social Media
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN PROFILE TAB -->
+      <div id="admin-tab-profile" class="hidden">
+        <div class="bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-slate-100">
+          <div class="flex items-center gap-3 mb-7">
+            <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg">
+              <i class="fas fa-user-circle"></i>
+            </div>
+            <div>
+              <h3 class="text-xl font-black text-slate-900">Your Admin Profile</h3>
+              <p class="text-sm text-slate-500">Update your profile information and contact details</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-user mr-1"></i>Full Name</label>
+              <input type="text" id="adminName" placeholder="Your full name"
+                     class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+            </div>
+            <div>
+              <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-id-badge mr-1"></i>Position / Role</label>
+              <input type="text" id="adminRole" placeholder="e.g., Mayor, Vice Mayor"
+                     class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+            </div>
+            <div class="lg:col-span-2">
+              <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-envelope mr-1"></i>Contact Email</label>
+              <input type="email" id="adminEmail" placeholder="admin@example.com" required
+                     class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              <p class="text-[10px] text-slate-400 mt-1 ml-1">This email will receive all document requests</p>
+            </div>
+            <div>
+              <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-image mr-1"></i>Profile Photo URL</label>
+              <input type="url" id="adminImage" placeholder="https://… (optional)"
+                     class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+            </div>
+            <div>
+              <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-sitemap mr-1"></i>Committees</label>
+              <input type="text" id="adminCommittees" placeholder="e.g., health, budget"
+                     class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              <p class="text-[10px] text-slate-400 mt-1 ml-1">Separate with commas</p>
+            </div>
+            <div class="lg:col-span-2">
+              <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-align-left mr-1"></i>Biography</label>
+              <textarea id="adminBio" rows="3" placeholder="Your background and qualifications…"
+                        class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all resize-none"></textarea>
+            </div>
+            <div class="lg:col-span-2">
+              <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-file mr-1"></i>Document / File Link</label>
+              <input type="url" id="adminDocument" placeholder="https://… (optional PDF link)"
+                     class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+            </div>
+            <div class="lg:col-span-2">
+              <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-sticky-note mr-1"></i>Additional Information</label>
+              <textarea id="adminAdditional" rows="2" maxlength="300" placeholder="Any additional information (max 300 characters)…"
+                        class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all resize-none"></textarea>
+              <p class="text-[10px] text-slate-400 mt-1 ml-1"><span id="adminCharCount">0</span>/300 characters</p>
+            </div>
+          </div>
+
+          <!-- Email Service Settings -->
+          <div class="border-t border-slate-200 pt-8 mt-8">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg">
+                <i class="fas fa-envelope-circle-check"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-black text-slate-900">Email Service Configuration</h3>
+                <p class="text-sm text-slate-500">Set up email delivery for document requests</p>
+              </div>
+            </div>
+
+            <div class="space-y-5">
+              <div>
+                <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-envelope mr-1"></i>Email Service Type</label>
+                <select id="emailServiceType"
+                        class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 font-semibold text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
+                        onchange="window.toggleEmailServiceFields()">
+                  <option value="none">None (Manual processing only)</option>
+                  <option value="sendgrid">SendGrid API</option>
+                  <option value="firebase-function">Firebase Cloud Function</option>
+                  <option value="smtp">SMTP Server</option>
+                </select>
+                <p class="text-[10px] text-slate-400 mt-2 ml-1"><strong>Note:</strong> For Firebase Cloud Function, see documentation to set up Cloud Function for email sending.</p>
+              </div>
+
+              <!-- SendGrid Configuration -->
+              <div id="sendgrid-config" class="hidden space-y-4">
+                <div>
+                  <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fab fa-sendgrid mr-1"></i>SendGrid API Key</label>
+                  <input type="password" id="sendgridApiKey" placeholder="SG.xxxxxxxxxxxx"
+                         class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+                  <p class="text-[10px] text-slate-400 mt-1 ml-1">Get your API key from <a href="https://app.sendgrid.com/settings/api_keys" target="_blank" class="text-blue-600 hover:underline">SendGrid dashboard</a></p>
+                </div>
+              </div>
+
+              <!-- SMTP Configuration -->
+              <div id="smtp-config" class="hidden space-y-4">
+                <div>
+                  <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-server mr-1"></i>SMTP Server</label>
+                  <input type="text" id="smtpServer" placeholder="mail.example.com"
+                         class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-lock mr-1"></i>Port</label>
+                    <input type="number" id="smtpPort" placeholder="587" value="587"
+                           class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+                  </div>
+                  <div>
+                    <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-shield mr-1"></i>Security (TLS/SSL)</label>
+                    <select id="smtpSecurity"
+                            class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 font-semibold text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+                      <option value="tls">TLS</option>
+                      <option value="ssl">SSL</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-user mr-1"></i>Username / Email</label>
+                  <input type="email" id="smtpUsername" placeholder="your-email@example.com"
+                         class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+                </div>
+                <div>
+                  <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-key mr-1"></i>Password</label>
+                  <input type="password" id="smtpPassword" placeholder="Your SMTP password"
+                         class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+                </div>
+                <button type="button" onclick="window.testSmtpConnection()"
+                        class="px-4 py-2 bg-slate-100 text-slate-700 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all">
+                  <i class="fas fa-check-circle mr-1"></i> Test Connection
+                </button>
+              </div>
+
+              <p class="text-xs text-slate-500 bg-blue-50 border border-blue-200 rounded-xl p-4 mt-4">
+                <strong>ℹ️ How to use:</strong> Select your email service above. For <strong>SendGrid</strong>, enter your API key for automatic email sending. For <strong>SMTP</strong>, provide your mail server details. For <strong>Firebase Cloud Function</strong>, document requests will be stored in Firestore for a Cloud Function to process.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex gap-3 mt-8">
+            <button type="button" id="saveAdminProfileBtn" onclick="window.saveAdminProfile()"
+                    class="flex-1 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center justify-center gap-2">
+              <i class="fas fa-save"></i> Save Profile
             </button>
           </div>
         </div>
@@ -1271,18 +1423,23 @@
       btn.disabled = true;
       
       try {
-        // Get admin email from settings
+        // Get admin profile with email service config
         let adminEmail = 'admin@sb-argao.com';
+        let emailServiceType = 'none';
+        let sendgridApiKey = '';
         try {
-          const settingsSnap = await getDoc(doc(db,'artifacts',appId,'admin','profile'));
-          if (settingsSnap.exists() && settingsSnap.data().contactEmail) {
-            adminEmail = settingsSnap.data().contactEmail;
+          const adminSnap = await getDoc(doc(db,'artifacts',appId,'admin','profile'));
+          if (adminSnap.exists()) {
+            const adminData = adminSnap.data();
+            adminEmail = adminData.contactEmail || adminEmail;
+            emailServiceType = adminData.emailServiceType || 'none';
+            sendgridApiKey = adminData.sendgridApiKey || '';
           }
-        } catch(e) {}
+        } catch(e) { console.error(e); }
         
         // Store request in Firestore
         const requestsRef = collection(db,'artifacts',appId,'public','data','requests');
-        await addDoc(requestsRef, {
+        const requestRef = await addDoc(requestsRef, {
           docId: requestingDocId,
           docTitle: doc.title,
           docId_: doc.docId,
@@ -1295,8 +1452,28 @@
           timestamp: serverTimestamp()
         });
         
-        // Send email via Firebase Function or email service
-        // For now, we'll show a success message
+        // Send email notification to admin based on service type
+        if (emailServiceType === 'sendgrid' && sendgridApiKey) {
+          await window.sendEmailViaSendGrid(
+            sendgridApiKey,
+            adminEmail,
+            'Document Request Received',
+            `A user has requested a copy of:<br><br>
+            <strong>${escapeHtml(doc.title)}</strong><br>
+            Document ID: ${escapeHtml(doc.docId)}<br><br>
+            <strong>Requester Details:</strong><br>
+            Email: ${escapeHtml(email)}<br>
+            Phone: ${escapeHtml(phone)}<br>
+            Notes: ${escapeHtml(notes) || 'None'}<br><br>
+            Expected Delivery: Within 5 calendar days<br><br>
+            Request ID: ${requestRef.id}`
+          );
+        } else if (emailServiceType === 'firebase-function') {
+          console.log('Document request stored in Firestore. Cloud Function will process and send emails.');
+        } else {
+          console.log('Email service not configured. Request stored in Firestore for manual processing.');
+        }
+        
         showToast('Your request has been submitted! You will receive a copy within 5 calendar days.','success');
         window.closeModal('documentRequestModal');
         
@@ -1309,14 +1486,50 @@
       }
     };
 
+    /* ── SendGrid Email Function ── */
+    window.sendEmailViaSendGrid = async (apiKey, toEmail, subject, htmlContent) => {
+      try {
+        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            personalizations: [{
+              to: [{ email: toEmail }]
+            }],
+            from: { email: 'noreply@sb-argao.web.app' },
+            subject: subject,
+            content: [{
+              type: 'text/html',
+              value: htmlContent
+            }]
+          })
+        });
+        if (!response.ok) {
+          console.error('SendGrid error:', response.status, response.statusText);
+          showToast('Email notification may not have been sent to admin. Request was saved.', 'info');
+        }
+      } catch(e) {
+        console.error('SendGrid API error:', e);
+        showToast('Could not send email notification, but request was saved.', 'info');
+      }
+    };
+
     /* ── Admin tab switch ── */
     window.switchAdminTab = (tab) => {
       document.getElementById('admin-tab-docs').classList.toggle('hidden', tab!=='docs');
       document.getElementById('admin-tab-members').classList.toggle('hidden', tab!=='members');
       document.getElementById('admin-tab-settings').classList.toggle('hidden', tab!=='settings');
+      document.getElementById('admin-tab-profile').classList.toggle('hidden', tab!=='profile');
       document.getElementById('tab-docs').className    = `admin-tab px-6 py-3 font-bold text-sm border-b-2 transition-all ${tab==='docs'    ?'border-blue-600 text-blue-600':'border-transparent text-slate-400 hover:text-slate-700'}`;
       document.getElementById('tab-members').className = `admin-tab px-6 py-3 font-bold text-sm border-b-2 transition-all ${tab==='members' ?'border-blue-600 text-blue-600':'border-transparent text-slate-400 hover:text-slate-700'}`;
       document.getElementById('tab-settings').className = `admin-tab px-6 py-3 font-bold text-sm border-b-2 transition-all ${tab==='settings' ?'border-blue-600 text-blue-600':'border-transparent text-slate-400 hover:text-slate-700'}`;
+      document.getElementById('tab-profile').className = `admin-tab px-6 py-3 font-bold text-sm border-b-2 transition-all ${tab==='profile' ?'border-blue-600 text-blue-600':'border-transparent text-slate-400 hover:text-slate-700'}`;
+      if (tab === 'profile') {
+        window.loadAdminProfile();
+      }
     };
 
     /* ── Upload Type Switcher ── */
@@ -1935,6 +2148,141 @@
       }
     };
 
+    /* ── Email Service Toggle ── */
+    window.toggleEmailServiceFields = () => {
+      const serviceType = document.getElementById('emailServiceType').value;
+      document.getElementById('sendgrid-config').classList.toggle('hidden', serviceType !== 'sendgrid');
+      document.getElementById('smtp-config').classList.toggle('hidden', serviceType !== 'smtp');
+    };
+
+    window.testSmtpConnection = async () => {
+      showToast('SMTP connection testing would require a backend service. Please verify credentials manually or contact support.', 'info');
+    };
+
+    /* ── Load Admin Profile ── */
+    window.loadAdminProfile = async () => {
+      if (!user) return;
+      try {
+        const adminProfileRef = doc(db,'artifacts',appId,'admin','profile');
+        const snap = await getDoc(adminProfileRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          document.getElementById('adminName').value = data.name || '';
+          document.getElementById('adminRole').value = data.role || '';
+          document.getElementById('adminEmail').value = data.contactEmail || '';
+          document.getElementById('adminImage').value = data.image || '';
+          document.getElementById('adminCommittees').value = (data.committees || []).join(', ');
+          document.getElementById('adminBio').value = data.bio || '';
+          document.getElementById('adminDocument').value = data.document || '';
+          document.getElementById('adminAdditional').value = data.additionalInfo || '';
+          document.getElementById('adminCharCount').textContent = (data.additionalInfo || '').length;
+          
+          // Load email service settings
+          document.getElementById('emailServiceType').value = data.emailServiceType || 'none';
+          document.getElementById('sendgridApiKey').value = data.sendgridApiKey || '';
+          document.getElementById('smtpServer').value = data.smtpServer || '';
+          document.getElementById('smtpPort').value = data.smtpPort || '587';
+          document.getElementById('smtpSecurity').value = data.smtpSecurity || 'tls';
+          document.getElementById('smtpUsername').value = data.smtpUsername || '';
+          document.getElementById('smtpPassword').value = data.smtpPassword || '';
+          
+          window.toggleEmailServiceFields();
+        }
+      } catch(e) {
+        console.error(e);
+      }
+    };
+
+    /* ── Save Admin Profile ── */
+    window.saveAdminProfile = async () => {
+      if (!user) { showToast('Admin login required','error'); return; }
+      const name = document.getElementById('adminName').value.trim();
+      const role = document.getElementById('adminRole').value.trim();
+      const email = document.getElementById('adminEmail').value.trim();
+      const image = document.getElementById('adminImage').value.trim();
+      const committees = (document.getElementById('adminCommittees').value || '').split(',').map(c=>c.trim()).filter(Boolean);
+      const bio = document.getElementById('adminBio').value.trim();
+      const document_ = document.getElementById('adminDocument').value.trim();
+      const additional = document.getElementById('adminAdditional').value.trim();
+      const emailServiceType = document.getElementById('emailServiceType').value;
+      
+      if (!name || !role || !email) { showToast('Please fill in required fields','error'); return; }
+      if (emailServiceType === 'sendgrid' && !document.getElementById('sendgridApiKey').value.trim()) {
+        showToast('SendGrid API key is required','error'); return;
+      }
+      if (emailServiceType === 'smtp') {
+        const smtpServer = document.getElementById('smtpServer').value.trim();
+        const smtpUsername = document.getElementById('smtpUsername').value.trim();
+        const smtpPassword = document.getElementById('smtpPassword').value.trim();
+        if (!smtpServer || !smtpUsername || !smtpPassword) {
+          showToast('Please fill in all SMTP settings','error'); return;
+        }
+      }
+      
+      const btn = document.getElementById('saveAdminProfileBtn');
+      const original = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      btn.disabled = true;
+      
+      try {
+        const adminProfileRef = doc(db,'artifacts',appId,'admin','profile');
+        const profilePayload = {
+          uid: user.uid,
+          name,
+          role,
+          contactEmail: email,
+          image,
+          committees,
+          bio,
+          document: document_,
+          additionalInfo: additional,
+          emailServiceType,
+          updatedAt: serverTimestamp(),
+          updatedBy: user.email || user.uid || ''
+        };
+
+        // Add email service credentials based on type
+        if (emailServiceType === 'sendgrid') {
+          profilePayload.sendgridApiKey = document.getElementById('sendgridApiKey').value;
+        } else if (emailServiceType === 'smtp') {
+          profilePayload.smtpServer = document.getElementById('smtpServer').value.trim();
+          profilePayload.smtpPort = parseInt(document.getElementById('smtpPort').value) || 587;
+          profilePayload.smtpSecurity = document.getElementById('smtpSecurity').value;
+          profilePayload.smtpUsername = document.getElementById('smtpUsername').value.trim();
+          profilePayload.smtpPassword = document.getElementById('smtpPassword').value;
+        }
+
+        await setDoc(adminProfileRef, profilePayload, { merge: true });
+        
+        // Update admin member profile if exists
+        try {
+          const col = collection(db,'artifacts',appId,'public','data','members');
+          const snapshot = await getDocs(col);
+          const adminMember = snapshot.docs.find(d => d.data().isAdmin);
+          if (adminMember) {
+            await updateDoc(doc(db,'artifacts',appId,'public','data','members',adminMember.id), {
+              name,
+              role,
+              image: image || '',
+              committees,
+              bio,
+              document: document_,
+              additionalInfo: additional,
+              updatedAt: serverTimestamp()
+            });
+          }
+        } catch(e) { console.error('Error updating admin member:', e); }
+
+        showToast('Profile saved successfully!','success');
+      } catch (e) {
+        console.error(e);
+        showToast('Error saving profile','error');
+      } finally {
+        btn.innerHTML = original;
+        btn.disabled = false;
+      }
+    };
+
     /* ── Document Management List ── */
     window.renderDocumentManagementList = () => {
       const container = document.getElementById('documentManagementList');
@@ -2240,6 +2588,14 @@
     if (additionalField) {
       additionalField.addEventListener('input', (e) => {
         document.getElementById('charCount').textContent = e.target.value.length;
+      });
+    }
+
+    // Character counter for admin tab additional info
+    const adminAdditionalField = document.getElementById('adminAdditional');
+    if (adminAdditionalField) {
+      adminAdditionalField.addEventListener('input', (e) => {
+        document.getElementById('adminCharCount').textContent = e.target.value.length;
       });
     }
 
