@@ -17,6 +17,7 @@
   <meta name="twitter:title" content="Sangguniang Bayan of Argao">
   <meta name="twitter:description" content="Official Legislative Information System">
   <link rel="canonical" href="https://sb-argao.web.app">
+  <link id="dynamicFavicon" rel="icon" href="./argao-seal.png">
   <title>Sangguniang Bayan of Argao · Legislative Information System</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -77,11 +78,11 @@
       <div class="flex justify-between items-center h-20">
 
         <div class="flex items-center gap-3 cursor-pointer group" onclick="window.navigateTo('public')">
-          <img src="./argao-seal.png"
-               alt="Argao Seal"
+          <img id="navSealImg" src="./argao-seal.png"
+               alt="Organization Seal"
                class="w-11 h-11 object-contain group-hover:scale-110 transition-transform duration-300">
           <div>
-            <h1 class="font-black text-base sm:text-lg leading-tight text-slate-900">Sangguniang Bayan of Argao</h1>
+            <h1 id="navOrgName" class="font-black text-base sm:text-lg leading-tight text-slate-900">Sangguniang Bayan of Argao</h1>
             <p class="text-[10px] font-semibold text-blue-600 tracking-widest uppercase flex items-center gap-1">
               <span class="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse inline-block"></span>
               Legislative Information System
@@ -127,13 +128,13 @@
             <div>
               <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-bold mb-8">
                 <i class="fas fa-landmark text-xs"></i>
-                Argao, Cebu · Official Legislative Portal
+                <span id="heroCityProvince">Argao, Cebu</span> · Official Legislative Portal
               </div>
               <h1 class="text-5xl lg:text-[3.6rem] font-black text-slate-900 leading-[1.08] mb-5">
                 Find Legislative <span class="text-blue-600">Documents</span><br>
                 in Seconds
               </h1>
-              <p class="text-slate-500 text-lg leading-relaxed mb-10 max-w-2xl mx-auto">
+              <p id="heroDescription" class="text-slate-500 text-lg leading-relaxed mb-10 max-w-2xl mx-auto">
                 Browse all ordinances and resolutions passed by the Sangguniang Bayan of Argao, Cebu.
               </p>
 
@@ -240,7 +241,7 @@
               <i class="fas fa-users"></i> Legislative Officers
             </p>
             <h2 class="text-3xl font-black text-slate-900">Meet the Members</h2>
-            <p class="text-slate-500 mt-1">Sangguniang Bayan of Argao, Cebu</p>
+            <p id="membersSubtitle" class="text-slate-500 mt-1">Sangguniang Bayan of Argao, Cebu</p>
           </div>
           <div class="mb-8">
             <div class="hero-search max-w-2xl">
@@ -600,6 +601,57 @@
 
       <!-- SETTINGS TAB -->
       <div id="admin-tab-settings" class="hidden">
+
+        <!-- Branding Settings -->
+        <div class="bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-slate-100 mb-8">
+          <div class="flex items-center gap-3 mb-7">
+            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg">
+              <i class="fas fa-building-columns"></i>
+            </div>
+            <div>
+              <h3 class="text-xl font-black text-slate-900">Organization Branding</h3>
+              <p class="text-sm text-slate-500">Update the name, location, and seal shown across the site</p>
+            </div>
+          </div>
+
+          <div class="space-y-5">
+            <div>
+              <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-landmark mr-1"></i>Organization Name (Text Logo)</label>
+              <input type="text" id="brandingOrgName" placeholder="e.g., Sangguniang Bayan of Argao"
+                     class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              <p class="text-[10px] text-slate-400 mt-1 ml-1">Appears in the navigation bar and footer</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-map-marker-alt mr-1"></i>Municipality</label>
+                <input type="text" id="brandingMunicipality" placeholder="e.g., Argao"
+                       class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              </div>
+              <div>
+                <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-map mr-1"></i>Province</label>
+                <input type="text" id="brandingProvince" placeholder="e.g., Cebu"
+                       class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              </div>
+            </div>
+            <div>
+              <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-image mr-1"></i>Organization Seal / Logo URL</label>
+              <input type="url" id="brandingSealUrl" placeholder="https://… (direct image link)"
+                     class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              <p class="text-[10px] text-slate-400 mt-1 ml-1">Updates the seal beside the text logo, footer, and browser tab icon (favicon)</p>
+            </div>
+            <!-- Seal preview -->
+            <div id="sealPreviewWrap" class="hidden flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+              <img id="sealPreviewImg" src="" alt="Seal preview" class="w-14 h-14 object-contain rounded-xl border border-slate-200 bg-white">
+              <p class="text-xs text-slate-500 font-semibold">Seal preview</p>
+            </div>
+          </div>
+
+          <button type="button" id="saveBrandingBtn" onclick="window.saveBrandingSettings()"
+                  class="mt-6 px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:from-emerald-600 hover:to-teal-700 transition-all flex items-center gap-2">
+            <i class="fas fa-save"></i> Save Branding
+          </button>
+        </div>
+
         <div class="bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-slate-100">
           <div class="flex items-center gap-3 mb-7">
             <div class="w-12 h-12 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg">
@@ -668,7 +720,7 @@
             </div>
             <div>
               <h3 class="text-xl font-black text-slate-900">Your Admin Profile</h3>
-              <p class="text-sm text-slate-500">Update your profile information and contact details</p>
+              <p class="text-sm text-slate-500">Only <strong>Contact Email</strong> is required — used for document copy requests</p>
             </div>
           </div>
 
@@ -694,39 +746,22 @@
               <input type="url" id="adminImage" placeholder="https://… (optional)"
                      class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
             </div>
-            <div>
-              <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-sitemap mr-1"></i>Committees</label>
-              <input type="text" id="adminCommittees" placeholder="e.g., health, budget"
-                     class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
-              <p class="text-[10px] text-slate-400 mt-1 ml-1">Separate with commas</p>
-            </div>
             <div class="lg:col-span-2">
               <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-align-left mr-1"></i>Biography</label>
               <textarea id="adminBio" rows="3" placeholder="Your background and qualifications…"
                         class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all resize-none"></textarea>
             </div>
-            <div class="lg:col-span-2">
-              <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-file mr-1"></i>Document / File Link</label>
-              <input type="url" id="adminDocument" placeholder="https://… (optional PDF link)"
-                     class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
-            </div>
-            <div class="lg:col-span-2">
-              <label class="text-xs font-black uppercase text-slate-400 block mb-2 tracking-wider"><i class="fas fa-sticky-note mr-1"></i>Additional Information</label>
-              <textarea id="adminAdditional" rows="2" maxlength="300" placeholder="Any additional information (max 300 characters)…"
-                        class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all resize-none"></textarea>
-              <p class="text-[10px] text-slate-400 mt-1 ml-1"><span id="adminCharCount">0</span>/300 characters</p>
-            </div>
           </div>
 
           <!-- Email Service Settings -->
-          <div class="border-t border-slate-200 pt-8 mt-8">
+          <div class="border-t border-slate-200 pt-8 mt-8 opacity-40 pointer-events-none select-none" title="Reserved — not required for current email flow">
             <div class="flex items-center gap-3 mb-6">
               <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg">
                 <i class="fas fa-envelope-circle-check"></i>
               </div>
               <div>
                 <h3 class="text-lg font-black text-slate-900">Email Service Configuration</h3>
-                <p class="text-sm text-slate-500">Set up email delivery for document requests</p>
+                <p class="text-sm text-slate-500">Reserved — document requests use the Contact Email above</p>
               </div>
             </div>
 
@@ -1132,11 +1167,15 @@
     let pendingDocUrl = '', pendingDocId = '';
 
     const DEFAULT_DOWNLOAD_NOTICE = 'Downloaded documents are for reference only. Under RA 7160, they are not official or binding unless authenticated by the Office of the Secretary to the Sangguniang Bayan with official seal and signature. Certified True Copies must be requested from the SB Secretary’s Office.';
-    let settingsState = { 
+    let settingsState = {
       downloadNotice: DEFAULT_DOWNLOAD_NOTICE,
       socialFacebook: '',
       socialTwitter: '',
-      socialEmail: ''
+      socialEmail: '',
+      orgName: '',
+      municipality: '',
+      province: '',
+      sealUrl: ''
     };
 
     const MEMBER_REF = collection(db,'artifacts',appId,'public','data','members');
@@ -1665,16 +1704,22 @@ Thank you.`;
             downloadNotice: incoming.downloadNotice || DEFAULT_DOWNLOAD_NOTICE,
             socialFacebook: incoming.socialFacebook || '',
             socialTwitter: incoming.socialTwitter || '',
-            socialEmail: incoming.socialEmail || ''
+            socialEmail: incoming.socialEmail || '',
+            orgName: incoming.orgName || '',
+            municipality: incoming.municipality || '',
+            province: incoming.province || '',
+            sealUrl: incoming.sealUrl || ''
           };
           syncNoticeUi();
           syncSocialMediaUi();
+          syncBrandingUi();
         },
         err => {
           console.error(err);
           settingsState.downloadNotice = DEFAULT_DOWNLOAD_NOTICE;
           syncNoticeUi();
           syncSocialMediaUi();
+          syncBrandingUi();
         }
       );
     };
@@ -2129,6 +2174,102 @@ Thank you.`;
       }
     };
 
+    /* ── Sync Branding UI ── */
+    function syncBrandingUi() {
+      const orgName     = settingsState.orgName     || 'Sangguniang Bayan of Argao';
+      const municipality = settingsState.municipality || 'Argao';
+      const province    = settingsState.province    || 'Cebu';
+      const sealUrl     = settingsState.sealUrl     || './argao-seal.png';
+      const cityProv    = `${municipality}, ${province}`;
+
+      // Nav
+      const navSeal = document.getElementById('navSealImg');
+      const navName = document.getElementById('navOrgName');
+      if (navSeal) navSeal.src = sealUrl;
+      if (navName) navName.textContent = orgName;
+
+      // Hero
+      const heroCityProv = document.getElementById('heroCityProvince');
+      const heroDesc     = document.getElementById('heroDescription');
+      if (heroCityProv) heroCityProv.textContent = cityProv;
+      if (heroDesc)     heroDesc.textContent = `Browse all ordinances and resolutions passed by the ${orgName}, ${province}.`;
+
+      // Members subtitle
+      const membersSub = document.getElementById('membersSubtitle');
+      if (membersSub) membersSub.textContent = `${orgName}, ${province}`;
+
+      // Footer
+      const footerSeal  = document.getElementById('footerSealImg');
+      const footerName  = document.getElementById('footerOrgName');
+      const footerCity  = document.getElementById('footerCityProvince');
+      const footerDesc  = document.getElementById('footerDescription');
+      if (footerSeal) footerSeal.src = sealUrl;
+      if (footerName) footerName.textContent = orgName;
+      if (footerCity) footerCity.textContent = cityProv;
+      if (footerDesc) footerDesc.innerHTML = `Official Legislative Information System providing transparent access to ordinances and resolutions of the ${escapeHtml(orgName)}, ${escapeHtml(province)}. <strong>2026</strong>`;
+
+      // Favicon
+      const favicon = document.getElementById('dynamicFavicon');
+      if (favicon) favicon.href = sealUrl;
+
+      // Admin form inputs (don't overwrite if user is actively editing)
+      const inpOrg  = document.getElementById('brandingOrgName');
+      const inpMun  = document.getElementById('brandingMunicipality');
+      const inpProv = document.getElementById('brandingProvince');
+      const inpSeal = document.getElementById('brandingSealUrl');
+      if (inpOrg  && document.activeElement !== inpOrg)  inpOrg.value  = settingsState.orgName     || '';
+      if (inpMun  && document.activeElement !== inpMun)  inpMun.value  = settingsState.municipality || '';
+      if (inpProv && document.activeElement !== inpProv) inpProv.value = settingsState.province    || '';
+      if (inpSeal && document.activeElement !== inpSeal) inpSeal.value = settingsState.sealUrl     || '';
+
+      // Seal preview
+      if (inpSeal) updateSealPreview(inpSeal.value);
+    }
+
+    function updateSealPreview(url) {
+      const wrap = document.getElementById('sealPreviewWrap');
+      const img  = document.getElementById('sealPreviewImg');
+      if (!wrap || !img) return;
+      if (url && url.startsWith('http')) {
+        img.src = url;
+        wrap.classList.remove('hidden');
+      } else {
+        wrap.classList.add('hidden');
+      }
+    }
+
+    /* ── Save Branding Settings ── */
+    window.saveBrandingSettings = async () => {
+      if (!user) { showToast('Admin login required','error'); return; }
+      const orgName     = document.getElementById('brandingOrgName').value.trim();
+      const municipality = document.getElementById('brandingMunicipality').value.trim();
+      const province    = document.getElementById('brandingProvince').value.trim();
+      const sealUrl     = document.getElementById('brandingSealUrl').value.trim();
+      const btn = document.getElementById('saveBrandingBtn');
+      const original = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      btn.disabled = true;
+      try {
+        await setDoc(SETTINGS_DOC, {
+          orgName, municipality, province, sealUrl,
+          updatedAt: serverTimestamp(),
+          updatedBy: user.email || user.uid || ''
+        }, { merge: true });
+        settingsState.orgName     = orgName;
+        settingsState.municipality = municipality;
+        settingsState.province    = province;
+        settingsState.sealUrl     = sealUrl;
+        syncBrandingUi();
+        showToast('Branding updated', 'success');
+      } catch(e) {
+        console.error(e);
+        showToast('Error saving branding', 'error');
+      } finally {
+        btn.innerHTML = original;
+        btn.disabled = false;
+      }
+    };
+
     /* ── Email Service Toggle ── */
     window.toggleEmailServiceFields = () => {
       const serviceType = document.getElementById('emailServiceType').value;
@@ -2148,26 +2289,11 @@ Thank you.`;
         const snap = await getDoc(adminProfileRef);
         if (snap.exists()) {
           const data = snap.data();
-          document.getElementById('adminName').value = data.name || '';
-          document.getElementById('adminRole').value = data.role || '';
+          document.getElementById('adminName').value  = data.name  || '';
+          document.getElementById('adminRole').value  = data.role  || '';
           document.getElementById('adminEmail').value = data.contactEmail || '';
           document.getElementById('adminImage').value = data.image || '';
-          document.getElementById('adminCommittees').value = (data.committees || []).join(', ');
-          document.getElementById('adminBio').value = data.bio || '';
-          document.getElementById('adminDocument').value = data.document || '';
-          document.getElementById('adminAdditional').value = data.additionalInfo || '';
-          document.getElementById('adminCharCount').textContent = (data.additionalInfo || '').length;
-          
-          // Load email service settings
-          document.getElementById('emailServiceType').value = data.emailServiceType || 'none';
-          document.getElementById('sendgridApiKey').value = data.sendgridApiKey || '';
-          document.getElementById('smtpServer').value = data.smtpServer || '';
-          document.getElementById('smtpPort').value = data.smtpPort || '587';
-          document.getElementById('smtpSecurity').value = data.smtpSecurity || 'tls';
-          document.getElementById('smtpUsername').value = data.smtpUsername || '';
-          document.getElementById('smtpPassword').value = data.smtpPassword || '';
-          
-          window.toggleEmailServiceFields();
+          document.getElementById('adminBio').value   = data.bio   || '';
         }
       } catch(e) {
         console.error(e);
@@ -2177,64 +2303,28 @@ Thank you.`;
     /* ── Save Admin Profile ── */
     window.saveAdminProfile = async () => {
       if (!user) { showToast('Admin login required','error'); return; }
-      const name = document.getElementById('adminName').value.trim();
-      const role = document.getElementById('adminRole').value.trim();
+      const name  = document.getElementById('adminName').value.trim();
+      const role  = document.getElementById('adminRole').value.trim();
       const email = document.getElementById('adminEmail').value.trim();
       const image = document.getElementById('adminImage').value.trim();
-      const committees = (document.getElementById('adminCommittees').value || '').split(',').map(c=>c.trim()).filter(Boolean);
-      const bio = document.getElementById('adminBio').value.trim();
-      const document_ = document.getElementById('adminDocument').value.trim();
-      const additional = document.getElementById('adminAdditional').value.trim();
-      const emailServiceType = document.getElementById('emailServiceType').value;
-      
-      if (!name || !role || !email) { showToast('Please fill in required fields','error'); return; }
-      if (emailServiceType === 'sendgrid' && !document.getElementById('sendgridApiKey').value.trim()) {
-        showToast('SendGrid API key is required','error'); return;
-      }
-      if (emailServiceType === 'smtp') {
-        const smtpServer = document.getElementById('smtpServer').value.trim();
-        const smtpUsername = document.getElementById('smtpUsername').value.trim();
-        const smtpPassword = document.getElementById('smtpPassword').value.trim();
-        if (!smtpServer || !smtpUsername || !smtpPassword) {
-          showToast('Please fill in all SMTP settings','error'); return;
-        }
-      }
-      
+      const bio   = document.getElementById('adminBio').value.trim();
+
+      if (!email) { showToast('Contact Email is required','error'); return; }
+
       const btn = document.getElementById('saveAdminProfileBtn');
       const original = btn.innerHTML;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
       btn.disabled = true;
-      
+
       try {
         const adminProfileRef = doc(db,'artifacts',appId,'admin','profile');
-        const profilePayload = {
+        await setDoc(adminProfileRef, {
           uid: user.uid,
-          name,
-          role,
-          contactEmail: email,
-          image,
-          committees,
-          bio,
-          document: document_,
-          additionalInfo: additional,
-          emailServiceType,
+          name, role, contactEmail: email, image, bio,
           updatedAt: serverTimestamp(),
           updatedBy: user.email || user.uid || ''
-        };
+        }, { merge: true });
 
-        // Add email service credentials based on type
-        if (emailServiceType === 'sendgrid') {
-          profilePayload.sendgridApiKey = document.getElementById('sendgridApiKey').value;
-        } else if (emailServiceType === 'smtp') {
-          profilePayload.smtpServer = document.getElementById('smtpServer').value.trim();
-          profilePayload.smtpPort = parseInt(document.getElementById('smtpPort').value) || 587;
-          profilePayload.smtpSecurity = document.getElementById('smtpSecurity').value;
-          profilePayload.smtpUsername = document.getElementById('smtpUsername').value.trim();
-          profilePayload.smtpPassword = document.getElementById('smtpPassword').value;
-        }
-
-        await setDoc(adminProfileRef, profilePayload, { merge: true });
-        
         // Update admin member profile if exists
         try {
           const col = collection(db,'artifacts',appId,'public','data','members');
@@ -2242,20 +2332,13 @@ Thank you.`;
           const adminMember = snapshot.docs.find(d => d.data().isAdmin);
           if (adminMember) {
             await updateDoc(doc(db,'artifacts',appId,'public','data','members',adminMember.id), {
-              name,
-              role,
-              image: image || '',
-              committees,
-              bio,
-              document: document_,
-              additionalInfo: additional,
-              updatedAt: serverTimestamp()
+              name, role, image: image || '', bio, updatedAt: serverTimestamp()
             });
           }
         } catch(e) { console.error('Error updating admin member:', e); }
 
         showToast('Profile saved successfully!','success');
-      } catch (e) {
+      } catch(e) {
         console.error(e);
         showToast('Error saving profile','error');
       } finally {
@@ -2571,20 +2654,18 @@ Thank you.`;
     /* ── Init ── */
     startSync();
     syncNoticeUi();
+    syncBrandingUi();
+
+    // Live seal preview on URL input
+    document.getElementById('brandingSealUrl')?.addEventListener('input', (e) => {
+      updateSealPreview(e.target.value.trim());
+    });
 
     // Character counter for admin profile additional info
     const additionalField = document.getElementById('adminProfileAdditional');
     if (additionalField) {
       additionalField.addEventListener('input', (e) => {
         document.getElementById('charCount').textContent = e.target.value.length;
-      });
-    }
-
-    // Character counter for admin tab additional info
-    const adminAdditionalField = document.getElementById('adminAdditional');
-    if (adminAdditionalField) {
-      adminAdditionalField.addEventListener('input', (e) => {
-        document.getElementById('adminCharCount').textContent = e.target.value.length;
       });
     }
 
@@ -2622,13 +2703,13 @@ Thank you.`;
         <!-- Organization Info -->
         <div>
           <div class="flex items-center gap-2 mb-4">
-            <img src="./argao-seal.png" alt="Argao Seal" class="w-10 h-10 object-contain">
+            <img id="footerSealImg" src="./argao-seal.png" alt="Organization Seal" class="w-10 h-10 object-contain">
             <div>
-              <h4 class="font-black text-sm">Sangguniang Bayan</h4>
-              <p class="text-[11px] text-slate-400">Argao, Cebu</p>
+              <h4 id="footerOrgName" class="font-black text-sm">Sangguniang Bayan of Argao</h4>
+              <p id="footerCityProvince" class="text-[11px] text-slate-400">Argao, Cebu</p>
             </div>
           </div>
-          <p class="text-sm text-slate-400 leading-relaxed mb-4">
+          <p id="footerDescription" class="text-sm text-slate-400 leading-relaxed mb-4">
             Official Legislative Information System providing transparent access to ordinances and resolutions of the Sangguniang Bayan of Argao, Cebu. <strong>2026</strong>
           </p>
           <div class="flex gap-3">
