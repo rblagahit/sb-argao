@@ -1102,17 +1102,17 @@
              orderBy, limit }                         from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
     const firebaseConfig = {
-      apiKey: "AIzaSyCiPtF6zCmrtnHs3CJMM9CrA7dyDynYwdA",
-      authDomain: "sb-argao.firebaseapp.com",
-      projectId: "sb-argao",
-      messagingSenderId: "839376133163",
-      appId: "1:839376133163:web:80dad979ea44bb960e1e6e"
+      apiKey:            "%VITE_FIREBASE_API_KEY%",
+      authDomain:        "%VITE_FIREBASE_AUTH_DOMAIN%",
+      projectId:         "%VITE_FIREBASE_PROJECT_ID%",
+      messagingSenderId: "%VITE_FIREBASE_MESSAGING_SENDER_ID%",
+      appId:             "%VITE_FIREBASE_APP_ID%",
     };
 
     const app   = initializeApp(firebaseConfig);
     const auth  = getAuth(app);
     const db    = getFirestore(app);
-    const appId = 'sb-argao';
+    const appId = '%VITE_LGU_ID%';
 
     let user = null, localDocs = [], localMembers = [];
     let memberSearchTerm = '';
