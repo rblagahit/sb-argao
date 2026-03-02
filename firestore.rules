@@ -3,32 +3,71 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ── Helpers ──────────────────────────────────────────────────────────────
-    // Phase 1: role enforced via Firebase Custom Claims in the JWT.
-    // isAdmin() now takes lguId so a municipal admin can only write their LGU.
-    // Phase 2 adds editor/viewer distinction and barangay-scoped rules.
+    // Role is stored in users/{uid}.role (Firestore), not Custom Claims.
+    // This lets new admins self-register without needing a bootstrap script.
+    // get() in rules bypasses client-facing security rules and reads directly.
+
+    function userRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function userLguId() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.lguId;
+    }
 
     function isAdmin(lguId) {
       return request.auth != null
-          && request.auth.token.email_verified == true
-          && request.auth.token.role in ['admin', 'superadmin']
-          && (request.auth.token.role == 'superadmin'
-              || request.auth.token.lguId == lguId);
+          && userRole() in ['admin', 'superadmin']
+          && (userRole() == 'superadmin' || userLguId() == lguId);
     }
 
     function isSuperAdmin() {
       return request.auth != null
-          && request.auth.token.role == 'superadmin';
+          && userRole() == 'superadmin';
+    }
+
+    // True when no superadmin has been bootstrapped yet
+    // (setup/bootstrapped doc does not exist).
+    function isFirstSetup() {
+      return !exists(/databases/$(database)/documents/setup/bootstrapped);
+    }
+
+    // ── One-time setup document ───────────────────────────────────────────────
+    // Written by the first registered user to lock out subsequent self-grants.
+    match /setup/bootstrapped {
+      allow read:   if true;
+      allow create: if request.auth != null;   // first auth user can write once
+      allow update, delete: if isSuperAdmin();
     }
 
     // ── Users collection ─────────────────────────────────────────────────────
-    // Users can read their own document; only Super Admin can write.
     match /users/{uid} {
-      allow read:  if request.auth != null && request.auth.uid == uid;
-      allow write: if isSuperAdmin();
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      // Self-registration:
+      //   • Any authenticated user may CREATE their own doc with role 'pending'.
+      //   • The very first registration (before setup/bootstrapped exists) may
+      //     claim role 'superadmin' — this is the one-time bootstrap path.
+      allow create: if request.auth != null
+                    && request.auth.uid == uid
+                    && (
+                      request.resource.data.role == 'pending'
+                      || (isFirstSetup() && request.resource.data.role == 'superadmin')
+                    );
+
+      // Self-profile update (name, image, bio, contactEmail, isComplete…).
+      // Users may NOT change their own role or lguId.
+      allow update: if isSuperAdmin()
+                    || (request.auth != null
+                        && request.auth.uid == uid
+                        && request.resource.data.role  == resource.data.role
+                        && request.resource.data.lguId == resource.data.lguId);
+
+      allow delete: if isSuperAdmin();
     }
 
     // ── Municipal data ────────────────────────────────────────────────────────
-    // Public read. Admin write scoped to their lguId claim.
+    // Public read. Admin write scoped to their lguId.
     match /lgus/{lguId}/legislations/{docId} {
       allow read:  if true;
       allow write: if isAdmin(lguId);
@@ -45,8 +84,6 @@ service cloud.firestore {
     }
 
     // ── Barangay data ─────────────────────────────────────────────────────────
-    // Phase 2 will add barangayId claim scoping for barangay-level admins.
-    // For now, the municipal admin (lguId match) can manage all barangay paths.
     match /lgus/{lguId}/barangays/{barangayId}/{document=**} {
       allow read:  if true;
       allow write: if isAdmin(lguId);

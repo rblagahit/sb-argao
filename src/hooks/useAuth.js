@@ -5,7 +5,7 @@ import { auth, db } from '../firebase';
 
 /**
  * Tracks Firebase auth state and exposes helpers.
- * Also reads Custom Claims (role, lguId) from the JWT on every auth change.
+ * Role and lguId are read from users/{uid} in Firestore (not Custom Claims).
  * @returns {{ user, userRole, userLguId, loading, logout }}
  */
 export function useAuth() {
@@ -19,9 +19,15 @@ export function useAuth() {
       setUser(u);
       if (u) {
         try {
-          const token = await u.getIdTokenResult(true);
-          setUserRole(token.claims.role   || null);
-          setUserLguId(token.claims.lguId || null);
+          const snap = await getDoc(doc(db, 'users', u.uid));
+          if (snap.exists()) {
+            const d = snap.data();
+            setUserRole(d.role   || null);
+            setUserLguId(d.lguId || null);
+          } else {
+            setUserRole(null);
+            setUserLguId(null);
+          }
         } catch {
           setUserRole(null);
           setUserLguId(null);
@@ -42,8 +48,7 @@ export function useAuth() {
 }
 
 /**
- * Checks whether the admin profile document exists at users/{uid}.
- * Used to gate the "first-time profile completion" flow.
+ * Checks whether the admin profile document exists and is complete at users/{uid}.
  */
 export async function checkAdminProfileComplete(user) {
   if (!user) return false;
