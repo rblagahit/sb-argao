@@ -3,6 +3,7 @@
 
 > Last updated: March 2026
 > Stack: Vanilla HTML/CSS/JS · Firebase Auth · Cloud Firestore · Firebase Hosting
+> Live: https://sb-argao.web.app · https://multi-legislative.web.app
 
 ---
 
@@ -12,13 +13,13 @@
 
 | Aspect | Current State | Target State |
 |---|---|---|
-| Stack | Single `index.html` (~2,600 lines) with CDN imports | Componentized React app (Vite already configured) |
-| Auth model | Binary — anonymous public vs. one hardcoded admin | Role-based: Super Admin → Admin → Editor → Viewer |
-| Admin roles | None — any logged-in user has full write access | Custom Claims via Firebase (enforced server-side) |
-| Firestore rules | `request.auth != null` = full write to everything | Role + LGU-scoped rules |
-| Data path | `artifacts/sb-argao/public/data/*` (hardcoded) | `lgus/{lguId}/*` (multi-tenant ready) |
-| User management | One admin profile at `admin/profile` | `users/{uid}` collection with roles and status |
-| Admin UI | Always-open forms, nested tabs, cluttered layout | Sidebar nav, list-first, drawer-based forms |
+| Stack | Single `index.html` (~5,400 lines) with CDN imports | Componentized React app (Vite already configured) |
+| Auth model | Role-based: superadmin → admin → editor → viewer | ✅ Done (Firestore-sourced roles) |
+| Admin roles | Custom Claims NOT used — roles in `users/{uid}.role` | JWT Custom Claims (Phase 1 stretch goal) |
+| Firestore rules | Role + LGU-scoped rules | ✅ Done |
+| Data path | `lgus/{lguId}/*` multi-tenant ready | ✅ Done |
+| User management | `users/{uid}` collection, invite system, approval flow | ✅ Done |
+| Admin UI | Top tab bar, inline collapsible forms | Sidebar nav, list-first, drawer-based forms (Phase 3) |
 
 ### What Works Well
 
@@ -27,352 +28,247 @@
 - XSS-safe HTML escaping on rendered content
 - Batch CSV import for documents
 - View tracking with atomic `increment()` operations
-- Responsive design with Tailwind CSS
-- Well-structured document metadata (sponsors, tags, co-sponsors)
-
-### Key Pain Points
-
-1. **Single admin bottleneck** — one person must do everything; no delegation
-2. **No audit trail** — no way to know who changed what or when
-3. **Admin UI clutter** — forms always open, all fields always visible, settings overwhelming
-4. **Firebase config exposed in HTML** — API key hardcoded, no environment variables
-5. **Monolithic file** — 2,600+ lines make maintenance and collaboration error-prone
-6. **Firestore rules too permissive** — any authenticated user can write any document
+- Multi-tenant data model (`lgus/{lguId}/*`)
+- Registration → approval workflow (pending → admin approves)
+- Invite system (`userInvites/{email}`)
+- Tier system (starter/standard/premium) with feature flags per LGU
+- Advanced Analytics tab (tier-gated)
+- Superadmin Platform panel (LGUs, Users, Analytics, Barangays)
+- Per-LGU branding isolation (fixed: unique `lguId` slug enforced on registration)
+- Password show/hide on registration
 
 ---
 
-## 2. Role Hierarchy (Target)
+## 2. Role Hierarchy (Implemented)
 
 ```
-Super Admin
-  └── full system access, manages all LGUs and all users
+superadmin
+  └── Platform owner; manages all LGUs, all users, feature flags, tiers
 
   Admin (per LGU)
-    ├── Full Admin   → documents, members, settings, user invitations
-    ├── Editor       → documents and members only (no settings, no user mgmt)
-    └── Viewer       → read-only admin panel (can view but not save)
+    ├── Full Admin   → docs, members, settings, barangays, users, analytics, pricing
+    ├── Editor       → docs, members, settings, profile only
+    └── Viewer       → docs only (read-only)
+
+  Pending / Rejected
+    └── No panel access; pending shown in Platform > Users for approval
 
 Public User
   └── Anonymous visitor — browse, search, request document copies
 ```
 
----
+### Tab Access (implemented in `TAB_ACCESS`)
 
-## 3. Admin Panel Redesign
-
-### What's Wrong Now
-
-| Tab | Problem |
+| Role | Tabs Accessible |
 |---|---|
-| Documents | 8-field upload form permanently open above the document list; nested sub-tabs (Single/Batch) add a second tab layer inside the first |
-| Members | 7-field Add Member form occupies a full column side-by-side with the list even when not in use |
-| Settings | Branding (9 fields) + Document Notice (1 textarea) + Social Media (3 fields) all stacked open simultaneously — 13+ fields visible at all times |
-| Profile | Disabled Email Service block (~8 greyed-out fields) takes up a third of the page with no current function |
-
-### Proposed Layout: Sidebar + List-First + Action-Triggered Drawers
-
-**Core principle: lists are the default view. Forms only appear when you trigger an action.**
-
-#### Overall Shell
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  [≡ Seal]  Management Panel       [Members: 12] [Docs: 48] │
-├──────────┬──────────────────────────────────────────────────┤
-│          │                                                   │
-│  📄 Docs │  [content area — changes per section]            │
-│  👥 Memb │                                                   │
-│  ⚙ Sett │                                                   │
-│  👤 Prof │                                                   │
-│          │                                                   │
-│  ← Public│                                                   │
-└──────────┴──────────────────────────────────────────────────┘
-```
-
-- Left sidebar replaces the top tab bar — scales cleanly to more tabs (Users, Activity Log, Super Admin)
-- Stats (member/doc counts) move to top bar
-- Active section highlighted with icon + label
-
-#### Documents — List-First with Drawer
-
-```
-┌──────────────────────────────────────────────────────┐
-│  Documents                          [+ Add Document] │
-│  [Search by title or ID…] [Type ▾] [Year ▾]          │
-├──────────────────────────────────────────────────────┤
-│  ORD-2024-001 · An Ordinance…    Ordinance  [✏] [🗑] │
-│  RES-2024-047 · A Resolution…   Resolution  [✏] [🗑] │
-└──────────────────────────────────────────────────────┘
-
-                          ┌─────────────────────────┐
-                          │  Add Document        [×] │  (drawer — right side)
-                          │  ○ Single  ○ Batch       │
-                          │  ─────────────────────── │
-                          │  Title                   │
-                          │  Doc ID        Type ▾    │
-                          │  Primary Sponsor ▾       │
-                          │  PDF URL                 │
-                          │  ▾ Optional fields       │  ← Co-Sponsors, Tags, More Info
-                          │  ─────────────────────── │  collapsed by default
-                          │  [Cancel]  [Publish Doc] │
-                          └─────────────────────────┘
-```
-
-#### Members — List-First with Drawer
-
-```
-┌──────────────────────────────────────────────────────┐
-│  Members                             [+ Add Member]  │
-│  [Search by name or role…]                           │
-├──────────────────────────────────────────────────────┤
-│  [Photo] Hon. Juan dela Cruz                         │
-│          Vice Mayor · Committee on Health  [✏] [🗑]  │
-│  [Photo] Hon. Maria Santos                           │
-│          Councilor · Committee on Budget   [✏] [🗑]  │
-└──────────────────────────────────────────────────────┘
-```
-
-- No permanently-open left column
-- Add/Edit share the same drawer, pre-filled on edit
-- Archive toggle inline on each row
-
-#### Settings — Accordion (One Section Open at a Time)
-
-```
-┌──────────────────────────────────────────────────────┐
-│  Settings                                            │
-├──────────────────────────────────────────────────────┤
-│  ▼  🏛  Organization Branding               [Save]  │  ← expanded
-│  ─────────────────────────────────────────────────  │
-│  Org Name  [Sangguniang Bayan of Argao           ]  │
-│  Municipality [Argao    ]  Province [Cebu        ]  │
-│  Seal URL  [https://…                            ]  │
-│  Phone 1   [           ]   Phone 2  [            ]  │
-│  Contact Email [                                 ]  │
-├──────────────────────────────────────────────────────┤
-│  ▶  📋  Document Download Notice                    │  ← collapsed
-├──────────────────────────────────────────────────────┤
-│  ▶  📱  Social Media Links                          │  ← collapsed
-└──────────────────────────────────────────────────────┘
-```
-
-- Click header to expand/collapse; only one open at a time
-- Each section has its own Save button inline — no scrolling to find it
-
-#### Profile — Focused, No Dead Weight
-
-```
-┌──────────────────────────────────────────────────────┐
-│  My Profile                                          │
-│  ─────────────────────────────────────────────────  │
-│  Full Name     [                                 ]  │
-│  Position      [                                 ]  │
-│  Contact Email [                                 ] *│
-│  Photo URL     [                                 ]  │
-│  Bio           [                                 ]  │
-│                                                     │
-│                              [Save Profile]         │
-└──────────────────────────────────────────────────────┘
-```
-
-- Email Service Configuration section **removed** — disabled, confuses users, serves no current purpose. Reintroduce only when implemented.
+| superadmin | Redirected to Platform view (no LGU tabs) |
+| admin | docs, members, barangay, settings, profile, users, analytics, pricing |
+| editor | docs, members, settings, profile |
+| viewer | docs |
+| pending/rejected | None (redirect to pending view) |
 
 ---
 
-## 4. Architecture: Multi-User, Multi-Admin, Super Admin
+## 3. Firestore Data Model (Current)
 
-### Firebase Auth + Custom Claims (Role Engine)
+### Collections in Use
 
-Custom Claims are embedded in the JWT — enforced by both client UI gating and Firestore server-side rules.
-
-```js
-// Cloud Function: setUserRole (called only by Super Admin)
-await admin.auth().setCustomUserClaims(uid, {
-  role: 'admin',   // 'superadmin' | 'admin' | 'editor' | 'viewer'
-  lguId: 'argao'   // which organization this user belongs to
-});
 ```
+setup/bootstrapped              ← First-admin lock; prevents second superadmin
 
-Client reads claims via:
-```js
-const { role, lguId } = (await user.getIdTokenResult()).claims;
-```
-
-### Firestore Data Model Changes
-
-**New `users` collection** (replaces single `admin/profile`):
-```
 users/{uid}
-  ├── email
-  ├── name
-  ├── role: 'superadmin' | 'admin' | 'editor' | 'viewer'
-  ├── lguId: 'argao'
-  ├── status: 'active' | 'suspended' | 'pending'
-  ├── createdAt
-  ├── createdBy (uid)
-  └── lastLogin
-```
+  ├── email, name, role, lguId
+  ├── barangayId, barangayName  ← for barangay-scoped editors
+  ├── status, isComplete
+  ├── requestedLguSlug          ← submitted at registration (NEW)
+  ├── orgLgu, position, phone   ← submitted at registration (NEW)
+  └── pendingNotification       ← in-app toast on approval/rejection
 
-**Multi-tenant data path** (replaces hardcoded `sb-argao`):
-```
+userInvites/{email}
+  ├── role, lguId, barangayId
+  └── status: 'pending' | 'accepted'
+
+lguRegistry/{lguId}
+  ├── tier: 'starter' | 'standard' | 'premium'
+  ├── paid: bool
+  ├── features.advancedAnalytics: bool
+  └── features.additionalUsers: bool
+
 lgus/{lguId}/
-  ├── profile/              ← org name, seal, contact info
-  ├── legislations/{docId}  ← documents
-  ├── members/{memberId}    ← members
-  └── settings/general      ← branding, social links, download notice
-```
+  ├── legislations/{docId}      ← documents (public read)
+  ├── members/{memberId}        ← members (public read)
+  ├── settings/general          ← branding, social, download notice
+  └── barangays/{barangayId}/*  ← barangay sub-portals
 
-### Revised Firestore Security Rules
-
-```js
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-
-    function isSuperAdmin() {
-      return request.auth != null
-          && request.auth.token.role == 'superadmin';
-    }
-    function isAdminOf(lguId) {
-      return request.auth != null
-          && request.auth.token.lguId == lguId
-          && request.auth.token.role in ['admin', 'superadmin'];
-    }
-    function isEditorOf(lguId) {
-      return request.auth != null
-          && request.auth.token.lguId == lguId
-          && request.auth.token.role in ['admin', 'editor', 'superadmin'];
-    }
-
-    match /users/{uid} {
-      allow read:  if request.auth.uid == uid || isSuperAdmin();
-      allow write: if isSuperAdmin();
-    }
-
-    match /lgus/{lguId}/legislations/{doc} {
-      allow read:  if true;
-      allow write: if isEditorOf(lguId);
-    }
-    match /lgus/{lguId}/members/{doc} {
-      allow read:  if true;
-      allow write: if isEditorOf(lguId);
-    }
-    match /lgus/{lguId}/settings/{doc} {
-      allow read:  if true;
-      allow write: if isAdminOf(lguId);   // editors cannot change settings
-    }
-    match /lgus/{lguId}/profile/{doc} {
-      allow read:  if true;
-      allow write: if isAdminOf(lguId);
-    }
-  }
-}
+featureRequests/{reqId}
+  ├── lguId, type, status
+  └── requestedBy, requestedAt
 ```
 
 ---
 
-## 5. Development Phasing
+## 4. Firestore Security Rules (Current)
+
+Rules are role + LGU-scoped. Key helper functions:
+
+- `isSuperAdmin()` — role == 'superadmin' OR bootstrapped first admin
+- `isAdmin(lguId)` — role == 'admin' + LGU match (superadmin bypasses)
+- `isEditor(lguId)` — role in ['admin','editor'] + LGU match
+- `isBarangayAdmin(lguId, barangayId)` — editor scoped to a barangay
+
+All LGU data (`lgus/{lguId}/*`) requires LGU scope match. Settings require admin or above. Documents and members are public-readable, write-restricted.
 
 ---
 
-### ⚡ PHASE 0 — Quick Wins (No Architecture Change Required)
-**Goal: Highest immediate impact with the least disruption. Ship now.**
+## 5. Development Phases — Current Status
 
-| # | Task | Impact | Effort |
+---
+
+### ✅ PHASE 0 — Quick Wins (95% Complete)
+
+| # | Task | Status |
+|---|---|---|
+| 0.1 | Tighten Firestore rules | ✅ Done |
+| 0.2 | Move Firebase config to `.env` | ✅ Done (Vite `%VITE_*%` placeholders) |
+| 0.3 | Remove disabled Email Service block | ✅ Done |
+| 0.4 | Collapse Add Document form | ✅ Done |
+| 0.5 | Collapse Add Member form | ✅ Done |
+| 0.6 | Settings accordion | ✅ Done |
+| 0.7 | Optional fields (co-sponsors, tags) collapsed | ⚠️ Partial — visible but no toggle |
+
+---
+
+### ✅ PHASE 1 — Foundation: Roles & Secure Rules (75% Complete)
+
+| # | Task | Status |
+|---|---|---|
+| 1.1 | `users/{uid}` collection | ✅ Done |
+| 1.2 | Firebase Cloud Functions | ❌ Not started — role changes done via client writes |
+| 1.3 | Promote first admin to role via script | ✅ Done (bootstrap on first signup) |
+| 1.4 | Deploy updated Firestore rules | ✅ Done |
+| 1.5 | Read role from auth token | ⚠️ Partial — reads from Firestore doc, not JWT claims |
+
+> **Note:** Phase 1.2 (Cloud Functions) is a stretch goal. The current Firestore-sourced role model is secure enough for the current use case. Custom Claims via Cloud Functions is a future hardening step.
+
+---
+
+### ✅ PHASE 2 — Multi-Admin (85% Complete)
+
+| # | Task | Status |
+|---|---|---|
+| 2.1 | Users tab in admin panel | ✅ Done |
+| 2.2 | Invite by email flow | ✅ Done |
+| 2.3 | User list: active, pending, rejected | ✅ Done (no "suspended" state yet) |
+| 2.4 | Role-gated UI | ✅ Done |
+| 2.5 | Activity log collection | ❌ Not started |
+
+---
+
+### 🚧 PHASE 2.5 — Multi-Tenancy Fixes (NEW — In Progress)
+
+These are issues discovered after Phase 2 that must be resolved before Phase 3.
+
+| # | Task | Status |
+|---|---|---|
+| 2.5.1 | Per-LGU branding isolation (bug fix) | ✅ Done |
+| 2.5.2 | Registration captures LGU slug | ✅ Done |
+| 2.5.3 | Approval pre-fills LGU ID, format-validated | ✅ Done |
+| 2.5.4 | Duplicate slug warning on approval | ✅ Done |
+| 2.5.5 | Subdomain / hash-based LGU routing | ⬜ Next |
+| 2.5.6 | "Your Public URL" shown to admin after login | ⬜ Next |
+
+---
+
+### 🔲 PHASE 3 — Admin Panel Redesign (25% Complete)
+
+> **Prerequisite:** Phases 0–2.5 should be stable first.
+
+| # | Task | Status |
+|---|---|---|
+| 3.1 | Migrate `index.html` to React components | ❌ Not started |
+| 3.2 | Left sidebar navigation | ❌ Not started (still top tab bar) |
+| 3.3 | Slide-in drawer component | ❌ Not started (still inline panels) |
+| 3.4 | Settings accordion component | ✅ Done (already in HTML) |
+| 3.5 | Activity log view in sidebar | ❌ Not started |
+
+---
+
+### 🔲 PHASE 4 — Super Admin Dashboard (60% Complete)
+
+| # | Task | Status |
+|---|---|---|
+| 4.1 | `/platform` super admin view | ✅ Done |
+| 4.2 | LGU management (create, assign tier) | ✅ Done |
+| 4.3 | Global user management | ✅ Done |
+| 4.4 | System-wide settings | ⚠️ Partial — feature flags per LGU done; global defaults missing |
+| 4.5 | Firebase App Check | ❌ Not started |
+
+---
+
+### 🔲 PHASE 5 — Multi-Tenant (60% Complete)
+
+| # | Task | Status |
+|---|---|---|
+| 5.1 | Migrate data paths to `lgus/{lguId}/*` | ✅ Done |
+| 5.2 | LGU selector on login or subdomain routing | ⚠️ Partial — no UI; LGU assigned by admin |
+| 5.3 | Per-LGU branding isolation | ✅ Done (bug fixed in 2.5.1) |
+| 5.4 | Cross-LGU search (Super Admin only) | ❌ Not started |
+
+---
+
+## 6. Tier Model
+
+| Feature | Starter (Free) | Standard | Premium |
 |---|---|---|---|
-| 0.1 | **Tighten Firestore rules** — add `lguId` and `role` check even before Custom Claims are set up. Minimum: restrict writes to a known admin UID list. | 🔴 Security Critical | XS |
-| 0.2 | **Move Firebase config to `.env`** — use Vite's `import.meta.env.VITE_*`. Removes API key from public HTML. | 🔴 Security | S |
-| 0.3 | **Remove the disabled Email Service block** from the Profile tab. Dead UI that confuses users. | 🟢 UX / Clarity | XS |
-| 0.4 | **Collapse the Add Document form** — hide it behind an "+ Add Document" button. List becomes the default view. | 🟢 UX / Clarity | S |
-| 0.5 | **Collapse the Add Member form** — same pattern; show only on button click. Removes the permanent two-column layout. | 🟢 UX / Clarity | S |
-| 0.6 | **Settings accordion** — wrap each settings group (Branding, Notice, Social) in a collapsible card. All collapsed by default except the first. | 🟢 UX / Clarity | S |
-| 0.7 | **Optional fields in upload form collapsed** — Co-Sponsors, Tags, and More Info hidden under a "▾ Optional fields" toggle. Reduces first-view noise significantly. | 🟢 UX / Clarity | XS |
+| Public legislative page | ✓ | ✓ | ✓ |
+| Documents + Members | ✓ | ✓ | ✓ |
+| Basic branding | ✓ | ✓ | ✓ |
+| 1 admin user | ✓ | ✓ | ✓ |
+| Basic analytics | ✓ | ✓ | ✓ |
+| Advanced analytics + export | — | ✓ | ✓ |
+| Up to 5 users (editors) | — | ✓ | ✓ |
+| Barangay-level editors | — | — | ✓ |
+| Custom domain | — | — | ✓ |
+| Priority support | — | — | ✓ |
 
-> **Phase 0 can be completed entirely within the current `index.html`** — no build tooling, no migration, no Firebase changes required for most items.
+### Enforcement (how it works)
+- `lguRegistry/{lguId}.tier` = tier string
+- `lguRegistry/{lguId}.features` = `{ advancedAnalytics: bool, additionalUsers: bool }`
+- Analytics tab checks tier before rendering; locked banner shown for Starter
+- Superadmin toggles features and tier manually from Platform > LGUs tab
 
----
-
-### PHASE 1 — Foundation: Roles & Secure Rules
-**Goal: Lay the security and data model foundation. Existing users unaffected.**
-
-| # | Task | Notes |
-|---|---|---|
-| 1.1 | Create `users/{uid}` collection in Firestore | Migrate current `admin/profile` → first user document with `role: 'admin'` |
-| 1.2 | Add Firebase Cloud Functions project | `setUserRole`, `getUserRole` — callable functions only Super Admin can invoke |
-| 1.3 | Promote current admin to `role: 'admin'` via one-time script | One `setCustomUserClaims()` call |
-| 1.4 | Deploy updated Firestore security rules | Role-scoped, LGU-scoped rules from §4 above |
-| 1.5 | Update client auth logic to read `role` from token claims | Gate UI sections based on role |
-
----
-
-### PHASE 2 — Multi-Admin: Invite & Manage Users
-**Goal: Allow a Full Admin to invite editors and viewers.**
-
-| # | Task | Notes |
-|---|---|---|
-| 2.1 | Add **Users tab** to admin sidebar | Visible only to `admin` and `superadmin` roles |
-| 2.2 | Invite by email flow | Firebase creates account → Cloud Function sets role claim → user receives email |
-| 2.3 | User list: active, suspended, pending invite | Admin can suspend (not delete) access |
-| 2.4 | Role-gated UI | Editors see Docs + Members tabs only; Settings and Users tabs hidden for editors/viewers |
-| 2.5 | Activity log collection | `lgus/{lguId}/activityLog/{id}` — records who changed what and when |
+### Still Needed
+- User count enforcement (block adding users when tier limit exceeded)
+- "Your Plan" panel in LGU Settings showing what's active/locked
+- `paidUntil` timestamp + auto-downgrade warning
+- Pending feature requests badged in Platform > LGUs
 
 ---
 
-### PHASE 3 — Admin Panel Redesign (Full)
-**Goal: Ship the full sidebar + drawer UI redesign from §3.**
-
-| # | Task | Notes |
-|---|---|---|
-| 3.1 | Migrate `index.html` to React components | Vite + React already in `package.json` — split views into component files |
-| 3.2 | Implement left sidebar navigation | Replace top tab bar; built for scalability |
-| 3.3 | Slide-in drawer component | Shared by Add Document, Add Member, Edit Document, Edit Member |
-| 3.4 | Settings accordion component | Branding / Notice / Social — one open at a time |
-| 3.5 | Activity log view in sidebar | Read-only list of recent changes with user, action, timestamp |
-
----
-
-### PHASE 4 — Super Admin Dashboard
-**Goal: Central control panel for managing all LGUs and all users.**
-
-| # | Task | Notes |
-|---|---|---|
-| 4.1 | `view-superadmin` section / route | Only accessible with `role: 'superadmin'` claim |
-| 4.2 | LGU management | Create new LGU instances (`lgus/{lguId}/profile`), assign first admin |
-| 4.3 | Global user management | List all users across all LGUs, reassign roles, suspend |
-| 4.4 | System-wide settings | Global download notice defaults, email service config |
-| 4.5 | Enable Firebase App Check | Prevents unauthorized API calls from outside the app |
-
----
-
-### PHASE 5 — Multi-Tenant (Optional / Future)
-**Goal: One deployment serves multiple LGUs (SB Dalaguete, SB Carcar, SP Cebu, etc.)**
-
-| # | Task | Notes |
-|---|---|---|
-| 5.1 | Migrate data paths to `lgus/{lguId}/*` | Replace hardcoded `artifacts/sb-argao/` path |
-| 5.2 | LGU selector on login or subdomain routing | `argao.sb-lis.gov.ph` vs `dalaguete.sb-lis.gov.ph` |
-| 5.3 | Per-LGU branding isolation | Each LGU has its own seal, colors, contact info |
-| 5.4 | Cross-LGU search (Super Admin only) | Super admin can query across all LGU document libraries |
-
----
-
-## 6. Phase Summary & Recommended Sequence
+## 7. Next Priority Queue
 
 ```
-Phase 0 ──► NOW       Quick wins in the current index.html (no migration)
-Phase 1 ──► Next      Security foundation: roles, rules, users collection
-Phase 2 ──► After 1   Multi-admin: invite system, role-gated UI, activity log
-Phase 3 ──► After 2   Full admin UI redesign (React components + drawers)
-Phase 4 ──► After 3   Super admin dashboard
-Phase 5 ──► Future    Full multi-tenant if expanding to other LGUs
-```
+Priority 1 — Phase 2.5 (Multi-tenancy cleanup)
+  ► 2.5.5: Hash-based public URL per LGU (window.location.hash)
+  ► 2.5.6: Show admin "Your public portal URL" after login
 
-**Minimum viable improvement that adds real security and usability:**
-Complete **Phase 0 + Phase 1**. These two phases together fix the biggest pain points (UI clutter + open Firestore rules) with the least risk of breaking existing functionality.
+Priority 2 — Phase 0.7
+  ► Collapse optional fields (co-sponsors, tags, more info) under toggle
+
+Priority 3 — Phase 2 activity log
+  ► lgus/{lguId}/activityLog collection
+  ► Lightweight write on doc/member add/edit/delete
+
+Priority 4 — Phase 3 (React migration + sidebar)
+  ► This is the big lift; plan separately
+
+Priority 5 — Phase 4.5 Firebase App Check
+  ► 1-2 hour addition; high security value
+```
 
 ---
 
-## 7. File / Folder Structure (Target — Phase 3+)
+## 8. File / Folder Structure (Target — Phase 3+)
 
 ```
 erp-legislative/
@@ -382,14 +278,15 @@ erp-legislative/
 │   ├── components/
 │   │   ├── layout/
 │   │   │   ├── AdminSidebar.jsx
-│   │   │   ├── Drawer.jsx       ← shared slide-in panel
+│   │   │   ├── Drawer.jsx
 │   │   │   └── Toast.jsx
 │   │   ├── admin/
 │   │   │   ├── DocumentsTab.jsx
 │   │   │   ├── MembersTab.jsx
 │   │   │   ├── SettingsTab.jsx
 │   │   │   ├── ProfileTab.jsx
-│   │   │   └── UsersTab.jsx     ← Phase 2
+│   │   │   ├── UsersTab.jsx
+│   │   │   └── AnalyticsTab.jsx
 │   │   └── public/
 │   │       ├── PublicView.jsx
 │   │       ├── ContactView.jsx
@@ -400,14 +297,15 @@ erp-legislative/
 │   │   └── useMembers.js
 │   └── views/
 │       ├── AdminView.jsx
+│       ├── PlatformView.jsx
 │       ├── PublicView.jsx
 │       └── LoginView.jsx
-├── functions/                   ← Phase 1 (Firebase Cloud Functions)
+├── functions/                   ← Phase 1 stretch (Firebase Cloud Functions)
 │   ├── index.js
 │   └── setUserRole.js
 ├── firestore.rules
-├── .env                         ← Firebase config (not committed)
-├── .env.example                 ← committed template
+├── .env
+├── .env.example
 └── package.json
 ```
 

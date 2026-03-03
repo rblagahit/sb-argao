@@ -7,86 +7,175 @@ service cloud.firestore {
     // This lets new admins self-register without needing a bootstrap script.
     // get() in rules bypasses client-facing security rules and reads directly.
 
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    // Role is stored in users/{uid}.role (Firestore), not Custom Claims.
+    // get() in rules reads directly, bypassing client-facing security rules.
+
     function userRole() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
-
     function userLguId() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.lguId;
     }
-
-    function isAdmin(lguId) {
-      return request.auth != null
-          && userRole() in ['admin', 'superadmin']
-          && (userRole() == 'superadmin' || userLguId() == lguId);
+    function userBarangayId() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.barangayId;
     }
 
+    // True when the requesting user is the bootstrapped platform admin.
+    // Acts as fallback if their 'role' field is overwritten.
+    function isFirstAdmin() {
+      return request.auth != null
+          && exists(/databases/$(database)/documents/setup/bootstrapped)
+          && get(/databases/$(database)/documents/setup/bootstrapped).data.by == request.auth.uid;
+    }
+
+    // superadmin = platform owner of the SaaS.
     function isSuperAdmin() {
       return request.auth != null
-          && userRole() == 'superadmin';
+          && (userRole() == 'superadmin' || isFirstAdmin());
     }
 
-    // True when no superadmin has been bootstrapped yet
-    // (setup/bootstrapped doc does not exist).
+    // admin = LGU client who registered an account. Full LGU-level access.
+    function isAdmin(lguId) {
+      return isSuperAdmin()
+          || (request.auth != null
+              && userRole() == 'admin'
+              && userLguId() == lguId);
+    }
+
+    // editor = LGU staff scoped to a barangay (or whole LGU if no barangayId).
+    function isBarangayAdmin(lguId, barangayId) {
+      return isAdmin(lguId)
+          || (request.auth != null
+              && userRole() == 'editor'
+              && userLguId() == lguId
+              && userBarangayId() == barangayId);
+    }
+
+    // True when no superadmin has been bootstrapped yet.
     function isFirstSetup() {
       return !exists(/databases/$(database)/documents/setup/bootstrapped);
     }
 
+    // True when a valid pending invite exists for the given email and role.
+    function hasValidInvite(email, role) {
+      let inv = /databases/$(database)/documents/userInvites/$(email);
+      return exists(inv)
+          && get(inv).data.status == 'pending'
+          && get(inv).data.role   == role;
+    }
+
     // ── One-time setup document ───────────────────────────────────────────────
-    // Written by the first registered user to lock out subsequent self-grants.
     match /setup/bootstrapped {
       allow read:   if true;
-      allow create: if request.auth != null;   // first auth user can write once
+      allow create: if request.auth != null;
       allow update, delete: if isSuperAdmin();
     }
 
     // ── Users collection ─────────────────────────────────────────────────────
     match /users/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
+      // get  = read a specific document.
+      // list = query/collection scan (getDocs on the whole collection).
+      // Separating them avoids evaluating resource.data on every doc during a list.
+      allow get:  if request.auth != null
+                  && (request.auth.uid == uid || isSuperAdmin() || isAdmin(resource.data.lguId));
+      // Admins can list users filtered by their own lguId (client sends where('lguId','==',lguId)).
+      allow list: if request.auth != null && (isSuperAdmin() || userRole() == 'admin');
 
-      // Self-registration:
-      //   • Any authenticated user may CREATE their own doc with role 'pending'.
-      //   • The very first registration (before setup/bootstrapped exists) may
-      //     claim role 'superadmin' — this is the one-time bootstrap path.
+      // Self-registration (three paths):
+      //   1. First bootstrap → claim 'superadmin'
+      //   2. Pre-invited by admin → claim the invited role
+      //   3. Open registration → claim 'pending'
       allow create: if request.auth != null
                     && request.auth.uid == uid
                     && (
-                      request.resource.data.role == 'pending'
-                      || (isFirstSetup() && request.resource.data.role == 'superadmin')
+                      (isFirstSetup() && request.resource.data.role == 'superadmin')
+                      || hasValidInvite(request.resource.data.email, request.resource.data.role)
+                      || request.resource.data.role == 'pending'
                     );
 
       // Self-profile update (name, image, bio, contactEmail, isComplete…).
-      // Users may NOT change their own role or lguId.
+      // Users may NOT change role, lguId, or barangayId — only admin or superadmin can.
       allow update: if isSuperAdmin()
+                    || isAdmin(resource.data.lguId)
                     || (request.auth != null
                         && request.auth.uid == uid
-                        && request.resource.data.role  == resource.data.role
-                        && request.resource.data.lguId == resource.data.lguId);
+                        && request.resource.data.role        == resource.data.role
+                        && request.resource.data.lguId       == resource.data.lguId
+                        && request.resource.data.barangayId  == resource.data.barangayId);
 
       allow delete: if isSuperAdmin();
     }
 
+    // ── Invite registry ───────────────────────────────────────────────────────
+    // Admins create invites for their LGU. Invited users can mark their own accepted.
+    match /userInvites/{email} {
+      allow read: if request.auth != null
+                  && (isSuperAdmin()
+                      || isAdmin(resource.data.lguId)
+                      || request.auth.token.email == email);
+      allow create: if request.auth != null
+                    && (isSuperAdmin() || isAdmin(request.resource.data.lguId));
+      allow update: if request.auth != null
+                    && (isSuperAdmin()
+                        || isAdmin(resource.data.lguId)
+                        || request.auth.token.email == email);   // invited user marks accepted
+      allow delete: if request.auth != null
+                    && (isSuperAdmin() || isAdmin(resource.data.lguId));
+    }
+
+    // ── LGU Registry ─────────────────────────────────────────────────────────
+    // Subscription tier, payment status, and expiry per LGU.
+    // Only the platform superadmin can write. Any authenticated user can read (for admin pricing tab).
+    match /lguRegistry/{lguId} {
+      allow read:  if request.auth != null;
+      allow write: if isSuperAdmin();
+    }
+
     // ── Municipal data ────────────────────────────────────────────────────────
-    // Public read. Admin write scoped to their lguId.
     match /lgus/{lguId}/legislations/{docId} {
       allow read:  if true;
-      allow write: if isAdmin(lguId);
+      allow write: if request.auth != null
+                   && userRole() in ['admin', 'editor']
+                   && (isSuperAdmin() || userLguId() == lguId);
     }
 
     match /lgus/{lguId}/members/{docId} {
       allow read:  if true;
-      allow write: if isAdmin(lguId);
+      allow write: if request.auth != null
+                   && userRole() in ['admin', 'editor']
+                   && (isSuperAdmin() || userLguId() == lguId);
     }
 
     match /lgus/{lguId}/settings/{docId} {
       allow read:  if true;
-      allow write: if isAdmin(lguId);
+      allow write: if isAdmin(lguId);   // editor cannot change settings
+    }
+
+    // ── Activity Log ──────────────────────────────────────────────────────────
+    // Admins and editors can write log entries (client-side, fire-and-forget).
+    // Only admins (Premium feature) and superadmin can read the log.
+    match /lgus/{lguId}/activityLog/{entryId} {
+      allow read:   if isAdmin(lguId);
+      allow create: if request.auth != null
+                    && userRole() in ['admin', 'editor']
+                    && (isSuperAdmin() || userLguId() == lguId);
+      allow update, delete: if false;  // immutable audit log
+    }
+
+    // ── Feature Requests ─────────────────────────────────────────────────────
+    // LGU admins can create/read their own requests. Superadmin can read/update all.
+    match /featureRequests/{reqId} {
+      allow read:   if request.auth != null && (isSuperAdmin() || isAdmin(resource.data.lguId));
+      allow create: if request.auth != null && isAdmin(request.resource.data.lguId);
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
     }
 
     // ── Barangay data ─────────────────────────────────────────────────────────
     match /lgus/{lguId}/barangays/{barangayId}/{document=**} {
       allow read:  if true;
-      allow write: if isAdmin(lguId);
+      allow write: if isBarangayAdmin(lguId, barangayId);
     }
 
   }

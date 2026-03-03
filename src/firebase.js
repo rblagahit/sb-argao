@@ -30,26 +30,22 @@ export const LGU_ID = import.meta.env.VITE_LGU_ID || 'sb-argao';
 //   3. Register your domain at https://www.google.com/recaptcha/admin/create
 //   4. Copy the site key into VITE_RECAPTCHA_SITE_KEY in .env
 //
-// In development: a debug token is auto-generated. Open DevTools console,
-// copy the token, then add it in Firebase Console → App Check → Apps →
-// Manage debug tokens.
+// In development: set VITE_RECAPTCHA_SITE_KEY in .env and set
+// FIREBASE_APPCHECK_DEBUG_TOKEN=true in .env (or hard-code a debug UUID here).
+// Open DevTools console to see the generated debug token, then register it in
+// Firebase Console → App Check → Apps → Manage debug tokens.
 
-if (import.meta.env.PROD) {
-  const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
-  if (siteKey && siteKey !== 'your-recaptcha-v3-site-key') {
-    initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(siteKey),
-      isTokenAutoRefreshEnabled: true,
-    });
-  } else {
-    console.warn('[AppCheck] VITE_RECAPTCHA_SITE_KEY not set — App Check disabled in production.');
+const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+
+if (siteKey) {
+  if (!import.meta.env.PROD) {
+    // eslint-disable-next-line no-restricted-globals
+    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   }
-} else {
-  // Development: enable debug mode so App Check tokens can be generated locally.
-  // eslint-disable-next-line no-restricted-globals
-  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider('debug'),
+    provider: new ReCaptchaV3Provider(siteKey),
     isTokenAutoRefreshEnabled: true,
   });
+} else {
+  console.warn('[AppCheck] VITE_RECAPTCHA_SITE_KEY not set — App Check disabled.');
 }

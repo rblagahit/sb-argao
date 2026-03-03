@@ -22,6 +22,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <style>
     * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
 
@@ -99,6 +100,12 @@
         </div>
 
         <div class="flex items-center gap-3">
+          <!-- Platform admin link — shown only for superadmins -->
+          <button id="platformPanelBtn" onclick="window.navigateTo('platform')"
+                  class="hidden px-4 py-2 bg-purple-50 border border-purple-200 text-purple-700 rounded-xl font-bold text-sm hover:bg-purple-100 transition-all items-center gap-2">
+            <i class="fas fa-globe text-xs"></i>
+            <span class="hidden sm:inline">Platform</span>
+          </button>
           <!-- Admin panel link — shown only when logged in -->
           <button id="adminPanelBtn" onclick="window.navigateTo('admin')"
                   class="hidden px-4 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-xl font-bold text-sm hover:bg-blue-100 transition-all items-center gap-2">
@@ -219,6 +226,12 @@
             </div>
           </div>
 
+          <!-- Barangay search matches (shown only when search term matches a barangay) -->
+          <div id="barangayResults" class="hidden mb-8">
+            <p class="text-xs font-black uppercase tracking-widest text-teal-600 mb-3"><i class="fas fa-map-marker-alt mr-1"></i>Barangay Matches</p>
+            <div id="barangayResultsList" class="flex flex-wrap gap-3"></div>
+          </div>
+
           <div id="documentGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
 
           <div id="emptyState" class="hidden text-center py-24">
@@ -320,12 +333,52 @@
               <div class="relative group">
                 <i class="fas fa-lock absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
                 <input type="password" id="regPass" placeholder="Password (min 8 chars)" required minlength="8"
-                       class="w-full pl-14 pr-6 py-4 bg-slate-50 rounded-2xl outline-none border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+                       class="w-full pl-14 pr-14 py-4 bg-slate-50 rounded-2xl outline-none border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+                <button type="button" onclick="window.togglePassVis('regPass','eyePass')"
+                        class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors focus:outline-none">
+                  <i id="eyePass" class="fas fa-eye text-sm"></i>
+                </button>
               </div>
               <div class="relative group">
                 <i class="fas fa-lock absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
                 <input type="password" id="regPassConfirm" placeholder="Confirm Password" required
+                       class="w-full pl-14 pr-14 py-4 bg-slate-50 rounded-2xl outline-none border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+                <button type="button" onclick="window.togglePassVis('regPassConfirm','eyePassConfirm')"
+                        class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors focus:outline-none">
+                  <i id="eyePassConfirm" class="fas fa-eye text-sm"></i>
+                </button>
+              </div>
+              <!-- LGU registration info — shown for new LGU applicants; invited users can skip -->
+              <div class="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3 text-xs text-blue-700 leading-relaxed">
+                <i class="fas fa-info-circle mr-1.5"></i>
+                <strong>New LGU account?</strong> Fill in your organization details below so we can set up your portal. Skip if you were invited by an existing admin.
+              </div>
+              <div class="relative group">
+                <i class="fas fa-building absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
+                <input type="text" id="regOrgName" placeholder="Organization / LGU Name (e.g., SB ng Argao)"
                        class="w-full pl-14 pr-6 py-4 bg-slate-50 rounded-2xl outline-none border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              </div>
+              <div class="group">
+                <div class="relative">
+                  <i class="fas fa-link absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
+                  <input type="text" id="regLguSlug" placeholder="Preferred portal ID (e.g., sb-argao)"
+                         maxlength="40"
+                         oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'')"
+                         class="w-full pl-14 pr-6 py-4 bg-slate-50 rounded-2xl outline-none border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+                </div>
+                <p class="text-[10px] text-slate-400 pl-2 mt-1.5">Lowercase letters, numbers, hyphens only — becomes your unique portal ID.</p>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="relative group">
+                  <i class="fas fa-id-badge absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors text-sm"></i>
+                  <input type="text" id="regPosition" placeholder="Your position/title"
+                         class="w-full pl-11 pr-4 py-4 bg-slate-50 rounded-2xl outline-none border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all text-sm">
+                </div>
+                <div class="relative group">
+                  <i class="fas fa-phone absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors text-sm"></i>
+                  <input type="tel" id="regPhone" placeholder="Contact number"
+                         class="w-full pl-11 pr-4 py-4 bg-slate-50 rounded-2xl outline-none border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all text-sm">
+                </div>
               </div>
               <div id="regNote" class="text-xs text-slate-400 text-center py-1"></div>
               <button type="submit" id="registerBtn"
@@ -371,7 +424,15 @@
               <h2 class="text-2xl font-black text-slate-900">Management Panel</h2>
               <span id="roleChip" class="hidden px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider"></span>
             </div>
-            <p class="text-slate-500 text-sm mt-1 ml-13">Manage members and legislative documents</p>
+            <p class="text-slate-500 text-sm mt-1">Manage members and legislative documents</p>
+            <p id="adminPortalLine" class="hidden text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
+              <i class="fas fa-globe text-[10px]"></i>
+              <a id="adminPortalAnchor" href="#" target="_blank" rel="noopener"
+                 class="text-blue-600 font-semibold hover:underline truncate max-w-xs"></a>
+              <button id="adminPortalCopy" class="flex-shrink-0 text-slate-400 hover:text-blue-600 transition-colors" title="Copy portal link">
+                <i class="fas fa-copy text-[10px]"></i>
+              </button>
+            </p>
           </div>
         </div>
         <div class="flex gap-4">
@@ -397,20 +458,32 @@
           <i class="fas fa-users mr-2"></i>Members
         </button>
         <button onclick="window.switchAdminTab('barangay')" id="tab-barangay"
-                class="admin-tab px-6 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all">
+                class="admin-tab px-6 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all hidden">
           <i class="fas fa-map-marked-alt mr-2"></i>Barangays
         </button>
         <button onclick="window.switchAdminTab('settings')" id="tab-settings"
-                class="admin-tab px-6 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all">
+                class="admin-tab px-6 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all hidden">
           <i class="fas fa-sliders mr-2"></i>Settings
         </button>
         <button onclick="window.switchAdminTab('profile')" id="tab-profile"
-                class="admin-tab px-6 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all">
+                class="admin-tab px-6 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all hidden">
           <i class="fas fa-user-circle mr-2"></i>My Profile
         </button>
+        <button onclick="window.switchAdminTab('users')" id="tab-users"
+                class="admin-tab px-6 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all hidden">
+          <i class="fas fa-users-cog mr-2"></i>Users
+        </button>
+        <button onclick="window.switchAdminTab('analytics')" id="tab-analytics"
+                class="admin-tab px-6 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all hidden">
+          <i class="fas fa-chart-bar mr-2"></i>Advanced Analytics
+        </button>
         <button onclick="window.switchAdminTab('pricing')" id="tab-pricing"
-                class="admin-tab px-6 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all">
-          <i class="fas fa-tags mr-2"></i>Packages
+                class="admin-tab px-6 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all hidden">
+          <i class="fas fa-tags mr-2"></i>Subscription
+        </button>
+        <button onclick="window.switchAdminTab('activity')" id="tab-activity"
+                class="admin-tab px-6 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all hidden">
+          <i class="fas fa-history mr-2"></i>Activity
         </button>
       </div>
 
@@ -888,11 +961,8 @@
         </div>
       </div>
 
-    </section>
-  </div>
-
-  <!-- ═══ BARANGAY TAB PANEL ═══ -->
-  <div id="admin-tab-barangay" class="hidden">
+      <!-- ═══ BARANGAY TAB PANEL ═══ -->
+      <div id="admin-tab-barangay" class="hidden">
     <div class="flex items-center justify-between mb-6">
       <div>
         <h3 class="text-xl font-black text-slate-900">Barangays</h3>
@@ -944,94 +1014,285 @@
         <p class="text-xs mt-1">Click "Add Barangay" to register your first barangay unit.</p>
       </div>
     </div>
+      </div>
+
+      <!-- ═══ SUBSCRIPTION TAB PANEL ═══ -->
+      <div id="admin-tab-pricing" class="hidden">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h3 class="text-xl font-black text-slate-900">Subscription</h3>
+            <p class="text-sm text-slate-500">Your current plan and available upgrades</p>
+          </div>
+          <button type="button" onclick="window.loadAdminSubscription()"
+                  class="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all">
+            <i class="fas fa-sync-alt text-xs"></i> Refresh
+          </button>
+        </div>
+
+        <!-- Current plan status (dynamic) -->
+        <div id="subscriptionStatus" class="mb-8">
+          <div class="text-center py-10 text-slate-400"><i class="fas fa-spinner fa-spin text-2xl block mb-2"></i></div>
+        </div>
+
+        <!-- Plan comparison cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" id="planCards">
+          <!-- Starter -->
+          <div class="plan-card bg-white rounded-3xl border-2 border-slate-200 p-8 flex flex-col" data-tier="starter">
+            <div class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-500 text-xl mb-5"><i class="fas fa-seedling"></i></div>
+            <p class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Starter</p>
+            <h4 class="text-3xl font-black text-slate-900 mb-1">Free</h4>
+            <p class="text-slate-500 text-sm mb-6">Forever — no credit card needed</p>
+            <ul class="space-y-3 text-sm text-slate-600 flex-1 mb-8">
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Up to 100 legislative documents</li>
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> 1 Admin account</li>
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Public document portal</li>
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Members directory</li>
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Basic branding</li>
+              <li class="flex items-center gap-2"><i class="fas fa-times text-slate-300 text-xs"></i> Barangay sub-portals</li>
+              <li class="flex items-center gap-2"><i class="fas fa-times text-slate-300 text-xs"></i> Excel export</li>
+            </ul>
+            <span class="plan-cta block text-center py-3 rounded-2xl border-2 border-slate-200 text-slate-400 font-bold text-sm">Entry Tier</span>
+          </div>
+          <!-- Standard -->
+          <div class="plan-card bg-white rounded-3xl border-2 border-blue-500 p-8 flex flex-col relative shadow-lg shadow-blue-100" data-tier="standard">
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2">
+              <span class="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow">Most Popular</span>
+            </div>
+            <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 text-xl mb-5"><i class="fas fa-building-columns"></i></div>
+            <p class="text-xs font-black uppercase tracking-widest text-blue-500 mb-1">Standard</p>
+            <h4 class="text-3xl font-black text-slate-900 mb-1">&#8369;1,500<span class="text-base font-semibold text-slate-400">/mo</span></h4>
+            <p class="text-slate-500 text-sm mb-6">For active municipal LGUs</p>
+            <ul class="space-y-3 text-sm text-slate-600 flex-1 mb-8">
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Unlimited documents</li>
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Up to 5 Admin accounts</li>
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Up to 10 Barangay sub-portals</li>
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Excel bulk export</li>
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Full branding customization</li>
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Email support</li>
+            </ul>
+            <a href="mailto:rlagahit@icloud.com?subject=Standard Plan Inquiry" class="plan-cta block text-center py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-sm hover:from-blue-700 hover:to-purple-700 transition-all shadow-md">
+              Contact Us to Upgrade
+            </a>
+          </div>
+          <!-- Premium -->
+          <div class="plan-card bg-white rounded-3xl border-2 border-purple-200 p-8 flex flex-col" data-tier="premium">
+            <div class="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600 text-xl mb-5"><i class="fas fa-crown"></i></div>
+            <p class="text-xs font-black uppercase tracking-widest text-purple-500 mb-1">Premium</p>
+            <h4 class="text-3xl font-black text-slate-900 mb-1">&#8369;3,500<span class="text-base font-semibold text-slate-400">/mo</span></h4>
+            <p class="text-slate-500 text-sm mb-6">For large cities &amp; provinces</p>
+            <ul class="space-y-3 text-sm text-slate-600 flex-1 mb-8">
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Everything in Standard</li>
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Unlimited Admin accounts</li>
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Unlimited Barangay portals</li>
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Custom domain</li>
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Activity audit log</li>
+              <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Priority support &amp; SLA</li>
+            </ul>
+            <a href="mailto:rlagahit@icloud.com?subject=Premium Plan Inquiry" class="plan-cta block text-center py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-sm hover:from-purple-700 hover:to-pink-700 transition-all shadow-md">
+              Contact Us to Upgrade
+            </a>
+          </div>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex items-start gap-3 text-sm text-blue-800">
+          <i class="fas fa-info-circle mt-0.5 flex-shrink-0"></i>
+          <div>
+            <strong>All plans include:</strong> Firebase hosting, real-time updates, mobile-responsive design, and RA 7160 compliance.
+            To upgrade your plan, contact <a href="mailto:rlagahit@icloud.com" class="underline font-semibold">rlagahit@icloud.com</a>.
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ ACTIVITY LOG TAB PANEL ═══ -->
+      <div id="admin-tab-activity" class="hidden">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h3 class="text-xl font-black text-slate-900">Activity Log</h3>
+            <p class="text-sm text-slate-500">Audit trail of document and member changes</p>
+          </div>
+          <button type="button" onclick="window.loadActivityLog()"
+                  class="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all">
+            <i class="fas fa-sync-alt text-xs"></i> Refresh
+          </button>
+        </div>
+        <div id="activityLogContent">
+          <div class="text-center py-10 text-slate-400"><i class="fas fa-spinner fa-spin text-2xl block mb-2"></i></div>
+        </div>
+      </div>
+
+      <!-- ═══ USERS TAB PANEL ═══ -->
+      <div id="admin-tab-users" class="hidden">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h3 class="text-xl font-black text-slate-900">User Accounts</h3>
+            <p class="text-sm text-slate-500">Review and assign roles to registered accounts</p>
+          </div>
+          <div class="flex items-center gap-2" id="usersTabActions">
+            <button type="button" id="inviteUserBtn" onclick="window.openInviteUserModal()"
+                    class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-sm">
+              <i class="fas fa-user-plus text-xs"></i> Add User
+            </button>
+            <button type="button" id="requestUsersBtn" onclick="window.requestAdditionalUsers()" class="hidden flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl font-bold text-sm hover:bg-amber-100 transition-all">
+              <i class="fas fa-lock text-xs"></i> Request User Slots
+            </button>
+            <button type="button" onclick="window.loadUsers()"
+                    class="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all">
+              <i class="fas fa-sync-alt text-xs"></i> Refresh
+            </button>
+          </div>
+        </div>
+        <!-- Pending invites section -->
+        <div id="invitesList" class="mb-6"></div>
+        <!-- Registered users -->
+        <div id="usersList">
+          <div class="text-center py-16 text-slate-400">
+            <i class="fas fa-users text-4xl mb-3 block opacity-30"></i>
+            <p class="text-sm font-semibold">Loading users…</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ ANALYTICS TAB PANEL ═══ -->
+      <div id="admin-tab-analytics" class="hidden">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h3 class="text-xl font-black text-slate-900">Advanced Analytics</h3>
+            <p class="text-sm text-slate-500">In-depth legislative activity reports, filters, and exports</p>
+          </div>
+          <button type="button" onclick="window.renderAnalytics()"
+                  class="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all">
+            <i class="fas fa-sync-alt text-xs"></i> Refresh
+          </button>
+        </div>
+        <!-- Filter bar (shown only when tier is unlocked) -->
+        <div id="analyticsFilterBar" class="hidden bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-6 flex flex-wrap gap-3 items-end">
+          <div>
+            <label class="text-[10px] font-black uppercase text-slate-400 block mb-1">Barangay</label>
+            <select id="analyticsBarangayFilter"
+                    class="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white outline-none focus:border-blue-400">
+              <option value="">All Barangays</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] font-black uppercase text-slate-400 block mb-1">Document Type</label>
+            <select id="analyticsTypeFilter"
+                    class="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white outline-none focus:border-blue-400">
+              <option value="">All Types</option>
+              <option value="Ordinance">Ordinance</option>
+              <option value="Resolution">Resolution</option>
+              <option value="Minute">Minute</option>
+              <option value="Motion">Motion</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] font-black uppercase text-slate-400 block mb-1">Year</label>
+            <select id="analyticsYearFilter"
+                    class="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white outline-none focus:border-blue-400">
+              <option value="">All Years</option>
+            </select>
+          </div>
+          <button onclick="window.renderAnalytics()"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-xs hover:bg-blue-700 transition-all">
+            <i class="fas fa-filter mr-1"></i>Apply
+          </button>
+          <button onclick="window.exportAnalyticsReport()"
+                  class="px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-xs hover:bg-emerald-700 transition-all" id="analyticsExportBtn">
+            <i class="fas fa-download mr-1"></i>Export Report
+          </button>
+        </div>
+        <div id="analyticsContent">
+          <div class="text-center py-16 text-slate-400">
+            <i class="fas fa-chart-bar text-4xl mb-3 block opacity-30"></i>
+            <p class="text-sm font-semibold">Loading analytics…</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
   </div>
 
-  <!-- ═══ PRICING TAB PANEL ═══ -->
-  <div id="admin-tab-pricing" class="hidden">
-    <div class="mb-8">
-      <h3 class="text-xl font-black text-slate-900">Service Packages</h3>
-      <p class="text-sm text-slate-500">Choose the plan that fits your LGU's needs</p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-      <!-- Free Tier -->
-      <div class="bg-white rounded-3xl border-2 border-slate-200 p-8 flex flex-col">
-        <div class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-500 text-xl mb-5">
-          <i class="fas fa-seedling"></i>
+  <!-- Invite User Modal -->
+  <div id="inviteUserModal"
+       class="fixed inset-0 z-[110] modal-overlay hidden flex items-center justify-center p-6 overflow-y-auto"
+       onclick="if(event.target===this) window.closeModal('inviteUserModal')">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden relative my-8">
+      <button onclick="window.closeModal('inviteUserModal')"
+              class="absolute top-5 right-5 w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all">
+        <i class="fas fa-times text-sm"></i>
+      </button>
+      <div class="p-8">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center">
+            <i class="fas fa-user-plus"></i>
+          </div>
+          <div>
+            <p class="text-xs font-black uppercase tracking-widest text-blue-600">User Management</p>
+            <h3 class="text-lg font-black text-slate-900">Invite a User</h3>
+          </div>
         </div>
-        <p class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Starter</p>
-        <h4 class="text-3xl font-black text-slate-900 mb-1">Free</h4>
-        <p class="text-slate-500 text-sm mb-6">Forever — no credit card needed</p>
-        <ul class="space-y-3 text-sm text-slate-600 flex-1 mb-8">
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Up to 100 legislative documents</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> 1 Admin account</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Public document portal</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Members directory</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Basic branding</li>
-          <li class="flex items-center gap-2"><i class="fas fa-times text-slate-300 text-xs"></i> Barangay sub-portals</li>
-          <li class="flex items-center gap-2"><i class="fas fa-times text-slate-300 text-xs"></i> Excel export</li>
-          <li class="flex items-center gap-2"><i class="fas fa-times text-slate-300 text-xs"></i> Priority support</li>
-        </ul>
-        <span class="block text-center py-3 rounded-2xl border-2 border-slate-200 text-slate-400 font-bold text-sm">Current Plan</span>
-      </div>
 
-      <!-- Standard Tier -->
-      <div class="bg-white rounded-3xl border-2 border-blue-500 p-8 flex flex-col relative shadow-lg shadow-blue-100">
-        <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-          <span class="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow">Most Popular</span>
-        </div>
-        <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 text-xl mb-5">
-          <i class="fas fa-building-columns"></i>
-        </div>
-        <p class="text-xs font-black uppercase tracking-widest text-blue-500 mb-1">Standard</p>
-        <h4 class="text-3xl font-black text-slate-900 mb-1">₱1,500<span class="text-base font-semibold text-slate-400">/mo</span></h4>
-        <p class="text-slate-500 text-sm mb-6">For active municipal LGUs</p>
-        <ul class="space-y-3 text-sm text-slate-600 flex-1 mb-8">
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Unlimited documents</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Up to 5 Admin accounts</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Up to 10 Barangay sub-portals</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Excel bulk export</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Full branding customization</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Document request tracking</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Email support</li>
-          <li class="flex items-center gap-2"><i class="fas fa-times text-slate-300 text-xs"></i> Custom domain</li>
-        </ul>
-        <a href="mailto:rlagahit@icloud.com?subject=Standard Plan Inquiry"
-           class="block text-center py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-sm hover:from-blue-700 hover:to-purple-700 transition-all shadow-md">
-          Contact Us to Upgrade
-        </a>
-      </div>
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-black uppercase text-slate-400 block mb-1.5 tracking-wider">Full Name <span class="text-red-400">*</span></label>
+              <input type="text" id="inviteName" placeholder="Hon. Maria Santos" required
+                     class="w-full p-3.5 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all text-sm">
+            </div>
+            <div>
+              <label class="text-xs font-black uppercase text-slate-400 block mb-1.5 tracking-wider">Email Address <span class="text-red-400">*</span></label>
+              <input type="email" id="inviteEmail" placeholder="user@lgu.gov.ph" required
+                     class="w-full p-3.5 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all text-sm">
+            </div>
+          </div>
 
-      <!-- Premium Tier -->
-      <div class="bg-white rounded-3xl border-2 border-purple-200 p-8 flex flex-col">
-        <div class="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600 text-xl mb-5">
-          <i class="fas fa-crown"></i>
-        </div>
-        <p class="text-xs font-black uppercase tracking-widest text-purple-500 mb-1">Premium</p>
-        <h4 class="text-3xl font-black text-slate-900 mb-1">₱3,500<span class="text-base font-semibold text-slate-400">/mo</span></h4>
-        <p class="text-slate-500 text-sm mb-6">For large cities &amp; provinces</p>
-        <ul class="space-y-3 text-sm text-slate-600 flex-1 mb-8">
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Everything in Standard</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Unlimited Admin accounts</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Unlimited Barangay portals</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Custom domain (e.g., sb.lgu.gov.ph)</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Activity audit log</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Dedicated onboarding</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Priority phone &amp; email support</li>
-          <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> SLA guarantee</li>
-        </ul>
-        <a href="mailto:rlagahit@icloud.com?subject=Premium Plan Inquiry"
-           class="block text-center py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-sm hover:from-purple-700 hover:to-pink-700 transition-all shadow-md">
-          Contact Us to Upgrade
-        </a>
-      </div>
-    </div>
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-1.5 tracking-wider">Role <span class="text-red-400">*</span></label>
+            <select id="inviteRole"
+                    class="w-full p-3.5 bg-slate-50 rounded-2xl border border-slate-200 font-semibold text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all">
+              <option value="editor">Editor — can upload &amp; edit docs/members</option>
+              <option value="viewer">Viewer — read-only access to admin panel</option>
+              <option value="admin">Admin — full LGU admin access</option>
+            </select>
+          </div>
 
-    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex items-start gap-3 text-sm text-blue-800">
-      <i class="fas fa-info-circle mt-0.5 flex-shrink-0"></i>
-      <div>
-        <strong>All plans include:</strong> Firebase hosting, real-time updates, mobile-responsive design, and RA 7160 compliance.
-        Contact <a href="mailto:rlagahit@icloud.com" class="underline font-semibold">rlagahit@icloud.com</a> to upgrade or for custom pricing for your province or city.
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-black uppercase text-slate-400 block mb-1.5 tracking-wider">Barangay ID <span class="text-slate-300 font-normal">(optional)</span></label>
+              <input type="text" id="inviteBarangayId" placeholder="brgy-poblacion"
+                     class="w-full p-3.5 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all text-sm">
+              <p class="text-[10px] text-slate-400 mt-1 ml-1">Programmatic key (no spaces)</p>
+            </div>
+            <div>
+              <label class="text-xs font-black uppercase text-slate-400 block mb-1.5 tracking-wider">Barangay Name <span class="text-slate-300 font-normal">(optional)</span></label>
+              <input type="text" id="inviteBarangayName" placeholder="Poblacion"
+                     class="w-full p-3.5 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all text-sm">
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs font-black uppercase text-slate-400 block mb-1.5 tracking-wider">Official Barangay Email <span class="text-slate-300 font-normal">(optional)</span></label>
+            <input type="email" id="inviteOfficialEmail" placeholder="barangay@lgu.gov.ph"
+                   class="w-full p-3.5 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all text-sm">
+          </div>
+
+          <label class="flex items-start gap-3 p-4 rounded-2xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-all">
+            <input type="checkbox" id="inviteToS" class="mt-0.5 w-4 h-4 accent-blue-600 flex-shrink-0">
+            <span class="text-xs text-slate-600 leading-relaxed">
+              I confirm this person has agreed to the <strong>Terms of Service</strong> and is authorized to access and manage legislative data for this LGU.
+            </span>
+          </label>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+          <button type="button" onclick="window.closeModal('inviteUserModal')"
+                  class="w-full py-3.5 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-all">
+            Cancel
+          </button>
+          <button type="button" id="sendInviteBtn" onclick="window.sendUserInvite()"
+                  class="w-full py-3.5 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
+            <i class="fas fa-paper-plane text-sm"></i> Send Invite
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -1257,14 +1518,96 @@
     </div>
   </div>
 
+  <!-- ═══ FIRST-TIME PROFILE COMPLETION MODAL ═══ -->
+  <!-- Shown to all newly registered users (admin/editor/viewer/pending) until isComplete=true -->
+  <div id="adminProfileModal"
+       class="fixed inset-0 z-[200] modal-overlay flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden relative flex flex-col max-h-[92vh]">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-6 flex-shrink-0">
+        <p class="text-xs font-black uppercase tracking-widest text-blue-200 mb-1">Welcome</p>
+        <h2 class="text-xl font-black text-white">Complete Your Profile</h2>
+        <p class="text-sm text-blue-100 mt-1">This helps verify your identity and set up your account.</p>
+      </div>
+      <!-- Form (scrollable) -->
+      <div class="p-8 space-y-5 overflow-y-auto">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <!-- Full Name -->
+          <div class="sm:col-span-2">
+            <label class="text-xs font-black uppercase tracking-wider text-slate-400 block mb-2"><i class="fas fa-user mr-1"></i>Full Name <span class="text-red-400">*</span></label>
+            <input type="text" id="adminProfileName" placeholder="e.g., Juan dela Cruz"
+                   class="w-full p-3.5 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all text-sm font-semibold">
+          </div>
+          <!-- Position -->
+          <div>
+            <label class="text-xs font-black uppercase tracking-wider text-slate-400 block mb-2"><i class="fas fa-id-badge mr-1"></i>Position / Designation <span class="text-red-400">*</span></label>
+            <input type="text" id="adminProfileRole" placeholder="e.g., SB Secretary"
+                   class="w-full p-3.5 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all text-sm font-semibold">
+          </div>
+          <!-- Contact Email -->
+          <div>
+            <label class="text-xs font-black uppercase tracking-wider text-slate-400 block mb-2"><i class="fas fa-envelope mr-1"></i>Contact Email <span class="text-red-400">*</span></label>
+            <input type="email" id="adminProfileEmail"
+                   class="w-full p-3.5 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all text-sm font-semibold">
+          </div>
+          <!-- Phone -->
+          <div>
+            <label class="text-xs font-black uppercase tracking-wider text-slate-400 block mb-2"><i class="fas fa-phone mr-1"></i>Contact Phone</label>
+            <input type="tel" id="adminProfilePhone" placeholder="09XX-XXX-XXXX"
+                   class="w-full p-3.5 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all text-sm font-semibold">
+          </div>
+          <!-- Profile Image URL -->
+          <div>
+            <label class="text-xs font-black uppercase tracking-wider text-slate-400 block mb-2"><i class="fas fa-image mr-1"></i>Profile Photo URL</label>
+            <input type="url" id="adminProfileImage" placeholder="https://…"
+                   class="w-full p-3.5 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all text-sm font-semibold">
+          </div>
+          <!-- Bio -->
+          <div class="sm:col-span-2">
+            <label class="text-xs font-black uppercase tracking-wider text-slate-400 block mb-2"><i class="fas fa-align-left mr-1"></i>Bio / About (optional)</label>
+            <textarea id="adminProfileBio" rows="2" placeholder="Brief background…"
+                      class="w-full p-3.5 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all text-sm font-semibold resize-none"></textarea>
+          </div>
+        </div>
+
+        <!-- Pending-only application fields -->
+        <div id="pendingProfileFields" class="hidden space-y-4 border-t border-slate-100 pt-5">
+          <p class="text-xs font-black uppercase tracking-widest text-amber-600"><i class="fas fa-clipboard-list mr-1"></i>Application Details</p>
+          <div>
+            <label class="text-xs font-black uppercase tracking-wider text-slate-400 block mb-2"><i class="fas fa-building mr-1"></i>Organization / LGU Name <span class="text-red-400">*</span></label>
+            <input type="text" id="adminProfileOrgLgu" placeholder="e.g., Sangguniang Bayan ng Argao"
+                   class="w-full p-3.5 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all text-sm font-semibold">
+          </div>
+          <div>
+            <label class="text-xs font-black uppercase tracking-wider text-slate-400 block mb-2"><i class="fas fa-question-circle mr-1"></i>Reason for Requesting Access</label>
+            <textarea id="adminProfileReason" rows="2" placeholder="Describe how you plan to use this system…"
+                      class="w-full p-3.5 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all text-sm font-semibold resize-none"></textarea>
+          </div>
+        </div>
+
+        <!-- Hidden fields used by completeAdminProfile (kept for backward compat) -->
+        <input type="hidden" id="adminProfileCommittees" value="">
+        <input type="hidden" id="adminProfileDocument" value="">
+        <input type="hidden" id="adminProfileAdditional" value="">
+
+        <button type="button" id="completeProfileBtn" onclick="window.completeAdminProfile()"
+                class="w-full py-4 rounded-2xl font-black text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all shadow-md">
+          <i class="fas fa-check mr-2"></i>Save & Continue
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ FIREBASE + APP LOGIC ═══ -->
   <script type="module">
     import { initializeApp }                          from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+    import { initializeAppCheck,
+             ReCaptchaV3Provider }                    from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app-check.js';
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
              onAuthStateChanged, signOut }            from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
     import { getFirestore, collection, onSnapshot,
              addDoc, updateDoc, setDoc, doc, increment, deleteDoc, getDoc, getDocs,
-             serverTimestamp, query,
+             serverTimestamp, query, where,
              orderBy, limit }                         from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -1276,17 +1619,42 @@
     };
 
     const app   = initializeApp(firebaseConfig);
+
+    // ── Firebase App Check (reCAPTCHA v3) ────────────────────────────────────
+    // Each Firebase project has its own reCAPTCHA site key.
+    // We pick the right key based on hostname so one build serves both projects.
+    // localhost is skipped — App Check debug mode is handled automatically.
+    const _appCheckKeys = {
+      'multi-legislative.web.app': '%VITE_RECAPTCHA_KEY_MULTI%',
+      'legislative.web.app':       '%VITE_RECAPTCHA_KEY_MULTI%',
+      'sb-argao.web.app':          '%VITE_RECAPTCHA_KEY_SB%',
+    };
+    const _recaptchaKey = _appCheckKeys[window.location.hostname];
+    if (_recaptchaKey) {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(_recaptchaKey),
+        isTokenAutoRefreshEnabled: true,
+      });
+    }
+
     const auth  = getAuth(app);
     const db    = getFirestore(app);
-    const lguId = '%VITE_LGU_ID%';
+    // lguId starts from URL hash (multi-LGU) or env var (single-LGU deployment).
+    // Example: multi-legislative.web.app#sb-argao → lguId = 'sb-argao'
+    const BUILT_IN_LGU_ID = '%VITE_LGU_ID%';
+    const _hashSlug       = window.location.hash.slice(1).replace(/[^a-z0-9-]/g, '');
+    const DEFAULT_LGU_ID  = _hashSlug || BUILT_IN_LGU_ID;
+    let lguId = DEFAULT_LGU_ID;
 
     let user = null, userRole = null, userLguId = null;
-    let localDocs = [], localMembers = [];
+    let localDocs = [], localMembers = [], localBarangays = [];
+    let _platformChartRole = null;   // Chart.js bar chart instance for overview
+    let _platformUsersUnsub = null;  // onSnapshot listener for platform overview
     let memberSearchTerm = '';
     let unsubDocs, unsubMembers, unsubSettings;
     let pendingDocUrl = '', pendingDocId = '';
 
-    const DEFAULT_DOWNLOAD_NOTICE = 'Downloaded documents are for reference only. Under RA 7160, they are not official or binding unless authenticated by the Office of the Secretary to the Sangguniang Bayan with official seal and signature. Certified True Copies must be requested from the SB Secretary’s Office.';
+    const DEFAULT_DOWNLOAD_NOTICE = "Downloaded documents are for reference only. Under RA 7160, they are not official or binding unless authenticated by the Office of the Secretary to the Sangguniang Bayan with official seal and signature. Certified True Copies must be requested from the SB Secretary's Office.";
     let settingsState = {
       downloadNotice: DEFAULT_DOWNLOAD_NOTICE,
       socialFacebook: '',
@@ -1301,9 +1669,20 @@
       contactEmail: ''
     };
 
-    const MEMBER_REF   = collection(db,'lgus',lguId,'members');
-    const DOC_REF      = collection(db,'lgus',lguId,'legislations');
-    const SETTINGS_DOC = doc(db,'lgus',lguId,'settings','general');
+    // Collection refs — let so they can be rebound when the active LGU changes.
+    let MEMBER_REF   = collection(db,'lgus',lguId,'members');
+    let DOC_REF      = collection(db,'lgus',lguId,'legislations');
+    let SETTINGS_DOC = doc(db,'lgus',lguId,'settings','general');
+
+    // Rebind collection refs to a new LGU and restart subscriptions.
+    function switchLgu(newLguId) {
+      if (newLguId === lguId) return;
+      lguId        = newLguId;
+      MEMBER_REF   = collection(db,'lgus',lguId,'members');
+      DOC_REF      = collection(db,'lgus',lguId,'legislations');
+      SETTINGS_DOC = doc(db,'lgus',lguId,'settings','general');
+      startSync();
+    }
 
     const escapeHtml = (str='') => str
       .replaceAll('&','&amp;')
@@ -1311,6 +1690,15 @@
       .replaceAll('>','&gt;')
       .replaceAll('"','&quot;')
       .replaceAll("'",'&#39;');
+
+    window.togglePassVis = (inputId, iconId) => {
+      const input = document.getElementById(inputId);
+      const icon  = document.getElementById(iconId);
+      if (!input || !icon) return;
+      const show = input.type === 'password';
+      input.type  = show ? 'text' : 'password';
+      icon.className = `fas fa-eye${show ? '-slash' : ''} text-sm`;
+    };
 
     const parseTags = (raw='') => raw.split(',').map(s=>s.trim()).filter(Boolean);
     const normalizeText = (val='') => val.toLowerCase().trim();
@@ -1390,10 +1778,34 @@
 
     /* ── Navigation ── */
     window.navigateTo = (view) => {
+      // Guard platform — only superadmin
+      if (view === 'platform' && userRole !== 'superadmin') {
+        showToast('Platform access requires superadmin role.', 'error'); return;
+      }
+      // Redirect pending/rejected users away from admin panel
+      if (view === 'admin' && (userRole === 'pending' || userRole === 'rejected')) {
+        view = 'pending';
+      }
+      // Tear down real-time platform overview listener when leaving
+      if (view !== 'platform' && _platformUsersUnsub) {
+        _platformUsersUnsub(); _platformUsersUnsub = null;
+      }
       document.querySelectorAll('.view-section').forEach(s=>s.classList.add('hidden'));
-      document.getElementById(`view-${view}`).classList.remove('hidden');
+      const target = document.getElementById(`view-${view}`);
+      if (!target) return;
+      target.classList.remove('hidden');
       window.scrollTo({top:0, behavior:'smooth'});
+      // Keep the URL hash in sync so each LGU's public page is bookmarkable/shareable.
+      if (view === 'public' && lguId) history.replaceState(null, '', '#' + lguId);
+      if (view === 'platform') window.loadPlatformOverview();
     };
+
+    // When the user navigates via browser back/forward (hash change), switch the public LGU view.
+    window.addEventListener('hashchange', () => {
+      if (user) return; // authenticated users always use their account's lguId
+      const slug = window.location.hash.slice(1).replace(/[^a-z0-9-]/g, '');
+      if (slug && slug !== lguId) switchLgu(slug);
+    });
 
     window.clearFilters = () => {
       document.getElementById('searchInput').value = '';
@@ -1418,10 +1830,18 @@
     window.checkAdminProfileComplete = async () => {
       if (!user) return;
       try {
-        const adminProfileRef = doc(db,'users',user.uid);
-        const snap = await getDoc(adminProfileRef);
+        const snap = await getDoc(doc(db,'users',user.uid));
         if (!snap.exists() || !snap.data().isComplete) {
-          document.getElementById('adminProfileModal').classList.remove('hidden');
+          const role = snap.data()?.role || 'pending';
+          // Show org/reason fields for pending applicants only
+          document.getElementById('pendingProfileFields')?.classList.toggle('hidden', role !== 'pending');
+          // Pre-fill email
+          const emailEl = document.getElementById('adminProfileEmail');
+          if (emailEl && user.email) emailEl.value = user.email;
+          // Pre-fill name if set during invite
+          const nameEl = document.getElementById('adminProfileName');
+          if (nameEl && snap.data()?.name) nameEl.value = snap.data().name;
+          document.getElementById('adminProfileModal')?.classList.remove('hidden');
         }
       } catch(e) {
         console.error(e);
@@ -1430,72 +1850,79 @@
 
     window.completeAdminProfile = async () => {
       if (!user) { showToast('Not logged in','error'); return; }
-      const name = document.getElementById('adminProfileName').value.trim();
-      const role = document.getElementById('adminProfileRole').value.trim();
-      const email = document.getElementById('adminProfileEmail').value.trim();
-      const image = document.getElementById('adminProfileImage').value.trim();
-      const committees = (document.getElementById('adminProfileCommittees').value || '').split(',').map(c=>c.trim()).filter(Boolean);
-      const bio = document.getElementById('adminProfileBio').value.trim();
-      const document_ = document.getElementById('adminProfileDocument').value.trim();
-      const additional = document.getElementById('adminProfileAdditional').value.trim();
-      
-      if (!email) { showToast('Contact Email is required','error'); return; }
+      const name     = document.getElementById('adminProfileName')?.value.trim() || '';
+      const position = document.getElementById('adminProfileRole')?.value.trim() || '';
+      const email    = document.getElementById('adminProfileEmail')?.value.trim() || '';
+      const phone    = document.getElementById('adminProfilePhone')?.value.trim() || '';
+      const image    = document.getElementById('adminProfileImage')?.value.trim() || '';
+      const bio      = document.getElementById('adminProfileBio')?.value.trim() || '';
+      const orgLgu   = document.getElementById('adminProfileOrgLgu')?.value.trim() || '';
+      const reason   = document.getElementById('adminProfileReason')?.value.trim() || '';
+      // legacy hidden fields kept for backward compat
+      const committees = (document.getElementById('adminProfileCommittees')?.value || '').split(',').map(c=>c.trim()).filter(Boolean);
+      const additional = document.getElementById('adminProfileAdditional')?.value.trim() || '';
+      const document_  = document.getElementById('adminProfileDocument')?.value.trim() || '';
+
+      if (!name)  { showToast('Full name is required', 'error'); return; }
+      if (!position) { showToast('Position / Designation is required', 'error'); return; }
+      if (!email) { showToast('Contact Email is required', 'error'); return; }
 
       const btn = document.getElementById('completeProfileBtn');
       const original = btn.innerHTML;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
       btn.disabled = true;
 
       try {
-        // Save admin profile
-        const adminProfileRef = doc(db,'users',user.uid);
-        await setDoc(adminProfileRef, {
-          uid: user.uid,
-          email,
+        // Read current role before saving
+        const snapBefore = await getDoc(doc(db,'users',user.uid));
+        const currentRole = snapBefore.data()?.role || 'pending';
+        const isPending   = currentRole === 'pending';
+
+        // Save user profile fields
+        await setDoc(doc(db,'users',user.uid), {
+          name,
+          position,
+          phone,
+          image,
+          bio,
           contactEmail: email,
+          ...(isPending ? { orgLgu, reasonForAccess: reason } : {}),
           isComplete: true,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
+          updatedAt: serverTimestamp(),
         }, { merge: true });
 
-        // Create admin as first legislative member only if name is provided
-        if (name) {
+        // For non-pending users who have an lguId, also create/update their member record
+        if (!isPending && lguId && name) {
           const memberPayload = {
-            name,
-            role,
-            image: image || '',
-            committees,
-            bio: bio || '',
-            additionalInfo: additional || '',
-            document: document_ || '',
-            isAdmin: true,
-            isArchived: false,
+            name, role: position, image: image || '',
+            committees, bio, additionalInfo: additional,
+            document: document_, isAdmin: true, isArchived: false,
             timestamp: serverTimestamp()
           };
-
-          const memberId = await (async () => {
-            const col = collection(db,'lgus',lguId,'members');
-            const snapshot = await getDocs(col);
-            const adminMember = snapshot.docs.find(d => d.data().isAdmin);
-            if (adminMember) {
-              await updateDoc(doc(db,'lgus',lguId,'members',adminMember.id), memberPayload);
-              return adminMember.id;
-            } else {
-              const docRef = await addDoc(col, memberPayload);
-              return docRef.id;
-            }
-          })();
-
-          if (memberId) {
-            await setDoc(adminProfileRef, { memberId }, { merge: true });
+          const col = collection(db,'lgus',lguId,'members');
+          const snapshot = await getDocs(col);
+          const adminMember = snapshot.docs.find(d => d.data().isAdmin);
+          let memberId;
+          if (adminMember) {
+            await updateDoc(doc(db,'lgus',lguId,'members',adminMember.id), memberPayload);
+            memberId = adminMember.id;
+          } else {
+            const ref = await addDoc(col, memberPayload);
+            memberId = ref.id;
           }
+          await setDoc(doc(db,'users',user.uid), { memberId }, { merge: true });
         }
 
-        showToast('Profile completed successfully!','success');
+        showToast('Profile saved successfully!', 'success');
         document.getElementById('adminProfileModal').classList.add('hidden');
+
+        // Pending users → go to waiting screen; others stay on admin panel
+        if (isPending) {
+          window.navigateTo('pending');
+        }
       } catch(e) {
         console.error(e);
-        showToast('Error completing profile','error');
+        showToast('Error saving profile: ' + (e.code || e.message), 'error');
       } finally {
         btn.innerHTML = original;
         btn.disabled = false;
@@ -1724,14 +2151,35 @@ Thank you.`;
       });
     };
 
+    /* ── Activity log writer ── */
+    // Fire-and-forget: never blocks the main operation.
+    async function logActivity(action, resourceType, resourceName) {
+      if (!user || !lguId) return;
+      try {
+        await addDoc(collection(db, 'lgus', lguId, 'activityLog'), {
+          action,
+          resourceType,
+          resourceName,
+          userId:    user.uid,
+          userEmail: user.email,
+          timestamp: serverTimestamp()
+        });
+      } catch(_) { /* silent */ }
+    }
+
     window.switchAdminTab = (tab) => {
-      ['docs','members','barangay','settings','profile','pricing'].forEach(t => {
+      ['docs','members','barangay','settings','profile','users','analytics','pricing','activity'].forEach(t => {
         document.getElementById(`admin-tab-${t}`)?.classList.toggle('hidden', tab!==t);
         const btn = document.getElementById(`tab-${t}`);
-        if (btn) btn.className = `admin-tab px-6 py-3 font-bold text-sm border-b-2 transition-all ${tab===t?'border-blue-600 text-blue-600':'border-transparent text-slate-400 hover:text-slate-700'}`;
+        if (btn && !btn.classList.contains('hidden'))
+          btn.className = `admin-tab px-6 py-3 font-bold text-sm border-b-2 transition-all ${tab===t?'border-blue-600 text-blue-600':'border-transparent text-slate-400 hover:text-slate-700'}`;
       });
       if (tab === 'profile')   window.loadAdminProfile();
       if (tab === 'barangay')  window.loadBarangays();
+      if (tab === 'users')     window.loadUsers();
+      if (tab === 'analytics') window.renderAnalytics();
+      if (tab === 'pricing')   window.loadAdminSubscription();
+      if (tab === 'activity')  window.loadActivityLog();
     };
 
     /* ── Upload Type Switcher ── */
@@ -1872,6 +2320,10 @@ Thank you.`;
       if (unsubMembers) unsubMembers();
       if (unsubSettings) unsubSettings();
       setLoading(true);
+      // Load barangays for public search (fire-and-forget)
+      getDocs(collection(db,'lgus',lguId,'barangays')).then(snap => {
+        localBarangays = snap.docs.map(d=>({id:d.id,...d.data()}));
+      }).catch(()=>{ localBarangays = []; });
 
       unsubMembers = onSnapshot(
         query(MEMBER_REF, orderBy('name'), limit(50)),
@@ -2074,6 +2526,7 @@ Thank you.`;
           isArchived: !!archive,
           updatedAt: serverTimestamp()
         });
+        logActivity(archive ? 'archived' : 'unarchived', 'member', member.name);
         showToast(archive ? 'Member archived and hidden from public list.' : 'Member unarchived.', 'success');
       } catch(e) {
         console.error(e);
@@ -2094,6 +2547,7 @@ Thank you.`;
           termEnd: '',
           updatedAt: serverTimestamp()
         });
+        logActivity('reactivated', 'member', member.name);
         showToast('Member reactivated. Update profile if needed.', 'success');
       } catch(e) {
         console.error(e);
@@ -2120,6 +2574,30 @@ Thank you.`;
       const tfMain  = document.getElementById('typeFilter');
       const tfMob   = document.getElementById('typeFilterMobile');
       const typeVal = tfMain?.value !== 'All' ? tfMain?.value : tfMob?.value ?? 'All';
+
+      // Search barangay records by name / code
+      const brgyContainer = document.getElementById('barangayResults');
+      const brgyList      = document.getElementById('barangayResultsList');
+      if (term && localBarangays.length > 0) {
+        const matchedBrgy = localBarangays.filter(b =>
+          b.name?.toLowerCase().includes(term) ||
+          b.code?.toLowerCase().includes(term) ||
+          b.captain?.toLowerCase().includes(term)
+        );
+        if (matchedBrgy.length > 0 && brgyList) {
+          brgyList.innerHTML = matchedBrgy.map(b=>`
+            <div class="inline-flex items-center gap-3 bg-teal-50 border border-teal-200 rounded-2xl px-4 py-3">
+              <div class="w-8 h-8 bg-teal-100 rounded-xl flex items-center justify-center text-teal-600 flex-shrink-0 text-xs">
+                <i class="fas fa-map-marker-alt"></i>
+              </div>
+              <div>
+                <p class="text-sm font-black text-slate-900">${escapeHtml(b.name||'—')}</p>
+                <p class="text-[10px] text-slate-500">Code: ${escapeHtml(b.code||'—')}${b.captain?' · Capt. '+escapeHtml(b.captain):''}</p>
+              </div>
+            </div>`).join('');
+          brgyContainer?.classList.remove('hidden');
+        } else { brgyContainer?.classList.add('hidden'); }
+      } else { brgyContainer?.classList.add('hidden'); }
 
       const filtered = localDocs.filter(d => {
         const inTitle  = d.title?.toLowerCase().includes(term);
@@ -2546,6 +3024,1336 @@ Thank you.`;
       }
     };
 
+    /* ── User Management (Admin only) ── */
+    window.loadUsers = async () => {
+      const container = document.getElementById('usersList');
+      if (!container) return;
+      container.innerHTML = '<div class="text-center py-10 text-slate-400"><i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i><p class="text-sm">Loading…</p></div>';
+      window.loadInvites(); // load pending invites alongside registered users
+      // Check feature flag: additional users
+      try {
+        const regSnap = await getDoc(doc(db,'lguRegistry',lguId));
+        const canAdd  = userRole === 'superadmin' || (regSnap.exists() && regSnap.data().features?.additionalUsers !== false);
+        document.getElementById('inviteUserBtn')?.classList.toggle('hidden', !canAdd);
+        document.getElementById('requestUsersBtn')?.classList.toggle('hidden', canAdd);
+      } catch(_){}
+      try {
+        // Admins query their own LGU only; superadmins see all users
+        const q = userRole === 'superadmin'
+          ? collection(db, 'users')
+          : query(collection(db, 'users'), where('lguId', '==', lguId));
+        const snap = await getDocs(q);
+        if (snap.empty) {
+          container.innerHTML = '<p class="text-center text-slate-400 py-10 text-sm">No registered users found.</p>';
+          return;
+        }
+        const roleColors = {
+          superadmin: 'bg-purple-100 text-purple-700',
+          admin:      'bg-blue-100 text-blue-700',
+          editor:     'bg-green-100 text-green-700',
+          viewer:     'bg-slate-100 text-slate-600',
+          pending:    'bg-amber-100 text-amber-700'
+        };
+        container.innerHTML = '<div class="space-y-3">' + snap.docs.map(d => {
+          const u        = d.data();
+          const isSelf   = d.id === user?.uid;
+          const isSA     = u.role === 'superadmin';
+          const chipCls  = roleColors[u.role] || 'bg-slate-100 text-slate-500';
+          return `
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center gap-4${isSelf ? ' ring-2 ring-blue-300' : ''}">
+              <div class="flex-1 min-w-0">
+                <p class="font-bold text-slate-900 truncate">${escapeHtml(u.name || '(no name)')} ${isSelf ? '<span class="text-xs text-blue-500 font-semibold ml-1">(you)</span>' : ''}</p>
+                <p class="text-xs text-slate-400 truncate mt-0.5">${escapeHtml(u.contactEmail || d.id)}</p>
+                <span class="inline-block mt-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${chipCls}">${escapeHtml(u.role || 'none')}</span>
+                ${u.lguId ? `<span class="ml-2 text-xs text-slate-400 font-semibold">${escapeHtml(u.lguId)}</span>` : '<span class="ml-2 text-xs text-slate-300">no LGU</span>'}
+                ${u.barangayId ? `<span class="ml-1 text-xs text-emerald-600 font-semibold">${escapeHtml(u.barangayId)}</span>` : ''}
+                ${u.pendingNotification ? `<span class="ml-2 text-[10px] text-emerald-600 font-bold"><i class="fas fa-bell mr-0.5"></i>Notified</span>` : ''}
+              </div>
+              ${isSA ? '' : `<div class="flex flex-col gap-2 flex-shrink-0 w-full sm:w-auto">
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <select id="roleSelect-${d.id}"
+                          class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+                    <option value="pending"    ${u.role==='pending'    ?'selected':''}>Pending</option>
+                    <option value="viewer"     ${u.role==='viewer'     ?'selected':''}>Viewer</option>
+                    <option value="editor"     ${u.role==='editor'     ?'selected':''}>Editor</option>
+                    <option value="admin"      ${u.role==='admin'      ?'selected':''}>Admin</option>
+                  </select>
+                  <input type="text" id="lguInput-${d.id}" value="${u.lguId||''}" placeholder="LGU ID (e.g. sb-argao)"
+                         class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 w-44">
+                </div>
+                <div class="flex flex-row gap-2 items-center">
+                  <input type="text" id="barangayInput-${d.id}" value="${u.barangayId||''}" placeholder="Barangay ID (optional)"
+                         class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 flex-1">
+                  <button type="button" onclick="window.assignUserRole('${d.id}')"
+                          class="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold text-xs uppercase tracking-wide hover:from-blue-700 hover:to-purple-700 transition-all whitespace-nowrap">
+                    Save
+                  </button>
+                </div>
+              </div>`}
+            </div>`;
+        }).join('') + '</div>';
+      } catch(e) {
+        console.error(e);
+        container.innerHTML = '<p class="text-center text-red-500 py-10 text-sm font-semibold">Could not load users.</p>';
+      }
+    };
+
+    window.assignUserRole = async (uid) => {
+      const newRole       = document.getElementById(`roleSelect-${uid}`)?.value;
+      const newLguId      = document.getElementById(`lguInput-${uid}`)?.value.trim() || null;
+      const newBarangayId = document.getElementById(`barangayInput-${uid}`)?.value.trim() || null;
+      if (!newRole) return;
+      try {
+        await updateDoc(doc(db, 'users', uid), { role: newRole, lguId: newLguId, barangayId: newBarangayId });
+        showToast('Role updated successfully', 'success');
+        window.loadUsers();
+      } catch(e) {
+        console.error(e);
+        showToast('Error updating role: ' + (e.code || e.message), 'error');
+      }
+    };
+
+    /* ── Admin Subscription Status ── */
+    window.loadAdminSubscription = async () => {
+      const container = document.getElementById('subscriptionStatus');
+      if (!container || !lguId) return;
+      try {
+        const snap = await getDoc(doc(db, 'lguRegistry', lguId));
+        const reg  = snap.exists() ? snap.data() : {};
+        const tier = reg.tier || 'starter';
+        const paid = reg.paid || false;
+        const expiryTs = reg.subscriptionExpiry ? reg.subscriptionExpiry.seconds * 1000 : null;
+        const expiryStr= expiryTs ? new Date(expiryTs).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : null;
+        const expired  = expiryTs && expiryTs < Date.now();
+        const daysLeft = expiryTs ? Math.ceil((expiryTs - Date.now()) / 86400000) : null;
+
+        const tierLabel = {starter:'Starter (Free)',standard:'Standard',premium:'Premium'}[tier] || tier;
+        const tierColor = {starter:'slate',standard:'blue',premium:'purple'}[tier] || 'slate';
+
+        // Highlight the active plan card
+        document.querySelectorAll('.plan-card').forEach(card => {
+          const isCurrent = card.dataset.tier === tier;
+          card.classList.toggle('ring-4',           isCurrent);
+          card.classList.toggle(`ring-${tierColor}-400`, isCurrent);
+          const cta = card.querySelector('.plan-cta');
+          if (cta && isCurrent) {
+            cta.textContent = 'Current Plan';
+            cta.className   = 'plan-cta block text-center py-3 rounded-2xl border-2 border-slate-200 text-slate-400 font-bold text-sm cursor-default';
+          }
+        });
+
+        let statusHtml;
+        if (expired) {
+          statusHtml = `
+            <div class="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-center gap-4">
+              <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-exclamation-triangle"></i>
+              </div>
+              <div>
+                <p class="font-black text-red-800">Subscription Expired</p>
+                <p class="text-sm text-red-600">Your <strong>${tierLabel}</strong> subscription expired on ${expiryStr}. Contact <a href="mailto:rlagahit@icloud.com" class="underline">rlagahit@icloud.com</a> to renew.</p>
+              </div>
+            </div>`;
+        } else {
+          const payBadge = paid
+            ? `<span class="inline-flex items-center gap-1 text-xs font-black px-3 py-1 rounded-full bg-emerald-100 text-emerald-700"><i class="fas fa-check-circle text-[10px]"></i> Paid</span>`
+            : `<span class="inline-flex items-center gap-1 text-xs font-black px-3 py-1 rounded-full bg-amber-100 text-amber-700"><i class="fas fa-clock text-[10px]"></i> Awaiting Payment</span>`;
+          statusHtml = `
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-${tierColor}-100 text-${tierColor}-600 flex items-center justify-center flex-shrink-0 text-xl">
+                <i class="fas ${tier==='premium'?'fa-crown':tier==='standard'?'fa-building-columns':'fa-seedling'}"></i>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 flex-wrap mb-1">
+                  <p class="font-black text-slate-900">${tierLabel} Plan</p>
+                  ${payBadge}
+                </div>
+                <p class="text-sm text-slate-500">
+                  ${expiryStr
+                    ? (daysLeft > 0
+                        ? `Expires <strong class="text-slate-700">${expiryStr}</strong> &bull; ${daysLeft} day${daysLeft!==1?'s':''} remaining`
+                        : `Expired on ${expiryStr}`)
+                    : 'No expiry set — contact us to configure your subscription.'}
+                </p>
+              </div>
+            </div>`;
+        }
+        container.innerHTML = statusHtml;
+      } catch(e) {
+        console.error(e);
+        container.innerHTML = '<p class="text-sm text-slate-400 py-4">Subscription info not available.</p>';
+      }
+    };
+
+    /* ── Activity Log ── */
+    window.loadActivityLog = async () => {
+      const container = document.getElementById('activityLogContent');
+      if (!container) return;
+
+      // Premium-only feature — same gate pattern as analytics
+      let isPremium = false;
+      try {
+        const regSnap = await getDoc(doc(db, 'lguRegistry', lguId));
+        if (regSnap.exists()) isPremium = regSnap.data().tier === 'premium';
+      } catch(_) {}
+
+      if (!isPremium) {
+        container.innerHTML = `
+          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-start gap-3">
+            <i class="fas fa-lock text-amber-500 mt-0.5 flex-shrink-0"></i>
+            <div>
+              <p class="font-black text-amber-800 text-sm">Activity Log is a Premium feature</p>
+              <p class="text-xs text-amber-700 mt-0.5">Upgrade to Premium to view the full audit trail of all document and member changes.</p>
+            </div>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = '<div class="text-center py-10 text-slate-400"><i class="fas fa-spinner fa-spin text-2xl block mb-2"></i><p class="text-sm">Loading activity…</p></div>';
+
+      try {
+        const q = query(
+          collection(db, 'lgus', lguId, 'activityLog'),
+          orderBy('timestamp', 'desc'),
+          limit(50)
+        );
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+          container.innerHTML = '<p class="text-sm text-slate-400 py-10 text-center"><i class="fas fa-history text-2xl block mb-2"></i>No activity recorded yet.</p>';
+          return;
+        }
+
+        const actionIcon = {
+          added:       'fa-plus-circle text-emerald-500',
+          updated:     'fa-edit text-blue-500',
+          deleted:     'fa-trash text-red-500',
+          archived:    'fa-archive text-amber-500',
+          unarchived:  'fa-undo text-slate-500',
+          reactivated: 'fa-redo text-purple-500'
+        };
+        const typeLabel = { document: 'Document', member: 'Member' };
+
+        const rows = snap.docs.map(d => {
+          const e = d.data();
+          const ts = e.timestamp?.toDate ? e.timestamp.toDate() : null;
+          const timeStr = ts
+            ? ts.toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })
+            : '—';
+          const icon = actionIcon[e.action] || 'fa-circle text-slate-400';
+          return `
+            <div class="flex items-center gap-4 py-3.5 border-b border-slate-100 last:border-0">
+              <div class="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
+                <i class="fas ${icon} text-sm"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-slate-800 truncate">${escapeHtml(e.resourceName || '—')}</p>
+                <p class="text-xs text-slate-500">${escapeHtml(typeLabel[e.resourceType] || e.resourceType || '—')} <span class="font-semibold capitalize">${escapeHtml(e.action || '')}</span> · ${escapeHtml(e.userEmail || '—')}</p>
+              </div>
+              <p class="text-xs text-slate-400 flex-shrink-0 whitespace-nowrap">${timeStr}</p>
+            </div>`;
+        }).join('');
+
+        container.innerHTML = `<div class="bg-white rounded-3xl border border-slate-100 shadow-sm px-6">${rows}</div>`;
+      } catch(e) {
+        console.error(e);
+        container.innerHTML = '<p class="text-sm text-red-500 py-4 text-center">Error loading activity log.</p>';
+      }
+    };
+
+    /* ── Analytics ── */
+    window.renderAnalytics = async () => {
+      const container = document.getElementById('analyticsContent');
+      if (!container) return;
+
+      // Check tier / feature flag
+      let advancedEnabled = false;
+      try {
+        const regSnap = await getDoc(doc(db,'lguRegistry',lguId));
+        if (regSnap.exists()) {
+          const reg = regSnap.data();
+          advancedEnabled = (reg.tier === 'standard' || reg.tier === 'premium') &&
+                            (reg.features?.advancedAnalytics !== false);
+        }
+      } catch(_){}
+
+      const filterBar    = document.getElementById('analyticsFilterBar');
+      const exportBtn    = document.getElementById('analyticsExportBtn');
+      if (filterBar) filterBar.classList.toggle('hidden', !advancedEnabled);
+
+      if (!advancedEnabled) {
+        // Free tier — show locked notice + basic stats only
+        container.innerHTML = `
+          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6 flex items-start gap-3">
+            <i class="fas fa-lock text-amber-500 mt-0.5 flex-shrink-0"></i>
+            <div>
+              <p class="font-black text-amber-800 text-sm">Advanced Analytics is a Standard/Premium feature</p>
+              <p class="text-xs text-amber-700 mt-0.5">Upgrade your plan to unlock barangay filters, committee analytics, sponsor reports, and export. Basic analytics is shown below.</p>
+            </div>
+          </div>
+          <div id="basicAnalyticsArea"></div>`;
+        _renderBasicAnalytics(document.getElementById('basicAnalyticsArea'));
+        return;
+      }
+
+      // Populate filter dropdowns once
+      const yearSel = document.getElementById('analyticsYearFilter');
+      if (yearSel && yearSel.options.length <= 1) {
+        const currentYear = new Date().getFullYear();
+        for (let y = currentYear; y >= currentYear - 9; y--) {
+          const opt = document.createElement('option'); opt.value = y; opt.textContent = y;
+          yearSel.appendChild(opt);
+        }
+      }
+      const brgyDrop = document.getElementById('analyticsBarangayFilter');
+      if (brgyDrop && brgyDrop.options.length <= 1 && localBarangays.length > 0) {
+        localBarangays.forEach(b => {
+          const opt = document.createElement('option'); opt.value = b.id||b.name; opt.textContent = b.name||b.id;
+          brgyDrop.appendChild(opt);
+        });
+      }
+
+
+      _renderAdvancedAnalytics(container);
+    };
+
+    function _renderBasicAnalytics(container) {
+      if (!container) return;
+      const currentYear = new Date().getFullYear();
+      const totalDocs   = localDocs.length;
+      const totalMembers= localMembers.length;
+      const totalViews  = localDocs.reduce((s,d)=>s+(d.views||0),0);
+      const docsThisYear= localDocs.filter(d=>{
+        const y=d.date?new Date(d.date).getFullYear():(d.timestamp?.toDate?d.timestamp.toDate().getFullYear():null);
+        return y===currentYear;
+      }).length;
+      const byType={};
+      localDocs.forEach(d=>{const t=d.type||'Other';byType[t]=(byType[t]||0)+1;});
+      const sortedTypes=Object.entries(byType).sort((a,b)=>b[1]-a[1]);
+      const maxTC=sortedTypes[0]?.[1]||1;
+      const tCls={'Ordinance':'bg-blue-500','Resolution':'bg-emerald-500','Minute':'bg-amber-500','Motion':'bg-purple-500'};
+      container.innerHTML=`
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          ${[{label:'Total Documents',value:totalDocs,icon:'fa-file-alt',color:'blue'},{label:'Total Members',value:totalMembers,icon:'fa-users',color:'emerald'},{label:'Total Views',value:totalViews,icon:'fa-eye',color:'purple'},{label:'Docs This Year',value:docsThisYear,icon:'fa-calendar-alt',color:'amber'}]
+          .map(k=>`<div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-center gap-4"><div class="w-10 h-10 rounded-xl bg-${k.color}-100 text-${k.color}-600 flex items-center justify-center text-base flex-shrink-0"><i class="fas ${k.icon}"></i></div><div><p class="text-2xl font-black text-slate-900">${k.value.toLocaleString()}</p><p class="text-xs text-slate-500 font-semibold mt-0.5">${k.label}</p></div></div>`).join('')}
+        </div>
+        <div class="bg-white border border-slate-200 rounded-2xl p-6">
+          <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4">By Document Type</h4>
+          ${sortedTypes.map(([t,c])=>`<div class="mb-3"><div class="flex justify-between text-xs font-semibold text-slate-600 mb-1"><span>${escapeHtml(t)}</span><span>${c}</span></div><div class="w-full bg-slate-100 rounded-full h-2"><div class="${tCls[t]||'bg-slate-400'} h-2 rounded-full" style="width:${Math.round(c/maxTC*100)}%"></div></div></div>`).join('')||'<p class="text-sm text-slate-400">No documents yet.</p>'}
+        </div>`;
+    }
+
+    function _renderAdvancedAnalytics(container) {
+      const currentYear = new Date().getFullYear();
+      // Apply active filters
+      const selBrgy = document.getElementById('analyticsBarangayFilter')?.value || '';
+      const selType = document.getElementById('analyticsTypeFilter')?.value || '';
+      const selYear = parseInt(document.getElementById('analyticsYearFilter')?.value || '') || 0;
+
+      let docs = localDocs;
+      if (selType) docs = docs.filter(d => (d.type||'') === selType);
+      if (selYear) docs = docs.filter(d => {
+        const y = d.date ? new Date(d.date).getFullYear() : (d.timestamp?.toDate ? d.timestamp.toDate().getFullYear() : null);
+        return y === selYear;
+      });
+      if (selBrgy) docs = docs.filter(d => (d.barangayId||d.barangay||'') === selBrgy);
+
+      const totalDocs    = docs.length;
+      const totalMembers = localMembers.length;
+      const totalViews   = docs.reduce((s,d)=>s+(d.views||0),0);
+      const docsThisYear = docs.filter(d=>{
+        const y=d.date?new Date(d.date).getFullYear():(d.timestamp?.toDate?d.timestamp.toDate().getFullYear():null);
+        return y===currentYear;
+      }).length;
+
+      // By type
+      const byType={};
+      docs.forEach(d=>{const t=d.type||'Other';byType[t]=(byType[t]||0)+1;});
+      const sortedTypes=Object.entries(byType).sort((a,b)=>b[1]-a[1]);
+      const maxTC=sortedTypes[0]?.[1]||1;
+      const tCls={'Ordinance':'bg-blue-500','Resolution':'bg-emerald-500','Minute':'bg-amber-500','Motion':'bg-purple-500'};
+
+      // By year (last 5)
+      const byYear={};
+      for(let y=currentYear;y>=currentYear-4;y--) byYear[y]=0;
+      docs.forEach(d=>{
+        const y=d.date?new Date(d.date).getFullYear():(d.timestamp?.toDate?d.timestamp.toDate().getFullYear():null);
+        if(y && byYear[y]!==undefined) byYear[y]++;
+      });
+      const yearEntries=Object.entries(byYear).sort((a,b)=>b[0]-a[0]);
+      const maxYC=Math.max(...Object.values(byYear),1);
+
+      // Top viewed
+      const topViewed=[...docs].sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,5);
+
+      // By author/sponsor
+      const byAuthor={};
+      docs.forEach(d=>{const a=d.authorName||'Unknown';byAuthor[a]=(byAuthor[a]||0)+1;});
+      const topAuthors=Object.entries(byAuthor).sort((a,b)=>b[1]-a[1]).slice(0,8);
+
+      // By committee (Advanced)
+      const byCommittee={};
+      docs.forEach(d=>{
+        const cs=d.committees?Array.isArray(d.committees)?d.committees:[d.committees]:[d.committee||'Unassigned'];
+        cs.forEach(c=>{if(c){byCommittee[c]=(byCommittee[c]||0)+1;}});
+      });
+      const topCommittees=Object.entries(byCommittee).sort((a,b)=>b[1]-a[1]).slice(0,8);
+      const maxCC=topCommittees[0]?.[1]||1;
+
+      const barRow = (label,count,max,cls='bg-blue-500') =>
+        `<div class="mb-3"><div class="flex justify-between text-xs font-semibold text-slate-600 mb-1"><span class="truncate max-w-[160px]">${escapeHtml(label)}</span><span>${count}</span></div><div class="w-full bg-slate-100 rounded-full h-2"><div class="${cls} h-2 rounded-full" style="width:${Math.round(count/max*100)}%"></div></div></div>`;
+
+      container.innerHTML = `
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          ${[{label:'Filtered Docs',value:totalDocs,icon:'fa-file-alt',color:'blue'},{label:'Total Members',value:totalMembers,icon:'fa-users',color:'emerald'},{label:'Total Views',value:totalViews,icon:'fa-eye',color:'purple'},{label:'Docs This Year',value:docsThisYear,icon:'fa-calendar-alt',color:'amber'}]
+          .map(k=>`<div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-center gap-4"><div class="w-10 h-10 rounded-xl bg-${k.color}-100 text-${k.color}-600 flex items-center justify-center text-base flex-shrink-0"><i class="fas ${k.icon}"></i></div><div><p class="text-2xl font-black text-slate-900">${k.value.toLocaleString()}</p><p class="text-xs text-slate-500 font-semibold mt-0.5">${k.label}</p></div></div>`).join('')}
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div class="bg-white border border-slate-200 rounded-2xl p-6">
+            <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4">By Document Type</h4>
+            ${sortedTypes.map(([t,c])=>barRow(t,c,maxTC,tCls[t]||'bg-slate-400')).join('')||'<p class="text-sm text-slate-400">No documents.</p>'}
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-6">
+            <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4">Documents by Year</h4>
+            ${yearEntries.map(([y,c])=>barRow(y,c,maxYC,'bg-blue-500')).join('')}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div class="bg-white border border-slate-200 rounded-2xl p-6">
+            <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4">Sponsor / Author Analytics</h4>
+            ${topAuthors.map(([n,c],i)=>`
+              <div class="flex items-center gap-3 py-2 ${i<topAuthors.length-1?'border-b border-slate-100':''}">
+                <span class="text-xs font-black text-slate-400 w-5 text-right">${i+1}</span>
+                <p class="text-xs font-bold text-slate-800 flex-1 truncate">${escapeHtml(n)}</p>
+                <span class="text-xs font-black text-emerald-600">${c} doc${c!==1?'s':''}</span>
+              </div>`).join('')||'<p class="text-sm text-slate-400">No documents.</p>'}
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-6">
+            <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4">Committee Analytics</h4>
+            ${topCommittees.map(([c,n])=>barRow(c,n,maxCC,'bg-purple-500')).join('')||'<p class="text-sm text-slate-400">No committee data found.</p>'}
+          </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-6">
+          <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4">Top Viewed Documents</h4>
+          ${topViewed.length===0?'<p class="text-sm text-slate-400">No documents.</p>':
+            topViewed.map((d,i)=>`
+              <div class="flex items-center gap-3 py-2 ${i<topViewed.length-1?'border-b border-slate-100':''}">
+                <span class="text-xs font-black text-slate-400 w-5 text-right">${i+1}</span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-bold text-slate-800 truncate">${escapeHtml(d.title||'Untitled')}</p>
+                  <p class="text-[10px] text-slate-400">${escapeHtml(d.docId||'')} &bull; ${escapeHtml(d.type||'')}</p>
+                </div>
+                <span class="text-xs font-black text-purple-600"><i class="fas fa-eye mr-1"></i>${(d.views||0).toLocaleString()}</span>
+              </div>`).join('')}
+        </div>`;
+    }
+
+    window.exportAnalyticsReport = () => {
+      const selBrgy = document.getElementById('analyticsBarangayFilter')?.value || '';
+      const selType = document.getElementById('analyticsTypeFilter')?.value || '';
+      const selYear = parseInt(document.getElementById('analyticsYearFilter')?.value||'') || 0;
+      let docs = localDocs;
+      if (selType) docs = docs.filter(d=>(d.type||'')===selType);
+      if (selYear) docs = docs.filter(d=>{
+        const y=d.date?new Date(d.date).getFullYear():(d.timestamp?.toDate?d.timestamp.toDate().getFullYear():null);
+        return y===selYear;
+      });
+      if (selBrgy) docs = docs.filter(d=>(d.barangayId||d.barangay||'')===selBrgy);
+      if (!docs.length) { showToast('No documents to export.','error'); return; }
+      const rows = [['Document ID','Title','Type','Date','Author/Sponsor','Committee','Views']];
+      docs.forEach(d=>rows.push([
+        d.docId||'',d.title||'',d.type||'',d.date||'',d.authorName||'',
+        Array.isArray(d.committees)?d.committees.join(';'):(d.committee||''),d.views||0
+      ]));
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,'Analytics',ws);
+      XLSX.writeFile(wb,`analytics_report_${Date.now()}.xlsx`);
+    };
+
+    /* ── Platform Admin ── */
+    window.switchPlatformTab = (tab) => {
+      ['overview','lgus','users','analytics','barangays','subscriptions'].forEach(t => {
+        document.getElementById(`padmin-tab-${t}`)?.classList.toggle('hidden', tab !== t);
+        const btn = document.getElementById(`ptab-${t}`);
+        if (btn) btn.className = `platform-tab px-5 py-3 font-bold text-sm border-b-2 transition-all ${tab===t?'border-purple-600 text-purple-600':'border-transparent text-slate-400 hover:text-slate-700'}`;
+      });
+      if (tab === 'overview')   window.loadPlatformOverview();
+      if (tab === 'lgus')       window.loadPlatformLgus();
+      if (tab === 'users')      window.loadPlatformUsers();
+      if (tab === 'analytics')  window.loadPlatformAnalytics();
+      if (tab === 'barangays')  window.loadPlatformBarangays();
+    };
+
+    /* Helper to render the overview UI from a snapshot of all users */
+    function _renderOverview(allUsers) {
+      const container = document.getElementById('platformOverviewContent');
+      if (!container) return;
+      const lguSet  = new Set(allUsers.map(u => u.lguId).filter(Boolean));
+      const pending = allUsers.filter(u => u.role === 'pending').length;
+      const active  = allUsers.filter(u => u.role && u.role !== 'pending' && u.role !== 'rejected').length;
+      const byRole  = {};
+      allUsers.forEach(u => { const r = u.role||'none'; byRole[r]=(byRole[r]||0)+1; });
+
+      const roleOrder  = ['admin','editor','viewer','pending','rejected','superadmin','none'];
+      const roleLabels = roleOrder.filter(r => byRole[r]);
+      const roleCounts = roleLabels.map(r => byRole[r]);
+      const roleColHex = {admin:'#3b82f6',editor:'#10b981',viewer:'#94a3b8',pending:'#f59e0b',rejected:'#ef4444',superadmin:'#8b5cf6',none:'#cbd5e1'};
+
+      container.innerHTML = `
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          ${[
+            {label:'Registered LGUs',  value: lguSet.size,     icon:'fa-city',       color:'purple'},
+            {label:'Total Users',       value: allUsers.length, icon:'fa-users',      color:'blue'},
+            {label:'Active Users',      value: active,          icon:'fa-user-check', color:'emerald'},
+            {label:'Pending Approval',  value: pending,         icon:'fa-user-clock', color:'amber'},
+          ].map(k=>`
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-center gap-4">
+              <div class="w-10 h-10 rounded-xl bg-${k.color}-100 text-${k.color}-600 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fas ${k.icon}"></i>
+              </div>
+              <div>
+                <p class="text-2xl font-black text-slate-900" id="kpi-${k.icon}">${k.value}</p>
+                <p class="text-xs text-slate-500 font-semibold mt-0.5">${k.label}</p>
+              </div>
+            </div>`).join('')}
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white border border-slate-200 rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider">Users by Role</h4>
+              <span class="text-[10px] font-bold text-emerald-500 flex items-center gap-1">
+                <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse inline-block"></span>Live
+              </span>
+            </div>
+            <canvas id="chartRole" height="220"></canvas>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-6">
+            <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4">Recent Registrations</h4>
+            <div class="space-y-2">
+              ${allUsers.slice().sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).slice(0,6).map(u=>`
+                <div class="flex items-center gap-3 py-1.5 border-b border-slate-50 last:border-0">
+                  <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-[10px] font-black flex-shrink-0">
+                    ${escapeHtml((u.name||u.email||'?').charAt(0).toUpperCase())}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-slate-800 truncate">${escapeHtml(u.name||u.email||u.id)}</p>
+                    <p class="text-[10px] text-slate-400">${escapeHtml(u.lguId||'No LGU')}</p>
+                  </div>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${u.role==='pending'?'bg-amber-100 text-amber-700':'bg-slate-100 text-slate-600'}">${u.role||'?'}</span>
+                </div>`).join('')}
+            </div>
+          </div>
+        </div>`;
+
+      // Draw / update Chart.js bar chart
+      const ctx = document.getElementById('chartRole')?.getContext('2d');
+      if (ctx) {
+        if (_platformChartRole) _platformChartRole.destroy();
+        _platformChartRole = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: roleLabels.map(r => r.charAt(0).toUpperCase()+r.slice(1)),
+            datasets: [{ data: roleCounts, backgroundColor: roleLabels.map(r=>roleColHex[r]||'#94a3b8'), borderRadius: 6, borderSkipped: false }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color:'#f1f5f9' } }, x: { grid: { display: false } } }
+          }
+        });
+      }
+    }
+
+    window.loadPlatformOverview = () => {
+      const container = document.getElementById('platformOverviewContent');
+      if (!container) return;
+      container.innerHTML = '<div class="text-center py-10 text-slate-400"><i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i></div>';
+      // Tear down old listener if switching back
+      if (_platformUsersUnsub) { _platformUsersUnsub(); _platformUsersUnsub = null; }
+      try {
+        _platformUsersUnsub = onSnapshot(collection(db,'users'), (snap) => {
+          const allUsers = snap.docs.map(d=>({id:d.id,...d.data()}));
+          _renderOverview(allUsers);
+        }, (e) => {
+          console.error(e);
+          if (container) container.innerHTML = '<p class="text-sm text-red-500 p-4">Error loading overview: ' + (e.message||e.code) + '</p>';
+        });
+      } catch(e) {
+        console.error(e);
+        container.innerHTML = '<p class="text-sm text-red-500 p-4">Error: ' + (e.message||e.code) + '</p>';
+      }
+    };
+
+    /* ── Platform Analytics Tab ── */
+    window.loadPlatformAnalytics = async () => {
+      const container = document.getElementById('platformAnalyticsContent');
+      if (!container) return;
+      container.innerHTML = '<div class="text-center py-10 text-slate-400"><i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i></div>';
+      try {
+        const [usersSnap, regSnap] = await Promise.all([
+          getDocs(collection(db,'users')),
+          getDocs(collection(db,'lguRegistry')),
+        ]);
+        const allUsers = usersSnap.docs.map(d=>({id:d.id,...d.data()}));
+        const registry = {};
+        regSnap.docs.forEach(d=>{ registry[d.id]=d.data(); });
+
+        // LGU IDs from user accounts
+        const lguIds = [...new Set(allUsers.map(u=>u.lguId).filter(Boolean))];
+        const tiers  = {starter:0, standard:0, premium:0, none:0};
+        let paid=0, unpaid=0, revenue=0;
+        const now = Date.now();
+
+        lguIds.forEach(lid => {
+          const reg  = registry[lid] || {};
+          const tier = reg.tier || 'starter';
+          tiers[tier] = (tiers[tier]||0) + 1;
+          if (reg.paid) { paid++; } else { unpaid++; }
+          if (reg.paid && tier==='standard') revenue += 1500;
+          if (reg.paid && tier==='premium')  revenue += 3500;
+        });
+
+        const tierColHex = { starter:'#94a3b8', standard:'#3b82f6', premium:'#8b5cf6', none:'#e2e8f0' };
+
+        container.innerHTML = `
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            ${[
+              {label:'Total LGUs',      value:lguIds.length,     icon:'fa-city',    color:'purple'},
+              {label:'Paid LGUs',        value:paid,              icon:'fa-check-circle', color:'emerald'},
+              {label:'Unpaid LGUs',      value:unpaid,            icon:'fa-exclamation-circle', color:'amber'},
+              {label:'Est. Revenue/mo',  value:'₱'+revenue.toLocaleString(), icon:'fa-peso-sign', color:'blue'},
+            ].map(k=>`
+              <div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-${k.color}-100 text-${k.color}-600 flex items-center justify-center text-base flex-shrink-0">
+                  <i class="fas ${k.icon}"></i>
+                </div>
+                <div>
+                  <p class="text-xl font-black text-slate-900">${k.value}</p>
+                  <p class="text-xs text-slate-500 font-semibold mt-0.5">${k.label}</p>
+                </div>
+              </div>`).join('')}
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white border border-slate-200 rounded-2xl p-6">
+              <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4">Tier Distribution</h4>
+              <canvas id="chartTier" height="250"></canvas>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-2xl p-6">
+              <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4">Paid vs Unpaid</h4>
+              <canvas id="chartPaid" height="250"></canvas>
+            </div>
+          </div>`;
+
+        // Tier doughnut chart
+        const ctxT = document.getElementById('chartTier')?.getContext('2d');
+        if (ctxT) new Chart(ctxT, {
+          type: 'doughnut',
+          data: {
+            labels: ['Starter','Standard','Premium'],
+            datasets:[{ data:[tiers.starter,tiers.standard,tiers.premium], backgroundColor:['#94a3b8','#3b82f6','#8b5cf6'], borderWidth:0, hoverOffset:6 }]
+          },
+          options:{ responsive:true, plugins:{ legend:{ position:'bottom', labels:{ font:{size:11,weight:'bold'} } } }, cutout:'65%' }
+        });
+
+        // Paid vs unpaid doughnut
+        const ctxP = document.getElementById('chartPaid')?.getContext('2d');
+        if (ctxP) new Chart(ctxP, {
+          type: 'doughnut',
+          data: {
+            labels: ['Paid','Unpaid'],
+            datasets:[{ data:[paid,unpaid], backgroundColor:['#10b981','#f59e0b'], borderWidth:0, hoverOffset:6 }]
+          },
+          options:{ responsive:true, plugins:{ legend:{ position:'bottom', labels:{ font:{size:11,weight:'bold'} } } }, cutout:'65%' }
+        });
+
+      } catch(e) {
+        console.error(e);
+        container.innerHTML = '<p class="text-sm text-red-500 p-4">Error loading analytics: ' + (e.message||e.code) + '</p>';
+      }
+    };
+
+    /* ── Platform Barangays Tab ── */
+    window.loadPlatformBarangays = async () => {
+      const container = document.getElementById('platformBarangaysList');
+      if (!container) return;
+      container.innerHTML = '<div class="text-center py-10 text-slate-400"><i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i></div>';
+      try {
+        const usersSnap = await getDocs(collection(db,'users'));
+        const lguIds = [...new Set(usersSnap.docs.map(d=>d.data().lguId).filter(Boolean))].sort();
+        if (lguIds.length === 0) {
+          container.innerHTML = '<div class="text-center py-16 text-slate-400"><i class="fas fa-map-marker-alt text-4xl mb-3 block opacity-30"></i><p class="text-sm">No LGUs found.</p></div>';
+          return;
+        }
+        // Fetch barangays for each LGU in parallel
+        const barangayResults = await Promise.all(
+          lguIds.map(async lid => {
+            try {
+              const bSnap = await getDocs(collection(db,'lgus',lid,'barangays'));
+              return { lguId: lid, barangays: bSnap.docs.map(d=>({id:d.id,...d.data()})) };
+            } catch(e) { return { lguId: lid, barangays: [] }; }
+          })
+        );
+        let total = 0;
+        barangayResults.forEach(r => total += r.barangays.length);
+        let html = `<p class="text-xs font-bold text-slate-400 mb-4">${total} barangay unit${total!==1?'s':''} across ${lguIds.length} LGU${lguIds.length!==1?'s':''}</p>`;
+        barangayResults.forEach(({lguId:lid, barangays}) => {
+          html += `
+            <div class="mb-6">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-7 h-7 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-xs"><i class="fas fa-city"></i></div>
+                <p class="text-xs font-black uppercase tracking-widest text-purple-600">${escapeHtml(lid)}</p>
+                <span class="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded-full">${barangays.length} barangay${barangays.length!==1?'s':''}</span>
+              </div>
+              ${barangays.length === 0
+                ? '<p class="text-xs text-slate-400 pl-9 pb-2">No barangays registered.</p>'
+                : `<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pl-0">
+                    ${barangays.map(b=>`
+                      <div class="bg-white border border-slate-200 rounded-xl px-4 py-3 flex items-center gap-3">
+                        <div class="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center text-teal-600 flex-shrink-0 text-xs"><i class="fas fa-map-marker-alt"></i></div>
+                        <div class="min-w-0">
+                          <p class="text-xs font-black text-slate-900 truncate">${escapeHtml(b.name||'—')}</p>
+                          <p class="text-[10px] text-slate-400">Code: ${escapeHtml(b.code||'—')}${b.captain?' · '+escapeHtml(b.captain):''}</p>
+                        </div>
+                      </div>`).join('')}
+                  </div>`}
+            </div>`;
+        });
+        container.innerHTML = html;
+      } catch(e) {
+        console.error(e);
+        container.innerHTML = '<p class="text-sm text-red-500 p-4">Error loading barangays: ' + (e.message||e.code) + '</p>';
+      }
+    };
+
+    /* ── Expiry Email Notification ── */
+    window.sendExpiryEmail = (lguId, adminEmail, tier, expiryDateStr) => {
+      const subject = encodeURIComponent(`Subscription Expiry Notice — ${lguId}`);
+      const body = encodeURIComponent(
+        `Dear ${lguId} Administrator,\n\n` +
+        `This is a notice that your ${tier.charAt(0).toUpperCase()+tier.slice(1)} subscription for the LGU Legislative Information System ` +
+        `is set to expire on ${expiryDateStr}.\n\n` +
+        `Please renew your subscription to avoid service interruption.\n\n` +
+        `For renewal inquiries, reply to this email or contact rlagahit@icloud.com.\n\n` +
+        `Thank you,\nLGU Legislative Information System Platform`
+      );
+      if (!adminEmail) { showToast('No admin email found for this LGU.', 'error'); return; }
+      window.open(`mailto:${adminEmail}?subject=${subject}&body=${body}`);
+    };
+
+    window.loadPlatformLgus = async () => {
+      const container = document.getElementById('platformLgusList');
+      if (!container) return;
+      container.innerHTML = '<div class="text-center py-10 text-slate-400"><i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i></div>';
+
+      // Load feature requests
+      try {
+        const reqSnap = await getDocs(query(collection(db,'featureRequests'), where('status','==','pending')));
+        const reqSection = document.getElementById('featureRequestsSection');
+        const reqList    = document.getElementById('featureRequestsList');
+        if (reqSection && reqList) {
+          if (!reqSnap.empty) {
+            reqSection.classList.remove('hidden');
+            reqList.innerHTML = reqSnap.docs.map(d=>{
+              const r=d.data();
+              return `<div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-2 flex items-center justify-between gap-3 flex-wrap">
+                <div><p class="text-sm font-bold text-amber-900">${escapeHtml(r.lguId)} — ${escapeHtml(r.type)}</p>
+                <p class="text-xs text-amber-700">Requested${r.requestedAt?' on '+new Date(r.requestedAt.seconds*1000).toLocaleDateString():''}</p></div>
+                <div class="flex gap-2">
+                  <button onclick="window.approveFeatureRequest('${d.id}','${escapeHtml(r.lguId)}','${escapeHtml(r.type)}')"
+                          class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg font-bold text-xs hover:bg-emerald-700 transition-all">Approve</button>
+                  <button onclick="window.denyFeatureRequest('${d.id}')"
+                          class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg font-bold text-xs hover:bg-red-200 transition-all">Deny</button>
+                </div>
+              </div>`;
+            }).join('');
+          } else {
+            reqSection.classList.add('hidden');
+          }
+        }
+      } catch(_){}
+
+      try {
+        // Load users and lguRegistry in parallel
+        const [usersSnap, registrySnap] = await Promise.all([
+          getDocs(collection(db,'users')),
+          getDocs(collection(db,'lguRegistry')),
+        ]);
+        const allUsers  = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const registry  = {};
+        registrySnap.docs.forEach(d => { registry[d.id] = d.data(); });
+
+        // Group users by lguId
+        const lguMap = {};
+        allUsers.forEach(u => {
+          if (!u.lguId) return;
+          if (!lguMap[u.lguId]) lguMap[u.lguId] = { lguId: u.lguId, users: [] };
+          lguMap[u.lguId].users.push(u);
+        });
+        const lgus = Object.values(lguMap).sort((a,b)=>a.lguId.localeCompare(b.lguId));
+
+        if (lgus.length === 0) {
+          container.innerHTML = '<div class="text-center py-16 text-slate-400"><i class="fas fa-city text-4xl mb-3 block opacity-30"></i><p class="text-sm font-semibold">No LGUs registered yet.</p></div>';
+          return;
+        }
+
+        const tierColors = {
+          starter:  'bg-slate-100 text-slate-500',
+          standard: 'bg-blue-100 text-blue-700',
+          premium:  'bg-purple-100 text-purple-700',
+        };
+
+        container.innerHTML = lgus.map(lgu => {
+          const reg     = registry[lgu.lguId] || {};
+          const tier    = reg.tier || 'starter';
+          const paid    = reg.paid || false;
+          const expiry  = reg.subscriptionExpiry ? new Date(reg.subscriptionExpiry.seconds*1000).toISOString().slice(0,10) : '';
+          const admins  = lgu.users.filter(u=>u.role==='admin').length;
+          const editors = lgu.users.filter(u=>u.role==='editor').length;
+          const pending = lgu.users.filter(u=>u.role==='pending').length;
+          const expiryMs= reg.subscriptionExpiry ? reg.subscriptionExpiry.seconds*1000 : 0;
+          const expired  = expiry && expiryMs < Date.now();
+          const daysLeft = expiry && !expired ? Math.ceil((expiryMs - Date.now()) / 86400000) : null;
+          const expiringSoon = daysLeft !== null && daysLeft <= 30;
+          const adminEmail = lgu.users.find(u=>u.role==='admin')?.contactEmail
+                          || lgu.users.find(u=>u.role==='admin')?.email || '';
+          const escapedAdminEmail = escapeHtml(adminEmail);
+          const escapedLguId     = escapeHtml(lgu.lguId);
+          const escapedTier      = escapeHtml(tier);
+          const escapedExpiry    = expiry ? new Date(expiryMs).toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'}) : '';
+
+          return `
+            <div class="bg-white border ${expired?'border-red-200':expiringSoon?'border-amber-200':'border-slate-200'} rounded-2xl p-5 mb-3">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <i class="fas fa-city"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap mb-1">
+                    <p class="font-black text-slate-900 text-sm">${escapedLguId}</p>
+                    <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full ${tierColors[tier]||'bg-slate-100 text-slate-500'}">${tier}</span>
+                    ${paid
+                      ? `<span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700"><i class="fas fa-check-circle mr-0.5"></i>Paid</span>`
+                      : `<span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">Unpaid</span>`}
+                    ${expired ? '<span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-red-100 text-red-600"><i class="fas fa-exclamation-triangle mr-0.5"></i>Expired</span>' : ''}
+                    ${expiringSoon && !expired ? `<span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-700"><i class="fas fa-clock mr-0.5"></i>Expires in ${daysLeft}d</span>` : ''}
+                  </div>
+                  <p class="text-xs text-slate-500">${lgu.users.length} user${lgu.users.length!==1?'s':''} &bull; ${admins} admin${admins!==1?'s':''} &bull; ${editors} editor${editors!==1?'s':''} ${pending?'&bull; <span class="text-amber-600 font-bold">'+pending+' pending</span>':''}</p>
+                  ${adminEmail ? `<p class="text-[10px] text-slate-400 mt-0.5"><i class="fas fa-envelope mr-1"></i>${escapedAdminEmail}</p>` : ''}
+                </div>
+              </div>
+
+              <!-- Subscription controls -->
+              <div class="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                <div>
+                  <label class="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Tier</label>
+                  <select id="tier-${escapedLguId}"
+                          class="w-full p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all">
+                    <option value="starter"  ${tier==='starter' ?'selected':''}>Starter (Free)</option>
+                    <option value="standard" ${tier==='standard'?'selected':''}>Standard — ₱1,500/mo</option>
+                    <option value="premium"  ${tier==='premium' ?'selected':''}>Premium — ₱3,500/mo</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Subscription Expiry</label>
+                  <input type="date" id="expiry-${escapedLguId}" value="${expiry}"
+                         class="w-full p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-sm outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all">
+                </div>
+                <div class="flex flex-col gap-2">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="paid-${escapedLguId}" ${paid?'checked':''} class="w-4 h-4 accent-emerald-600">
+                    <span class="text-xs font-bold text-slate-700">Mark as Paid</span>
+                  </label>
+                  <div class="flex gap-2">
+                    <button onclick="window.saveLguSubscription('${escapedLguId}')"
+                            class="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-purple-600 text-white rounded-xl font-bold text-xs hover:bg-purple-700 transition-all">
+                      <i class="fas fa-save text-[10px]"></i> Save
+                    </button>
+                    <a href="${window.location.origin}#${escapedLguId}" target="_blank" rel="noopener"
+                       class="flex items-center gap-1.5 px-3 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-200 transition-all" title="Open this LGU's public portal">
+                      <i class="fas fa-external-link-alt text-[10px]"></i> Portal
+                    </a>
+                    ${(expiringSoon || expired) && adminEmail
+                      ? `<button onclick="window.sendExpiryEmail('${escapedLguId}','${escapedAdminEmail}','${escapedTier}','${escapeHtml(escapedExpiry)}')"
+                                class="flex items-center gap-1.5 px-3 py-2.5 bg-orange-50 border border-orange-200 text-orange-700 rounded-xl font-bold text-xs hover:bg-orange-100 transition-all" title="Send expiry notice email">
+                          <i class="fas fa-envelope text-[10px]"></i> Notify
+                        </button>`
+                      : ''}
+                  </div>
+                </div>
+              </div>
+              <!-- Feature flags (Tier 2–3 only) -->
+              <div class="mt-3 pt-3 border-t border-slate-100">
+                <p class="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">Feature Flags <span class="text-slate-300 font-normal">(Tier 2–3)</span></p>
+                <div class="flex flex-wrap gap-4">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="feat-analytics-${escapedLguId}"
+                           ${reg.features?.advancedAnalytics?'checked':''} class="w-4 h-4 accent-blue-600">
+                    <span class="text-xs font-bold text-slate-700">Advanced Analytics</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="feat-addusers-${escapedLguId}"
+                           ${reg.features?.additionalUsers?'checked':''} class="w-4 h-4 accent-emerald-600">
+                    <span class="text-xs font-bold text-slate-700">Additional Users (Tier 2–3)</span>
+                  </label>
+                </div>
+                <button onclick="window.saveFeatureFlags('${escapedLguId}')"
+                        class="mt-2 px-4 py-1.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-200 transition-all">
+                  <i class="fas fa-toggle-on mr-1"></i>Save Feature Flags
+                </button>
+              </div>
+            </div>`;
+        }).join('');
+      } catch(e) {
+        console.error(e);
+        container.innerHTML = '<p class="text-sm text-red-500">Error loading LGUs: ' + (e.message||e.code) + '</p>';
+      }
+    };
+
+    window.approveFeatureRequest = async (docId, lguId_, featureType) => {
+      try {
+        const fieldMap = { additionalUsers: 'features.additionalUsers', advancedAnalytics: 'features.advancedAnalytics' };
+        await setDoc(doc(db,'lguRegistry',lguId_), {
+          features: { [featureType]: true }, updatedAt: serverTimestamp()
+        }, { merge: true });
+        await setDoc(doc(db,'featureRequests',docId), { status: 'approved', approvedAt: serverTimestamp() }, { merge: true });
+        showToast(`Feature "${featureType}" approved for ${lguId_}.`, 'success');
+        window.loadPlatformLgus();
+      } catch(e) { showToast('Error: '+(e.code||e.message),'error'); }
+    };
+
+    window.denyFeatureRequest = async (docId) => {
+      try {
+        await setDoc(doc(db,'featureRequests',docId), { status: 'denied', deniedAt: serverTimestamp() }, { merge: true });
+        showToast('Feature request denied.', 'success');
+        window.loadPlatformLgus();
+      } catch(e) { showToast('Error: '+(e.code||e.message),'error'); }
+    };
+
+    window.saveLguSubscription = async (lguId) => {
+      const tier   = document.getElementById(`tier-${lguId}`)?.value;
+      const expiry = document.getElementById(`expiry-${lguId}`)?.value;
+      const paid   = document.getElementById(`paid-${lguId}`)?.checked;
+      if (!tier) return;
+      try {
+        await setDoc(doc(db, 'lguRegistry', lguId), {
+          lguId,
+          tier,
+          paid,
+          subscriptionExpiry: expiry ? { seconds: Math.floor(new Date(expiry).getTime()/1000), nanoseconds: 0 } : null,
+          updatedBy: user?.uid || null,
+          updatedAt: serverTimestamp(),
+        }, { merge: true });
+        showToast(`Subscription updated for ${lguId}`, 'success');
+        window.loadPlatformLgus(); // refresh to show new badges
+      } catch(e) {
+        console.error(e);
+        showToast('Error saving: ' + (e.code || e.message), 'error');
+      }
+    };
+
+    window.saveFeatureFlags = async (lguId_) => {
+      const advancedAnalytics = document.getElementById(`feat-analytics-${lguId_}`)?.checked || false;
+      const additionalUsers   = document.getElementById(`feat-addusers-${lguId_}`)?.checked   || false;
+      try {
+        await setDoc(doc(db,'lguRegistry',lguId_), {
+          features: { advancedAnalytics, additionalUsers },
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        showToast(`Feature flags updated for ${lguId_}.`, 'success');
+      } catch(e) {
+        showToast('Error saving feature flags: ' + (e.code||e.message), 'error');
+      }
+    };
+
+    window.loadPlatformUsers = async () => {
+      const container = document.getElementById('platformUsersList');
+      if (!container) return;
+      container.innerHTML = '<div class="text-center py-10 text-slate-400"><i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i></div>';
+      try {
+        const snap = await getDocs(collection(db,'users'));
+        const allUsers = snap.docs.map(d=>({id:d.id,...d.data()}))
+          .sort((a,b) => {
+            // Pending users first, then by lguId
+            if ((a.role==='pending') !== (b.role==='pending')) return a.role==='pending' ? -1 : 1;
+            return (a.lguId||'').localeCompare(b.lguId||'');
+          });
+        if (allUsers.length === 0) {
+          container.innerHTML = '<div class="text-center py-16 text-slate-400"><i class="fas fa-users text-4xl mb-3 block opacity-30"></i><p class="text-sm font-semibold">No users found.</p></div>';
+          return;
+        }
+        const roleColors3 = {superadmin:'bg-purple-100 text-purple-700',admin:'bg-blue-100 text-blue-700',editor:'bg-emerald-100 text-emerald-700',viewer:'bg-slate-100 text-slate-600',pending:'bg-amber-100 text-amber-700',rejected:'bg-red-100 text-red-600'};
+
+        const pending = allUsers.filter(u=>u.role==='pending');
+        const others  = allUsers.filter(u=>u.role!=='pending');
+
+        let html = '';
+
+        // ── Pending applications (expandable cards with approve controls) ──
+        if (pending.length > 0) {
+          html += `
+            <div class="mb-6">
+              <p class="text-xs font-black uppercase tracking-widest text-amber-600 mb-3">
+                <i class="fas fa-user-clock mr-1"></i> Pending Applications (${pending.length})
+              </p>
+              <div class="space-y-3">
+                ${pending.map(u => `
+                  <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                    <div class="flex items-start gap-4 flex-wrap">
+                      <div class="flex-1 min-w-0">
+                        <p class="font-black text-slate-900 text-sm">${escapeHtml(u.name||'(no name)')}</p>
+                        <p class="text-xs text-slate-500">${escapeHtml(u.email||u.id)}</p>
+                        ${u.position ? `<p class="text-xs text-slate-600 mt-0.5"><i class="fas fa-id-badge mr-1 text-slate-400"></i>${escapeHtml(u.position)}</p>` : ''}
+                        ${u.orgLgu   ? `<p class="text-xs text-slate-600 mt-0.5"><i class="fas fa-building mr-1 text-slate-400"></i>${escapeHtml(u.orgLgu)}</p>` : ''}
+                        ${u.phone    ? `<p class="text-xs text-slate-600 mt-0.5"><i class="fas fa-phone mr-1 text-slate-400"></i>${escapeHtml(u.phone)}</p>` : ''}
+                        ${u.reasonForAccess ? `<p class="text-xs text-slate-500 mt-1 italic">"${escapeHtml(u.reasonForAccess)}"</p>` : ''}
+                      </div>
+                      <!-- Approve controls -->
+                      <div class="flex flex-col gap-2 min-w-[220px]">
+                        <label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Assign Role, LGU &amp; Tier</label>
+                        <select id="approve-role-${u.id}"
+                                class="w-full p-2 bg-white rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-blue-400 transition-all">
+                          <option value="admin">Admin</option>
+                          <option value="editor">Editor</option>
+                          <option value="viewer">Viewer</option>
+                        </select>
+                        <input type="text" id="approve-lgu-${u.id}"
+                               placeholder="LGU ID (e.g. sb-argao)"
+                               value="${escapeHtml(u.requestedLguSlug||'')}"
+                               oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'');document.getElementById('approve-lgu-preview-${u.id}').textContent=this.value||'—'"
+                               class="w-full p-2 bg-white rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-blue-400 transition-all">
+                        <p class="text-[10px] text-slate-400 pl-1">Portal ID: <span id="approve-lgu-preview-${u.id}" class="font-bold text-slate-600">${escapeHtml(u.requestedLguSlug||'—')}</span></p>
+                        <select id="approve-tier-${u.id}"
+                                class="w-full p-2 bg-white rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-purple-400 transition-all">
+                          <option value="starter">Starter (Free)</option>
+                          <option value="standard">Standard — ₱1,500/mo</option>
+                          <option value="premium">Premium — ₱3,500/mo</option>
+                        </select>
+                        <div class="flex gap-2">
+                          <button onclick="window.approveUser('${u.id}','${escapeHtml(u.email||u.contactEmail||'')}')"
+                                  class="flex-1 py-2 bg-emerald-600 text-white rounded-xl font-bold text-xs hover:bg-emerald-700 transition-all">
+                            <i class="fas fa-check mr-1"></i>Approve
+                          </button>
+                          <button onclick="window.denyUser('${u.id}','${escapeHtml(u.email||u.contactEmail||'')}')"
+                                  class="flex-1 py-2 bg-red-100 text-red-600 rounded-xl font-bold text-xs hover:bg-red-200 transition-all">
+                            <i class="fas fa-times mr-1"></i>Deny
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>`).join('')}
+              </div>
+            </div>`;
+        }
+
+        // ── All other users table — fetch LGU registry for tier display ──
+        const lguIds = [...new Set(others.map(u=>u.lguId).filter(Boolean))];
+        const tierMap = {};
+        await Promise.all(lguIds.map(async lid => {
+          try {
+            const rs = await getDoc(doc(db,'lguRegistry',lid));
+            if (rs.exists()) tierMap[lid] = rs.data().tier || 'starter';
+          } catch(_){}
+        }));
+        const tierBadge = t => {
+          if (t==='premium') return '<span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Premium</span>';
+          if (t==='standard') return '<span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Standard</span>';
+          return '<span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">Starter</span>';
+        };
+        html += `
+          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th class="text-left px-4 py-3 text-xs font-black uppercase tracking-wider text-slate-500">User</th>
+                  <th class="text-left px-4 py-3 text-xs font-black uppercase tracking-wider text-slate-500">LGU</th>
+                  <th class="text-left px-4 py-3 text-xs font-black uppercase tracking-wider text-slate-500">Role</th>
+                  <th class="text-left px-4 py-3 text-xs font-black uppercase tracking-wider text-slate-500 hidden md:table-cell">Tier</th>
+                  <th class="text-left px-4 py-3 text-xs font-black uppercase tracking-wider text-slate-500">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${others.map(u=>`
+                  <tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                    <td class="px-4 py-3">
+                      <p class="font-bold text-slate-800 text-xs">${escapeHtml(u.name||u.email||u.id)}</p>
+                      <p class="text-[10px] text-slate-400">${escapeHtml(u.email||'')}</p>
+                    </td>
+                    <td class="px-4 py-3 text-xs font-semibold text-slate-600">${escapeHtml(u.lguId||'—')}</td>
+                    <td class="px-4 py-3">
+                      <span class="text-[10px] font-black px-2 py-0.5 rounded-full ${roleColors3[u.role]||'bg-slate-100 text-slate-500'}">${u.role||'—'}</span>
+                    </td>
+                    <td class="px-4 py-3 hidden md:table-cell">
+                      ${u.lguId ? `
+                        <div class="flex items-center gap-2">
+                          ${tierBadge(tierMap[u.lguId]||'starter')}
+                          <select onchange="window.changeLguTier('${escapeHtml(u.lguId||'')}', this.value)"
+                                  class="text-[10px] border border-slate-200 rounded-lg px-1 py-0.5 bg-slate-50 outline-none focus:border-purple-400">
+                            <option value="">Set…</option>
+                            <option value="starter">Starter</option>
+                            <option value="standard">Standard</option>
+                            <option value="premium">Premium</option>
+                          </select>
+                        </div>` : '—'}
+                    </td>
+                    <td class="px-4 py-3">
+                      ${u.role !== 'superadmin' ? `
+                        <select onchange="window.changeUserRole('${u.id}', this.value)"
+                                class="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-slate-50 outline-none focus:border-blue-400 transition-all">
+                          <option value="">Change…</option>
+                          <option value="admin">Admin</option>
+                          <option value="editor">Editor</option>
+                          <option value="viewer">Viewer</option>
+                          <option value="pending">Pending</option>
+                        </select>` : '<span class="text-xs text-slate-400">—</span>'}
+                    </td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+
+        container.innerHTML = html;
+      } catch(e) {
+        console.error(e);
+        container.innerHTML = '<p class="text-sm text-red-500 p-4">Error loading users: ' + (e.message||e.code) + '</p>';
+      }
+    };
+
+    window.approveUser = async (uid, userEmail) => {
+      const role     = document.getElementById(`approve-role-${uid}`)?.value;
+      const newLguId = document.getElementById(`approve-lgu-${uid}`)?.value.trim().toLowerCase();
+      const tier     = document.getElementById(`approve-tier-${uid}`)?.value || 'starter';
+      if (!newLguId) { showToast('Please enter the LGU portal ID before approving.', 'error'); return; }
+      if (!/^[a-z0-9-]+$/.test(newLguId)) {
+        showToast('LGU portal ID can only contain lowercase letters, numbers, and hyphens.', 'error'); return;
+      }
+      // Warn if this LGU ID already has a registry entry (may be adding a user to an existing LGU — that's OK,
+      // but alert the superadmin so they don't accidentally assign two different LGUs the same slug).
+      try {
+        const existing = await getDoc(doc(db,'lguRegistry',newLguId));
+        if (existing.exists()) {
+          const ok = confirm(
+            `LGU portal ID "${newLguId}" already exists in the registry.\n\n` +
+            `This is fine if you're adding another user to the same organization.\n` +
+            `Click Cancel to change the ID if this is a different LGU.`
+          );
+          if (!ok) return;
+        }
+      } catch(_) { /* ignore — proceed */ }
+      try {
+        // Update user doc
+        await setDoc(doc(db,'users',uid), {
+          role, lguId: newLguId, updatedAt: serverTimestamp(),
+          pendingNotification: { type: 'approved', role, lguId: newLguId, tier, readAt: null }
+        }, { merge: true });
+        // Create/update LGU registry with assigned tier
+        await setDoc(doc(db,'lguRegistry',newLguId), {
+          tier, paid: tier !== 'starter', updatedAt: serverTimestamp(),
+          features: { advancedAnalytics: tier !== 'starter', additionalUsers: tier !== 'starter' }
+        }, { merge: true });
+        showToast(`User approved as ${role} for ${newLguId} (${tier}).`, 'success');
+        // Open mailto for email notification
+        if (userEmail) {
+          const sub  = encodeURIComponent('Your Account Has Been Approved — Legislative Information System');
+          const body = encodeURIComponent(
+            `Dear Applicant,\n\nYour registration has been approved.\n\nRole: ${role}\nLGU: ${newLguId}\nPlan: ${tier.charAt(0).toUpperCase()+tier.slice(1)}\n\n` +
+            `You may now log in to the Legislative Information System.\n\nBest regards,\nPlatform Administration`
+          );
+          window.open(`mailto:${userEmail}?subject=${sub}&body=${body}`);
+        }
+        window.loadPlatformUsers();
+      } catch(e) {
+        showToast('Error approving user: ' + (e.code||e.message), 'error');
+      }
+    };
+
+    window.denyUser = async (uid, userEmail) => {
+      if (!confirm('Deny this application? The user will be marked as rejected.')) return;
+      try {
+        await setDoc(doc(db,'users',uid), {
+          role: 'rejected', updatedAt: serverTimestamp(),
+          pendingNotification: { type: 'rejected', readAt: null }
+        }, { merge: true });
+        showToast('Application denied.', 'success');
+        if (userEmail) {
+          const sub  = encodeURIComponent('Update on Your Registration Application — Legislative Information System');
+          const body = encodeURIComponent(
+            `Dear Applicant,\n\nAfter review, we are unable to approve your registration at this time.\n\n` +
+            `If you believe this is an error or wish to reapply, please contact the Platform Administrator.\n\nBest regards,\nPlatform Administration`
+          );
+          window.open(`mailto:${userEmail}?subject=${sub}&body=${body}`);
+        }
+        window.loadPlatformUsers();
+      } catch(e) {
+        showToast('Error denying user: ' + (e.code||e.message), 'error');
+      }
+    };
+
+    window.changeUserRole = async (uid, newRole) => {
+      if (!newRole) return;
+      if (!confirm(`Change this user's role to "${newRole}"?`)) return;
+      try {
+        await setDoc(doc(db,'users',uid), { role: newRole, updatedAt: serverTimestamp() }, { merge: true });
+        showToast(`Role updated to ${newRole}.`, 'success');
+        window.loadPlatformUsers();
+      } catch(e) {
+        showToast('Error changing role: ' + (e.code||e.message), 'error');
+      }
+    };
+
+    window.changeLguTier = async (lguId_, newTier) => {
+      if (!newTier) return;
+      if (!confirm(`Set ${lguId_} to ${newTier} tier?`)) return;
+      try {
+        await setDoc(doc(db,'lguRegistry',lguId_), {
+          tier: newTier, paid: newTier !== 'starter', updatedAt: serverTimestamp(),
+          features: { advancedAnalytics: newTier !== 'starter', additionalUsers: newTier !== 'starter' }
+        }, { merge: true });
+        showToast(`${lguId_} tier set to ${newTier}.`, 'success');
+        window.loadPlatformUsers();
+      } catch(e) {
+        showToast('Error changing tier: ' + (e.code||e.message), 'error');
+      }
+    };
+
+    /* Show in-app notification banner if user has a pending notification */
+    window.checkPendingNotification = async () => {
+      if (!user) return;
+      try {
+        const snap = await getDoc(doc(db,'users',user.uid));
+        if (!snap.exists()) return;
+        const notif = snap.data().pendingNotification;
+        if (!notif || notif.readAt) return;
+        const isApproved = notif.type === 'approved';
+        const msg = isApproved
+          ? `Your account has been approved as ${notif.role} for ${notif.lguId} (${notif.tier||'starter'}).`
+          : 'Your application was not approved. Please contact the administrator.';
+        showToast(msg, isApproved ? 'success' : 'error');
+        // Mark as read
+        await setDoc(doc(db,'users',user.uid), {
+          pendingNotification: { ...notif, readAt: serverTimestamp() }
+        }, { merge: true });
+      } catch(e) { console.error('Notification check:', e); }
+    };
+
+    /* ── Request Additional Users (Free Tier) ── */
+    window.requestAdditionalUsers = async () => {
+      // Write a feature request to Firestore for superadmin review
+      try {
+        await setDoc(doc(db,'featureRequests',`${lguId}_additionalUsers`), {
+          lguId, type: 'additionalUsers', status: 'pending',
+          requestedBy: user?.uid || null, requestedAt: serverTimestamp()
+        }, { merge: true });
+        showToast('Request submitted. The Platform Administrator will review and activate this feature.', 'success');
+      } catch(e) {
+        showToast('Error submitting request: ' + (e.code||e.message), 'error');
+      }
+    };
+
+    /* ── Invite User (Admin → userInvites/{email}) ── */
+    window.openInviteUserModal = () => {
+      ['inviteName','inviteEmail','inviteBarangayId','inviteBarangayName','inviteOfficialEmail'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      const roleEl = document.getElementById('inviteRole');
+      if (roleEl) roleEl.value = 'editor';
+      const tosEl = document.getElementById('inviteToS');
+      if (tosEl) tosEl.checked = false;
+      document.getElementById('inviteUserModal')?.classList.remove('hidden');
+    };
+
+    window.sendUserInvite = async () => {
+      const name          = document.getElementById('inviteName')?.value.trim();
+      const email         = document.getElementById('inviteEmail')?.value.trim().toLowerCase();
+      const role          = document.getElementById('inviteRole')?.value;
+      const barangayId    = document.getElementById('inviteBarangayId')?.value.trim() || null;
+      const barangayName  = document.getElementById('inviteBarangayName')?.value.trim() || null;
+      const officialEmail = document.getElementById('inviteOfficialEmail')?.value.trim() || null;
+      const agreedToS     = document.getElementById('inviteToS')?.checked;
+
+      if (!name || !email || !role) { showToast('Name, email, and role are required.', 'error'); return; }
+      if (!agreedToS) { showToast('Please confirm the Terms of Service agreement.', 'error'); return; }
+      if (!lguId) { showToast('LGU context is missing. Please log out and back in.', 'error'); return; }
+
+      const btn  = document.getElementById('sendInviteBtn');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+      btn.disabled  = true;
+      try {
+        await setDoc(doc(db, 'userInvites', email), {
+          email, name, role,
+          lguId,
+          barangayId,
+          barangayName,
+          officialEmail,
+          agreedToTerms: true,
+          status:        'pending',
+          invitedBy:     user.uid,
+          invitedAt:     serverTimestamp(),
+        });
+        showToast(`Invite created for ${email}. Share the registration link with them.`, 'success');
+        window.closeModal('inviteUserModal');
+        window.loadUsers(); // refresh to show pending invite
+      } catch(e) {
+        console.error(e);
+        showToast('Error creating invite: ' + (e.code || e.message), 'error');
+      } finally {
+        btn.innerHTML = orig;
+        btn.disabled  = false;
+      }
+    };
+
+    window.loadInvites = async () => {
+      const container = document.getElementById('invitesList');
+      if (!container || !lguId) return;
+      try {
+        const snap = await getDocs(
+          query(collection(db,'userInvites'), orderBy('invitedAt','desc'), limit(20))
+        );
+        // Filter to this LGU's pending invites
+        const pending = snap.docs
+          .map(d => ({id:d.id,...d.data()}))
+          .filter(inv => inv.lguId === lguId && inv.status === 'pending');
+
+        if (pending.length === 0) { container.innerHTML = ''; return; }
+
+        container.innerHTML = `
+          <div class="mb-4">
+            <p class="text-xs font-black uppercase tracking-wider text-amber-600 mb-2">
+              <i class="fas fa-envelope-open-text mr-1"></i> Pending Invites (${pending.length})
+            </p>
+            <div class="space-y-2">
+              ${pending.map(inv => `
+                <div class="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-slate-800">${escapeHtml(inv.name)}</p>
+                    <p class="text-xs text-slate-500">${escapeHtml(inv.email)} &bull; <span class="font-semibold capitalize">${escapeHtml(inv.role)}</span>${inv.barangayName ? ' &bull; ' + escapeHtml(inv.barangayName) : ''}</p>
+                  </div>
+                  <button onclick="window.revokeInvite('${escapeHtml(inv.email)}')"
+                          class="text-xs font-bold text-red-500 hover:text-red-700 transition-colors flex-shrink-0">
+                    <i class="fas fa-times mr-1"></i>Revoke
+                  </button>
+                </div>`).join('')}
+            </div>
+          </div>`;
+      } catch(e) { console.error('loadInvites', e); }
+    };
+
+    window.revokeInvite = async (email) => {
+      if (!confirm(`Revoke invite for ${email}?`)) return;
+      try {
+        await deleteDoc(doc(db, 'userInvites', email));
+        showToast('Invite revoked.', 'success');
+        window.loadUsers();
+      } catch(e) {
+        showToast('Error revoking invite: ' + (e.code || e.message), 'error');
+      }
+    };
+
     /* ── Save Admin Profile ── */
     window.saveAdminProfile = async () => {
       if (!user) { showToast('Admin login required','error'); return; }
@@ -2659,6 +4467,7 @@ Thank you.`;
       if (!confirm(`Delete document "${docData.title}"?\n\nThis action cannot be undone.`)) return;
       try {
         await deleteDoc(doc(db,'lgus',lguId,'legislations',docId));
+        logActivity('deleted', 'document', docData.title);
         showToast('Document deleted successfully', 'success');
         window.renderDocumentManagementList();
       } catch(e) {
@@ -2724,6 +4533,7 @@ Thank you.`;
           moreInfo: moreInfo || '',
           updatedAt: serverTimestamp()
         });
+        logActivity('updated', 'document', title);
         showToast('Document updated successfully', 'success');
         window.closeEditDocumentModal();
         window.renderDocumentManagementList();
@@ -2776,9 +4586,11 @@ Thank you.`;
             ...payload,
             updatedAt: serverTimestamp()
           });
+          logActivity('updated', 'member', name);
           showToast("Member updated successfully",'success');
         } else {
           await addDoc(MEMBER_REF, { ...payload, isArchived: false, timestamp: serverTimestamp() });
+          logActivity('added', 'member', name);
           showToast("Member added successfully",'success');
         }
         resetMemberForm();
@@ -2836,6 +4648,7 @@ Thank you.`;
           views: 0,
           timestamp: serverTimestamp()
         });
+        logActivity('added', 'document', title);
         showToast("Document published successfully",'success');
         e.target.reset();
         document.getElementById('newMoreInfoCount').textContent = '0';
@@ -2869,9 +4682,12 @@ Thank you.`;
       btn.innerHTML = '<span>Logging in…</span> <i class="fas fa-spinner fa-spin"></i>';
       btn.disabled  = true;
       try {
-        await signInWithEmailAndPassword(auth, email, pass);
-        showToast("Welcome, Admin",'success');
-        window.navigateTo('admin');
+        const cred2 = await signInWithEmailAndPassword(auth, email, pass);
+        // Role-based redirect — onAuthStateChanged will also fire, but we get it here first.
+        const snap2 = await getDoc(doc(db, 'users', cred2.user.uid));
+        const role2 = snap2.exists() ? snap2.data().role : null;
+        showToast(role2 === 'superadmin' ? 'Welcome, Platform Admin' : 'Welcome!', 'success');
+        window.navigateTo(role2 === 'superadmin' ? 'platform' : role2 === 'pending' ? 'pending' : 'admin');
       } catch(err) {
         const msgs = {
           'auth/invalid-email':'Invalid email format.',
@@ -3027,47 +4843,85 @@ Thank you.`;
     /* ── Register Form ── */
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('regEmail').value.trim();
-      const pass  = document.getElementById('regPass').value;
-      const pass2 = document.getElementById('regPassConfirm').value;
+      const email    = document.getElementById('regEmail').value.trim();
+      const pass     = document.getElementById('regPass').value;
+      const pass2    = document.getElementById('regPassConfirm').value;
+      const orgName  = document.getElementById('regOrgName')?.value.trim()  || null;
+      const lguSlug  = document.getElementById('regLguSlug')?.value.trim().toLowerCase() || null;
+      const position = document.getElementById('regPosition')?.value.trim() || null;
+      const phone    = document.getElementById('regPhone')?.value.trim()    || null;
       if (!email || !pass) { showToast('Please fill in all fields.', 'error'); return; }
       if (pass !== pass2)  { showToast('Passwords do not match.', 'error'); return; }
       if (pass.length < 8) { showToast('Password must be at least 8 characters.', 'error'); return; }
+      if (lguSlug && !/^[a-z0-9-]+$/.test(lguSlug)) {
+        showToast('Portal ID can only contain lowercase letters, numbers, and hyphens.', 'error'); return;
+      }
       const btn  = document.getElementById('registerBtn');
       const orig = btn.innerHTML;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account…';
       btn.disabled  = true;
       try {
-        // Determine role before creating account
+        // 1. Check if first-time bootstrap
         const setupSnap   = await getDoc(doc(db, 'setup', 'bootstrapped'));
         const isFirstTime = !setupSnap.exists();
-        const role        = isFirstTime ? 'superadmin' : 'pending';
 
-        // Create Firebase Auth account
+        // 2. Check for a pending invite keyed by this email
+        let invite = null;
+        if (!isFirstTime) {
+          try {
+            const invSnap = await getDoc(doc(db, 'userInvites', email.toLowerCase()));
+            if (invSnap.exists() && invSnap.data().status === 'pending') invite = invSnap.data();
+          } catch(e) { /* invite lookup failed — proceed as pending */ }
+        }
+
+        // 3. Determine initial role / lguId / barangay from invite or defaults
+        const role       = isFirstTime ? 'superadmin' : (invite ? invite.role : 'pending');
+        const initLguId  = isFirstTime ? null          : (invite ? invite.lguId : null);
+        const initBrgyId = invite ? (invite.barangayId   || null) : null;
+        const initBrgyNm = invite ? (invite.barangayName || null) : null;
+        const initName   = invite ? (invite.name || null) : null;
+
+        // 4. Create Firebase Auth account
         const cred = await createUserWithEmailAndPassword(auth, email, pass);
         const uid  = cred.user.uid;
 
-        // Write users/{uid} with role
+        // 5. Write users/{uid}
         await setDoc(doc(db, 'users', uid), {
           uid,
           email,
+          name:        initName,
           role,
-          lguId:      isFirstTime ? null : null,
-          isComplete: false,
-          createdAt:  serverTimestamp(),
+          lguId:       initLguId,
+          barangayId:  initBrgyId,
+          barangayName:initBrgyNm,
+          isComplete:  false,
+          createdAt:   serverTimestamp(),
+          // LGU registration details (saved for pending applicants; ignored for invited/superadmin)
+          ...(role === 'pending' && {
+            orgLgu:           orgName,
+            requestedLguSlug: lguSlug,
+            position:         position,
+            phone:            phone,
+          }),
         });
 
-        // If first setup, lock it out for subsequent registrations
+        // 6. First bootstrap: lock setup doc
         if (isFirstTime) {
-          await setDoc(doc(db, 'setup', 'bootstrapped'), {
-            at: serverTimestamp(),
-            by: uid,
-          });
-          showToast('Super Admin account created. Welcome!', 'success');
+          await setDoc(doc(db, 'setup', 'bootstrapped'), { at: serverTimestamp(), by: uid });
+          showToast('Platform Admin account created. Welcome!', 'success');
+        } else if (invite) {
+          // 7. Mark invite accepted
+          try {
+            await updateDoc(doc(db, 'userInvites', email.toLowerCase()), {
+              status: 'accepted', acceptedAt: serverTimestamp(), acceptedBy: uid,
+            });
+          } catch(e) { /* ignore — invite already applied */ }
+          showToast(`Welcome! Your account has been set up as ${invite.role} for ${invite.lguId}.`, 'success');
         } else {
-          showToast('Account created. Awaiting role assignment.', 'success');
+          showToast('Account created. Awaiting role assignment from your LGU admin.', 'success');
         }
-        window.navigateTo('admin');
+        window.navigateTo(role === 'superadmin' ? 'platform' : role === 'pending' ? 'admin' : 'admin');
+        // For pending: navigateTo('admin') redirects to 'pending' via guard; checkAdminProfileComplete fires next
       } catch (err) {
         const msgs = {
           'auth/email-already-in-use': 'This email is already registered.',
@@ -3080,6 +4934,36 @@ Thank you.`;
         btn.disabled  = false;
       }
     });
+
+    /* ── Tab visibility by role ── */
+    // All tabs hidden in HTML by default; this reveals the correct set per role.
+    // superadmin = platform owner → no LGU tabs, always redirects to /platform.
+    // admin      = LGU client    → full LGU panel (8 tabs).
+    // editor     = LGU staff     → limited access (4 tabs).
+    // viewer     = read-only     → docs only.
+    const TAB_ACCESS = {
+      superadmin: [],   // redirected to /platform, no LGU tabs
+      admin:      ['docs','members','barangay','settings','profile','users','analytics','pricing','activity'],
+      editor:     ['docs','members','settings','profile'],
+      viewer:     ['docs'],
+      pending:    [],   // redirected to /pending view, no LGU tabs
+      rejected:   [],   // same as pending — no access
+    };
+    const ALL_TABS = ['docs','members','barangay','settings','profile','users','analytics','pricing','activity'];
+
+    function updateTabVisibility(role) {
+      const allowed = TAB_ACCESS[role] || [];
+      ALL_TABS.forEach(t => {
+        document.getElementById(`tab-${t}`)?.classList.toggle('hidden', !allowed.includes(t));
+      });
+      if (allowed.length === 0) return; // pending/rejected/superadmin — no admin tabs to switch
+      // If the currently active tab panel is no longer allowed, fall back to docs.
+      const hasActiveHidden = ['barangay','settings','profile','users','analytics','pricing','activity'].some(t =>
+        !allowed.includes(t) &&
+        !document.getElementById(`admin-tab-${t}`)?.classList.contains('hidden')
+      );
+      if (hasActiveHidden) window.switchAdminTab('docs');
+    }
 
     /* ── Auth state ── */
     onAuthStateChanged(auth, async u => {
@@ -3102,9 +4986,24 @@ Thank you.`;
           userRole  = null;
           userLguId = null;
         }
+        // Switch data subscriptions to the user's assigned LGU.
+        switchLgu(userLguId || DEFAULT_LGU_ID);
       } else {
         userRole  = null;
         userLguId = null;
+        // Revert to public/default LGU on logout.
+        switchLgu(DEFAULT_LGU_ID);
+      }
+
+      // If role looks corrupted (not a known system role), check if user is the
+      // bootstrapped first admin and restore their superadmin role locally.
+      if (u && userRole && !['superadmin','admin','editor','viewer','pending'].includes(userRole)) {
+        try {
+          const bsnap = await getDoc(doc(db, 'setup', 'bootstrapped'));
+          if (bsnap.exists() && bsnap.data().by === u.uid) {
+            userRole = 'superadmin'; // restore locally; Firestore rules already allow via isFirstAdmin()
+          }
+        } catch(e) { /* ignore */ }
       }
 
       // Update role chip and no-role warning banner
@@ -3115,7 +5014,8 @@ Thank you.`;
           superadmin: 'bg-purple-100 text-purple-700',
           admin:      'bg-blue-100 text-blue-700',
           editor:     'bg-green-100 text-green-700',
-          viewer:     'bg-slate-100 text-slate-500',
+          viewer:     'bg-slate-100 text-slate-600',
+          pending:    'bg-amber-100 text-amber-700',
         };
         roleChip.textContent = userRole;
         roleChip.className   = `px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${chipColors[userRole] || 'bg-slate-100 text-slate-500'}`;
@@ -3129,23 +5029,63 @@ Thank you.`;
         noRoleBanner?.classList.add('hidden');
       }
 
-      const navBtn        = document.getElementById('navBtn');
-      const adminPanelBtn = document.getElementById('adminPanelBtn');
-      const superAdminFab = document.getElementById('superAdminFab');
+      // Gate tab visibility based on role.
+      updateTabVisibility(u ? userRole : null);
+
+      // Show/hide the "Your public portal" link in the admin header.
+      const _portalLine   = document.getElementById('adminPortalLine');
+      const _portalAnchor = document.getElementById('adminPortalAnchor');
+      const _portalCopy   = document.getElementById('adminPortalCopy');
+      if (_portalLine && _portalAnchor) {
+        if (u && userRole === 'admin' && userLguId) {
+          const _portalUrl = `${window.location.origin}#${userLguId}`;
+          _portalAnchor.href        = _portalUrl;
+          _portalAnchor.textContent = _portalUrl;
+          _portalLine.classList.remove('hidden');
+          if (_portalCopy) _portalCopy.onclick = () =>
+            navigator.clipboard.writeText(_portalUrl)
+              .then(() => showToast('Portal URL copied!', 'success'));
+        } else {
+          _portalLine.classList.add('hidden');
+        }
+      }
+
+      const navBtn           = document.getElementById('navBtn');
+      const adminPanelBtn    = document.getElementById('adminPanelBtn');
+      const platformPanelBtn = document.getElementById('platformPanelBtn');
+      const superAdminFab    = document.getElementById('superAdminFab');
+      const isSA             = userRole === 'superadmin';
       if (u) {
         navBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i><span class="hidden sm:inline ml-1">Logout</span>';
-        adminPanelBtn.classList.remove('hidden');
-        adminPanelBtn.classList.add('flex');
+        // superadmin: show only Platform button (no LGU admin panel)
+        // admin/editor/viewer: show only Admin Panel button
+        if (adminPanelBtn) {
+          adminPanelBtn.classList.toggle('hidden', isSA);
+          adminPanelBtn.classList.toggle('flex',  !isSA);
+        }
+        if (platformPanelBtn) {
+          platformPanelBtn.classList.toggle('hidden', !isSA);
+          platformPanelBtn.classList.toggle('flex',    isSA);
+        }
         if (superAdminFab) superAdminFab.classList.add('hidden');
-        window.checkAdminProfileComplete();
+        // Pending/rejected users: show logout button only (no Admin Panel btn)
+        const isPending = userRole === 'pending' || userRole === 'rejected';
+        if (adminPanelBtn) {
+          adminPanelBtn.classList.toggle('hidden', isSA || isPending);
+          adminPanelBtn.classList.toggle('flex',  !isSA && !isPending);
+        }
+        if (!isSA) window.checkAdminProfileComplete();
+        if (!isSA && userRole !== 'pending' && userRole !== 'rejected') window.checkPendingNotification();
       } else {
         navBtn.innerHTML = '<span class="relative z-10 flex items-center gap-2"><i class="fas fa-lock text-xs"></i><span class="hidden sm:inline">Admin</span></span><div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>';
-        adminPanelBtn.classList.add('hidden');
-        adminPanelBtn.classList.remove('flex');
+        if (adminPanelBtn)    { adminPanelBtn.classList.add('hidden');    adminPanelBtn.classList.remove('flex'); }
+        if (platformPanelBtn) { platformPanelBtn.classList.add('hidden'); platformPanelBtn.classList.remove('flex'); }
         if (superAdminFab) superAdminFab.classList.remove('hidden');
       }
+      // After login (login view is still visible): route based on role
       if (u && !document.getElementById('view-login').classList.contains('hidden')) {
-        window.navigateTo('admin');
+        const target = isSA ? 'platform' : (userRole === 'pending' || userRole === 'rejected') ? 'pending' : 'admin';
+        window.navigateTo(target);
       }
     });
 
@@ -3192,6 +5132,222 @@ Thank you.`;
       if (btn) btn.disabled = !e.target.checked;
     });
   </script>
+
+  <!-- ═══ PLATFORM ADMIN VIEW ═══ -->
+  <!-- Accessible only to superadmin role. Manages all LGUs, all users, and subscriptions. -->
+  <section id="view-platform" class="view-section hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+    <!-- Platform Header (no back button — superadmins live here) -->
+    <div class="mb-8">
+      <p class="text-xs font-black uppercase tracking-widest text-purple-600 mb-1">Platform Administration</p>
+      <h2 class="text-2xl font-black text-slate-900">Global Dashboard</h2>
+      <p class="text-sm text-slate-500 mt-1">Manage all LGUs, registered users, and subscription tiers.</p>
+    </div>
+
+    <!-- Platform Tabs -->
+    <div class="flex flex-wrap gap-1 mb-8 border-b border-slate-200">
+      <button onclick="window.switchPlatformTab('overview')" id="ptab-overview"
+              class="platform-tab px-5 py-3 font-bold text-sm border-b-2 border-purple-600 text-purple-600 transition-all">
+        <i class="fas fa-tachometer-alt mr-2"></i>Overview
+      </button>
+      <button onclick="window.switchPlatformTab('lgus')" id="ptab-lgus"
+              class="platform-tab px-5 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all">
+        <i class="fas fa-city mr-2"></i>LGUs
+      </button>
+      <button onclick="window.switchPlatformTab('users')" id="ptab-users"
+              class="platform-tab px-5 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all">
+        <i class="fas fa-users-cog mr-2"></i>All Users
+      </button>
+      <button onclick="window.switchPlatformTab('analytics')" id="ptab-analytics"
+              class="platform-tab px-5 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all">
+        <i class="fas fa-chart-pie mr-2"></i>Analytics
+      </button>
+      <button onclick="window.switchPlatformTab('barangays')" id="ptab-barangays"
+              class="platform-tab px-5 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all">
+        <i class="fas fa-map-marker-alt mr-2"></i>Barangays
+      </button>
+      <button onclick="window.switchPlatformTab('subscriptions')" id="ptab-subscriptions"
+              class="platform-tab px-5 py-3 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-all">
+        <i class="fas fa-tags mr-2"></i>Subscriptions
+      </button>
+    </div>
+
+    <!-- Overview Tab (real-time via onSnapshot + Chart.js) -->
+    <div id="padmin-tab-overview">
+      <div class="mb-8">
+        <h3 class="text-xl font-black text-slate-900">Platform Overview</h3>
+        <p class="text-sm text-slate-500">Live summary of all registered users and LGUs</p>
+      </div>
+      <div id="platformOverviewContent">
+        <div class="text-center py-16 text-slate-400">
+          <i class="fas fa-spinner fa-spin text-3xl mb-3 block"></i>
+          <p class="text-sm font-semibold">Loading overview…</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- LGUs Tab -->
+    <div id="padmin-tab-lgus" class="hidden">
+      <div class="mb-8">
+        <h3 class="text-xl font-black text-slate-900">Registered LGUs</h3>
+        <p class="text-sm text-slate-500">Subscription management, feature flags, and expiry per LGU</p>
+      </div>
+      <!-- Feature Requests (pending user slot requests) -->
+      <div id="featureRequestsSection" class="mb-6 hidden">
+        <p class="text-xs font-black uppercase tracking-widest text-amber-600 mb-3"><i class="fas fa-bell mr-1"></i>Pending Feature Requests</p>
+        <div id="featureRequestsList"></div>
+      </div>
+      <div id="platformLgusList">
+        <div class="text-center py-16 text-slate-400">
+          <i class="fas fa-city text-4xl mb-3 block opacity-30"></i>
+          <p class="text-sm font-semibold">Loading LGUs…</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- All Users Tab -->
+    <div id="padmin-tab-users" class="hidden">
+      <div class="mb-8">
+        <h3 class="text-xl font-black text-slate-900">All Registered Users</h3>
+        <p class="text-sm text-slate-500">Approve, assign roles, assign tiers, and manage every account</p>
+      </div>
+      <div id="platformUsersList">
+        <div class="text-center py-16 text-slate-400">
+          <i class="fas fa-users text-4xl mb-3 block opacity-30"></i>
+          <p class="text-sm font-semibold">Loading users…</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div id="padmin-tab-analytics" class="hidden">
+      <div class="mb-8">
+        <h3 class="text-xl font-black text-slate-900">Platform Analytics</h3>
+        <p class="text-sm text-slate-500">Paid users, tier distribution, and revenue overview</p>
+      </div>
+      <div id="platformAnalyticsContent">
+        <div class="text-center py-16 text-slate-400">
+          <i class="fas fa-chart-pie text-4xl mb-3 block opacity-30"></i>
+          <p class="text-sm font-semibold">Loading analytics…</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barangays Tab -->
+    <div id="padmin-tab-barangays" class="hidden">
+      <div class="mb-8">
+        <h3 class="text-xl font-black text-slate-900">Barangay Units</h3>
+        <p class="text-sm text-slate-500">All registered barangay sub-units across all LGUs</p>
+      </div>
+      <div id="platformBarangaysList">
+        <div class="text-center py-16 text-slate-400">
+          <i class="fas fa-map-marker-alt text-4xl mb-3 block opacity-30"></i>
+          <p class="text-sm font-semibold">Loading barangays…</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subscriptions Tab -->
+    <div id="padmin-tab-subscriptions" class="hidden">
+      <div class="mb-8">
+        <h3 class="text-xl font-black text-slate-900">Service Packages</h3>
+        <p class="text-sm text-slate-500">Reference tiers for onboarding new LGUs</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <!-- Starter -->
+        <div class="bg-white rounded-3xl border-2 border-slate-200 p-8 flex flex-col">
+          <div class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-500 text-xl mb-5"><i class="fas fa-seedling"></i></div>
+          <p class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Starter</p>
+          <h4 class="text-3xl font-black text-slate-900 mb-1">Free</h4>
+          <p class="text-slate-500 text-sm mb-6">Forever — no credit card needed</p>
+          <ul class="space-y-3 text-sm text-slate-600 flex-1 mb-8">
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Up to 100 legislative documents</li>
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> 1 Admin account</li>
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Public document portal</li>
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Members directory</li>
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Basic branding</li>
+            <li class="flex items-center gap-2"><i class="fas fa-times text-slate-300 text-xs"></i> Barangay sub-portals</li>
+            <li class="flex items-center gap-2"><i class="fas fa-times text-slate-300 text-xs"></i> Excel export</li>
+          </ul>
+          <span class="block text-center py-3 rounded-2xl border-2 border-slate-200 text-slate-400 font-bold text-sm">Entry Tier</span>
+        </div>
+        <!-- Standard -->
+        <div class="bg-white rounded-3xl border-2 border-blue-500 p-8 flex flex-col relative shadow-lg shadow-blue-100">
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2">
+            <span class="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow">Most Popular</span>
+          </div>
+          <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 text-xl mb-5"><i class="fas fa-building-columns"></i></div>
+          <p class="text-xs font-black uppercase tracking-widest text-blue-500 mb-1">Standard</p>
+          <h4 class="text-3xl font-black text-slate-900 mb-1">&#8369;1,500<span class="text-base font-semibold text-slate-400">/mo</span></h4>
+          <p class="text-slate-500 text-sm mb-6">For active municipal LGUs</p>
+          <ul class="space-y-3 text-sm text-slate-600 flex-1 mb-8">
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Unlimited documents</li>
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Up to 5 Admin accounts</li>
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Up to 10 Barangay sub-portals</li>
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Excel bulk export</li>
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Full branding customization</li>
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Email support</li>
+          </ul>
+          <a href="mailto:rlagahit@icloud.com?subject=Standard Plan Inquiry"
+             class="block text-center py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-sm hover:from-blue-700 hover:to-purple-700 transition-all shadow-md">
+            Assign to LGU
+          </a>
+        </div>
+        <!-- Premium -->
+        <div class="bg-white rounded-3xl border-2 border-purple-200 p-8 flex flex-col">
+          <div class="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600 text-xl mb-5"><i class="fas fa-crown"></i></div>
+          <p class="text-xs font-black uppercase tracking-widest text-purple-500 mb-1">Premium</p>
+          <h4 class="text-3xl font-black text-slate-900 mb-1">&#8369;3,500<span class="text-base font-semibold text-slate-400">/mo</span></h4>
+          <p class="text-slate-500 text-sm mb-6">For large cities &amp; provinces</p>
+          <ul class="space-y-3 text-sm text-slate-600 flex-1 mb-8">
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Everything in Standard</li>
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Unlimited Admin accounts</li>
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Unlimited Barangay portals</li>
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Custom domain</li>
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Activity audit log</li>
+            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500 text-xs"></i> Priority support &amp; SLA</li>
+          </ul>
+          <a href="mailto:rlagahit@icloud.com?subject=Premium Plan Inquiry"
+             class="block text-center py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-sm hover:from-purple-700 hover:to-pink-700 transition-all shadow-md">
+            Assign to LGU
+          </a>
+        </div>
+      </div>
+      <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex items-start gap-3 text-sm text-blue-800">
+        <i class="fas fa-info-circle mt-0.5 flex-shrink-0"></i>
+        <div>
+          <strong>Note:</strong> Subscription management (assigning tiers to LGUs, billing tracking) will be added in a future phase. Contact <a href="mailto:rlagahit@icloud.com" class="underline font-semibold">rlagahit@icloud.com</a> to upgrade an LGU.
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══ PENDING APPROVAL VIEW ═══ -->
+  <!-- Shown to users whose role is 'pending' — awaiting superadmin approval -->
+  <section id="view-pending" class="view-section hidden min-h-screen flex items-center justify-center bg-slate-50 px-4 py-20">
+    <div class="max-w-md w-full text-center">
+      <div class="w-24 h-24 bg-amber-100 rounded-3xl flex items-center justify-center text-amber-500 text-4xl mx-auto mb-6 shadow-sm">
+        <i class="fas fa-user-clock"></i>
+      </div>
+      <h2 class="text-2xl font-black text-slate-900 mb-2">Application Under Review</h2>
+      <p class="text-slate-500 text-sm mb-6 max-w-sm mx-auto leading-relaxed">
+        Your profile has been submitted. The Platform Administrator will review your application and assign your access level.
+      </p>
+      <div class="bg-white border border-amber-200 rounded-2xl p-5 text-left text-sm text-amber-800 mb-6 shadow-sm">
+        <p class="font-bold mb-2"><i class="fas fa-info-circle mr-1"></i>What happens next?</p>
+        <ul class="space-y-1.5 text-xs text-amber-700">
+          <li class="flex items-start gap-2"><i class="fas fa-circle text-[6px] mt-1.5 flex-shrink-0"></i>The Platform Admin reviews your submitted profile.</li>
+          <li class="flex items-start gap-2"><i class="fas fa-circle text-[6px] mt-1.5 flex-shrink-0"></i>Once approved, you'll be assigned a role and LGU.</li>
+          <li class="flex items-start gap-2"><i class="fas fa-circle text-[6px] mt-1.5 flex-shrink-0"></i>Log back in after approval to access your panel.</li>
+        </ul>
+      </div>
+      <button onclick="window.handleLogout()"
+              class="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all">
+        <i class="fas fa-sign-out-alt mr-1"></i> Log Out
+      </button>
+    </div>
+  </section>
 
   <!-- ═══ CONTACT VIEW ═══ -->
   <section id="view-contact" class="view-section hidden">
