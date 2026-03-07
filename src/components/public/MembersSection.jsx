@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { normalizeText } from '../../utils/helpers';
 import MemberCard from './MemberCard';
 
@@ -6,10 +6,18 @@ import MemberCard from './MemberCard';
  * Public members directory section.
  * TODO (Phase 3): Port member profile modal logic.
  */
-export default function MembersSection({ members, documents }) {
+export default function MembersSection({ members, documents, hasMore, loadingMore, onLoadMore }) {
   const [search, setSearch] = useState('');
 
   const activeMembers = members.filter(m => !m.isArchived);
+  const relatedCounts = useMemo(() => {
+    const counts = new Map();
+    documents.forEach(doc => {
+      if (!doc.authorId) return;
+      counts.set(doc.authorId, (counts.get(doc.authorId) || 0) + 1);
+    });
+    return counts;
+  }, [documents]);
 
   const filtered = activeMembers.filter(m => {
     if (!search) return true;
@@ -50,10 +58,23 @@ export default function MembersSection({ members, documents }) {
             <MemberCard
               key={member.id}
               member={member}
-              relatedDocs={documents.filter(d => d.authorId === member.id)}
+              relatedCount={relatedCounts.get(member.id) || 0}
             />
           ))}
         </div>
+        {hasMore && (
+          <div className="mt-10 flex justify-center">
+            <button
+              type="button"
+              onClick={onLoadMore}
+              disabled={loadingMore}
+              className="inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-6 py-3 text-sm font-bold text-slate-700 shadow-sm transition-all hover:border-blue-300 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loadingMore ? <i className="fas fa-spinner fa-spin" /> : <i className="fas fa-user-plus" />}
+              <span>{loadingMore ? 'Loading more…' : 'Load More Members'}</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

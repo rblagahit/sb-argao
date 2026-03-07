@@ -1,24 +1,67 @@
-import { useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import DocumentsTab from './DocumentsTab';
-import MembersTab   from './MembersTab';
-import SettingsTab  from './SettingsTab';
-import ProfileTab   from './ProfileTab';
+import { SETTINGS_PANEL_ROLES } from '../../utils/constants';
+
+const BarangaysTab = lazy(() => import('./BarangaysTab'));
+const AnalyticsTab = lazy(() => import('./AnalyticsTab'));
+const MembersTab = lazy(() => import('./MembersTab'));
+const SettingsTab = lazy(() => import('./SettingsTab'));
+const ProfileTab = lazy(() => import('./ProfileTab'));
+const UsersTab = lazy(() => import('./UsersTab'));
+const SubscriptionTab = lazy(() => import('./SubscriptionTab'));
+const ActivityLogTab = lazy(() => import('./ActivityLogTab'));
 
 const TABS = [
-  { id: 'docs',     label: 'Documents', icon: 'fa-file-alt' },
-  { id: 'members',  label: 'Members',   icon: 'fa-users' },
-  { id: 'settings', label: 'Settings',  icon: 'fa-sliders' },
-  { id: 'profile',  label: 'My Profile',icon: 'fa-user-circle' },
+  { id: 'docs', label: 'Documents', icon: 'fa-file-alt', group: 'records' },
+  { id: 'members', label: 'Members', icon: 'fa-users', group: 'records' },
+  { id: 'barangays', label: 'Barangays', icon: 'fa-map-marked-alt', group: 'records', roles: SETTINGS_PANEL_ROLES },
+  { id: 'settings', label: 'Settings', icon: 'fa-sliders', group: 'administration', roles: SETTINGS_PANEL_ROLES },
+  { id: 'profile', label: 'My Profile', icon: 'fa-user-circle', group: 'administration' },
+  { id: 'users', label: 'Users', icon: 'fa-users-cog', group: 'administration', roles: SETTINGS_PANEL_ROLES },
+  { id: 'analytics', label: 'Advanced Analytics', icon: 'fa-chart-bar', group: 'insights', roles: SETTINGS_PANEL_ROLES },
+  { id: 'subscription', label: 'Subscription', icon: 'fa-tags', group: 'insights', roles: SETTINGS_PANEL_ROLES },
+  { id: 'activity', label: 'Activity', icon: 'fa-history', group: 'insights', roles: SETTINGS_PANEL_ROLES },
+];
+
+const TAB_GROUPS = [
+  { id: 'records', label: 'Records' },
+  { id: 'administration', label: 'Administration' },
+  { id: 'insights', label: 'Insights & Billing' },
 ];
 
 /**
  * Admin management panel with tab navigation.
  * Phase 3: Replace top tab bar with left sidebar per PROJECT_REVIEW.md §3.
  */
-export default function AdminView({ user, documents, members, settings, navigateTo, showToast }) {
+export default function AdminView({ user, userRole, tenantId, documents, members, settings, navigateTo, showToast, publicPortalUrl }) {
   const [activeTab, setActiveTab] = useState('docs');
+  const [activeGroup, setActiveGroup] = useState('records');
+  const visibleTabs = TABS.filter(tab => !tab.roles || tab.roles.includes(userRole));
+  const visibleGroups = useMemo(
+    () => TAB_GROUPS.filter(group => visibleTabs.some(tab => tab.group === group.id)),
+    [visibleTabs],
+  );
 
-  const tabProps = { user, documents, members, settings, showToast };
+  useEffect(() => {
+    if (!visibleGroups.some(group => group.id === activeGroup)) {
+      setActiveGroup(visibleGroups[0]?.id || 'records');
+    }
+  }, [activeGroup, visibleGroups]);
+
+  const visibleTabsForGroup = visibleTabs.filter(tab => tab.group === activeGroup);
+
+  useEffect(() => {
+    if (visibleTabsForGroup.some(tab => tab.id === activeTab)) return;
+    setActiveTab(visibleTabsForGroup[0]?.id || visibleTabs[0]?.id || 'docs');
+  }, [activeTab, visibleTabs, visibleTabsForGroup]);
+
+  const tabProps = { user, userRole, tenantId, documents, members, settings, showToast, publicPortalUrl };
+  const tabFallback = (
+    <div className="rounded-3xl border border-slate-100 bg-white p-10 text-center text-slate-400 shadow-sm">
+      <i className="fas fa-spinner fa-spin text-2xl" />
+      <p className="mt-3 text-sm font-semibold">Loading panel…</p>
+    </div>
+  );
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -54,27 +97,81 @@ export default function AdminView({ user, documents, members, settings, navigate
         </div>
       </div>
 
-      {/* Tab bar — Phase 3: replace with AdminSidebar */}
-      <div className="flex gap-2 mb-8 border-b border-slate-200">
-        {TABS.map(tab => (
+      <div className="mb-3 flex flex-wrap gap-2">
+        {visibleGroups.map(group => (
           <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-6 py-3 font-bold text-sm border-b-2 transition-all
-              ${activeTab === tab.id
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-slate-400 hover:text-slate-700'}`}
+            key={group.id}
+            onClick={() => setActiveGroup(group.id)}
+            className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider transition-all ${
+              activeGroup === group.id
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700'
+            }`}
           >
-            <i className={`fas ${tab.icon} mr-2`} />{tab.label}
+            {group.label}
           </button>
         ))}
       </div>
 
+      <div className="mb-8 overflow-x-auto border-b border-slate-200 pb-2">
+        <div className="flex min-w-max gap-2">
+          {visibleTabsForGroup.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`rounded-t-xl border-b-2 px-6 py-3 text-sm font-bold transition-all
+                ${activeTab === tab.id
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-slate-400 hover:text-slate-700'}`}
+            >
+              <i className={`fas ${tab.icon} mr-2`} />{tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Tab content */}
-      {activeTab === 'docs'     && <DocumentsTab {...tabProps} />}
-      {activeTab === 'members'  && <MembersTab   {...tabProps} />}
-      {activeTab === 'settings' && <SettingsTab  {...tabProps} />}
-      {activeTab === 'profile'  && <ProfileTab   {...tabProps} />}
+      {activeTab === 'docs' && <DocumentsTab {...tabProps} />}
+      {activeTab === 'members' && (
+        <Suspense fallback={tabFallback}>
+          <MembersTab {...tabProps} />
+        </Suspense>
+      )}
+      {activeTab === 'barangays' && (
+        <Suspense fallback={tabFallback}>
+          <BarangaysTab {...tabProps} />
+        </Suspense>
+      )}
+      {activeTab === 'settings' && (
+        <Suspense fallback={tabFallback}>
+          <SettingsTab {...tabProps} />
+        </Suspense>
+      )}
+      {activeTab === 'profile' && (
+        <Suspense fallback={tabFallback}>
+          <ProfileTab {...tabProps} />
+        </Suspense>
+      )}
+      {activeTab === 'users' && (
+        <Suspense fallback={tabFallback}>
+          <UsersTab {...tabProps} />
+        </Suspense>
+      )}
+      {activeTab === 'subscription' && (
+        <Suspense fallback={tabFallback}>
+          <SubscriptionTab {...tabProps} />
+        </Suspense>
+      )}
+      {activeTab === 'analytics' && (
+        <Suspense fallback={tabFallback}>
+          <AnalyticsTab {...tabProps} />
+        </Suspense>
+      )}
+      {activeTab === 'activity' && (
+        <Suspense fallback={tabFallback}>
+          <ActivityLogTab {...tabProps} />
+        </Suspense>
+      )}
 
     </section>
   );

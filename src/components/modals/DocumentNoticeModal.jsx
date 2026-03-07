@@ -6,11 +6,11 @@ import { incrementView } from '../../hooks/useDocuments';
  * Shown before opening the PDF link so users understand the document
  * is for reference only and not an officially authenticated copy.
  */
-export default function DocumentNoticeModal({ doc, settings, onClose }) {
+export default function DocumentNoticeModal({ doc, tenantId, settings, onClose }) {
   const notice = settings?.downloadNotice || DEFAULT_DOWNLOAD_NOTICE;
 
   const handleOpen = () => {
-    incrementView(doc.id).catch(console.error);
+    incrementView(doc.id, tenantId).catch(console.error);
     window.open(doc.link, '_blank', 'noopener,noreferrer');
     onClose();
   };

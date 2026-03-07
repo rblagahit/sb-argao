@@ -4,7 +4,7 @@ import { isTermExpired } from '../../utils/helpers';
  * Public member profile card.
  * TODO (Phase 3): Wire up member profile modal.
  */
-export default function MemberCard({ member, relatedDocs }) {
+export default function MemberCard({ member, relatedCount }) {
   const expired  = isTermExpired(member);
   const isViceMayor = /vice\s*mayor/i.test(member.role || '');
   const avatarFb = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'M')}&background=2563eb&color=fff&bold=true&size=128`;
@@ -44,7 +44,7 @@ export default function MemberCard({ member, relatedDocs }) {
         )}
 
         <p className="text-[10px] text-slate-400 mt-3">
-          {relatedDocs.length} document{relatedDocs.length !== 1 ? 's' : ''}
+          {relatedCount} document{relatedCount !== 1 ? 's' : ''}
         </p>
       </div>
     </div>

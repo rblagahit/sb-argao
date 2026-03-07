@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { lazy, useState } from 'react';
 import { addDocument, deleteDocument } from '../../hooks/useDocuments';
 import { parseTags } from '../../utils/helpers';
 import { DOCUMENT_TYPES } from '../../utils/constants';
-import EditDocumentModal from '../modals/EditDocumentModal';
+
+const EditDocumentModal = lazy(() => import('../modals/EditDocumentModal'));
 
 /**
  * Admin Documents tab — list + collapsible Add form + EditDocumentModal.
@@ -16,7 +17,7 @@ import EditDocumentModal from '../modals/EditDocumentModal';
  *   - Replace form panel with Drawer component
  *   - Add CSV batch import
  */
-export default function DocumentsTab({ documents, members, showToast }) {
+export default function DocumentsTab({ documents, members, tenantId, showToast }) {
   const [showForm, setShowForm]     = useState(false);
   const [showOptional, setOptional] = useState(false);
   const [saving, setSaving]         = useState(false);
@@ -54,7 +55,7 @@ export default function DocumentsTab({ documents, members, showToast }) {
         tags:        parseTags(form.tags),
         coSponsors:  parseTags(form.coSponsors),
         moreInfo:    form.moreInfo.slice(0, 400),
-      });
+      }, tenantId);
       showToast('Document published successfully', 'success');
       setForm({ title: '', docId: '', type: 'Ordinance', authorId: '', link: '', coSponsors: '', tags: '', moreInfo: '' });
       setShowForm(false);
@@ -70,7 +71,7 @@ export default function DocumentsTab({ documents, members, showToast }) {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this document?')) return;
     try {
-      await deleteDocument(id);
+      await deleteDocument(id, tenantId);
       showToast('Document deleted', 'success');
     } catch {
       showToast('Delete failed', 'error');
@@ -136,7 +137,6 @@ export default function DocumentsTab({ documents, members, showToast }) {
                 className="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all" />
             </div>
 
-            {/* Optional fields toggle */}
             <div className="md:col-span-2">
               <button type="button" onClick={() => setOptional(v => !v)}
                 className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-blue-600 transition-colors">
@@ -185,7 +185,6 @@ export default function DocumentsTab({ documents, members, showToast }) {
         </div>
       )}
 
-      {/* Document list */}
       <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100">
         <div className="mb-5">
           <input
@@ -228,12 +227,15 @@ export default function DocumentsTab({ documents, members, showToast }) {
 
       {/* Edit modal */}
       {editDoc && (
-        <EditDocumentModal
-          doc={editDoc}
-          members={members}
-          showToast={showToast}
-          onClose={() => setEditDoc(null)}
-        />
+        <Suspense fallback={null}>
+          <EditDocumentModal
+            doc={editDoc}
+            members={members}
+            tenantId={tenantId}
+            showToast={showToast}
+            onClose={() => setEditDoc(null)}
+          />
+        </Suspense>
       )}
     </div>
   );

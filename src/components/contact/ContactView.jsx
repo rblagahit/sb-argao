@@ -7,7 +7,6 @@ export default function ContactView({ settings }) {
   const {
     orgName, municipality, province,
     contactPhone1, contactPhone2, contactEmail,
-    socialFacebook, socialTwitter,
   } = settings || {};
 
   return (

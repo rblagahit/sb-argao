@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { saveSettings } from '../../hooks/useSettings';
 
 /**
@@ -7,7 +7,7 @@ import { saveSettings } from '../../hooks/useSettings';
  *
  * TODO (Phase 3): Add live seal preview update.
  */
-export default function SettingsTab({ settings, user, showToast }) {
+export default function SettingsTab({ settings, tenantId, user, showToast }) {
   const [open, setOpen] = useState('branding');
 
   // Local form mirrors settings; changes saved on explicit Save click
@@ -24,11 +24,29 @@ export default function SettingsTab({ settings, user, showToast }) {
     socialEmail:    settings?.socialEmail    || '',
   });
 
+  useEffect(() => {
+    setBranding({
+      orgName: settings?.orgName || '',
+      municipality: settings?.municipality || '',
+      province: settings?.province || '',
+      sealUrl: settings?.sealUrl || '',
+      contactPhone1: settings?.contactPhone1 || '',
+      contactPhone2: settings?.contactPhone2 || '',
+      contactEmail: settings?.contactEmail || '',
+    });
+    setNotice(settings?.downloadNotice || '');
+    setSocial({
+      socialFacebook: settings?.socialFacebook || '',
+      socialTwitter: settings?.socialTwitter || '',
+      socialEmail: settings?.socialEmail || '',
+    });
+  }, [settings]);
+
   const toggle = (id) => setOpen(v => v === id ? null : id);
 
   const save = async (partial) => {
     try {
-      await saveSettings(user.uid, partial);
+      await saveSettings(tenantId, user.uid, partial);
       showToast('Settings saved', 'success');
     } catch {
       showToast('Save failed', 'error');

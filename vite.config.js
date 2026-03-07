@@ -15,5 +15,16 @@ export default defineConfig({
   build: {
     outDir:      path.resolve(__dirname, 'dist'),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+          if (id.includes('/firebase/storage/') || id.includes('/@firebase/storage')) return 'firebase-storage-vendor';
+          if (id.includes('/firebase/') || id.includes('/@firebase/')) return 'firebase-vendor';
+          if (id.includes('/react/') || id.includes('/react-dom/')) return 'react-vendor';
+          return 'vendor';
+        },
+      },
+    },
   },
 });

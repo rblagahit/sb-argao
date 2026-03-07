@@ -21,3 +21,8 @@ Thumbs.db
 
 # Vite
 *.local
+
+# Local Firebase / deploy artifacts
+.firebase/logs/
+firebase-debug.log
+tmp-queue-backup-link

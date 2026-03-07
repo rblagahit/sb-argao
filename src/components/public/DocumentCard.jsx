@@ -4,9 +4,9 @@ import { TYPE_GRADIENT, TYPE_GRADIENT_DEFAULT } from '../../utils/constants';
  * Single document card shown in the public grid.
  * onViewDetails — called with the doc object when "View Details" is clicked.
  */
-export default function DocumentCard({ doc, members, onViewDetails }) {
+export default function DocumentCard({ doc, memberById, onViewDetails }) {
   const typeGradient = TYPE_GRADIENT[doc.type] || TYPE_GRADIENT_DEFAULT;
-  const sponsor = members?.find(m => m.id === doc.authorId);
+  const sponsor = memberById?.get(doc.authorId);
   const sponsorImg = sponsor?.image
     || `https://ui-avatars.com/api/?name=${encodeURIComponent(doc.authorName || 'SB')}&background=2563eb&color=fff&bold=true`;
 

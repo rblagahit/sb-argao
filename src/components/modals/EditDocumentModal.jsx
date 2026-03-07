@@ -7,7 +7,7 @@ import { DOCUMENT_TYPES } from '../../utils/constants';
  * Edit existing document modal — used in the admin Documents tab.
  * Pre-fills all fields from the current document data.
  */
-export default function EditDocumentModal({ doc, members, showToast, onClose }) {
+export default function EditDocumentModal({ doc, members, tenantId, showToast, onClose }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     title:      doc.title      || '',
@@ -43,7 +43,7 @@ export default function EditDocumentModal({ doc, members, showToast, onClose }) 
         tags:        parseTags(form.tags),
         coSponsors:  parseTags(form.coSponsors),
         moreInfo:    form.moreInfo.slice(0, 400),
-      });
+      }, tenantId);
       showToast('Document updated', 'success');
       onClose();
     } catch (err) {

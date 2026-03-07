@@ -26,6 +26,11 @@ export const DOCUMENT_TYPES = [
   { value: 'Committee Report', label: '📑 Committee Report' },
 ];
 
+export const ADMIN_PANEL_ROLES = ['superadmin', 'admin', 'editor', 'barangay_portal'];
+export const PLATFORM_PANEL_ROLES = ['superadmin'];
+export const SETTINGS_PANEL_ROLES = ['superadmin', 'admin'];
+export const ENABLE_LOCAL_IMPORTS = false;
+
 // ─── Firestore collection paths ───────────────────────────────────────────────
 // Constructed at runtime using LGU_ID from firebase.js.
 // Barangay paths extend this with: lgus/{lguId}/barangays/{barangayId}/...

@@ -7,7 +7,7 @@ import { db } from '../../firebase';
  * Profile is stored at users/{uid} (Phase 1+ data model).
  * Contact email is the only required field (used for document requests).
  */
-export default function ProfileTab({ user, members, showToast }) {
+export default function ProfileTab({ user, showToast }) {
   const [form, setForm] = useState({
     name: '', role: '', email: '', image: '', bio: '',
   });

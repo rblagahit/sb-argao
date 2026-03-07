@@ -8,7 +8,7 @@ import { parseTags, isTermExpired } from '../../utils/helpers';
  *
  * TODO (Phase 3): Replace form panel with shared Drawer component.
  */
-export default function MembersTab({ members, showToast }) {
+export default function MembersTab({ members, tenantId, showToast }) {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId]     = useState(null);
   const [saving, setSaving]     = useState(false);
@@ -57,10 +57,10 @@ export default function MembersTab({ members, showToast }) {
     };
     try {
       if (editId) {
-        await updateMember(editId, payload);
+        await updateMember(editId, payload, tenantId);
         showToast('Member updated', 'success');
       } else {
-        await addMember(payload);
+        await addMember(payload, tenantId);
         showToast('Member added', 'success');
       }
       handleCancel();
@@ -74,12 +74,12 @@ export default function MembersTab({ members, showToast }) {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this member?')) return;
-    try { await deleteMember(id); showToast('Member deleted', 'success'); }
+    try { await deleteMember(id, tenantId); showToast('Member deleted', 'success'); }
     catch { showToast('Delete failed', 'error'); }
   };
 
   const handleArchive = async (id, current) => {
-    try { await archiveMember(id, !current); showToast(!current ? 'Member archived' : 'Member reactivated', 'success'); }
+    try { await archiveMember(id, !current, tenantId); showToast(!current ? 'Member archived' : 'Member reactivated', 'success'); }
     catch { showToast('Error updating member', 'error'); }
   };
 

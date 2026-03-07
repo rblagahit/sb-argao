@@ -1,0 +1,37 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function userDoc() {
+      return request.auth != null
+        ? firestore.get(/databases/(default)/documents/users/$(request.auth.uid))
+        : null;
+    }
+
+    function userRole() {
+      return request.auth != null ? userDoc().data.role : null;
+    }
+
+    function userLguId() {
+      return request.auth != null ? userDoc().data.lguId : null;
+    }
+
+    function canManageLgu(lguId) {
+      return request.auth != null
+        && (
+          userRole() == 'superadmin'
+          || (
+            userLguId() == lguId
+            && userRole() in ['admin', 'editor', 'barangay_portal']
+          )
+        );
+    }
+
+    match /lgus/{lguId}/legislations/{allPaths=**} {
+      allow read, write: if canManageLgu(lguId);
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

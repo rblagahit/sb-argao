@@ -4,11 +4,6 @@ service cloud.firestore {
 
     // ── Helpers ──────────────────────────────────────────────────────────────
     // Role is stored in users/{uid}.role (Firestore), not Custom Claims.
-    // This lets new admins self-register without needing a bootstrap script.
-    // get() in rules bypasses client-facing security rules and reads directly.
-
-    // ── Helpers ──────────────────────────────────────────────────────────────
-    // Role is stored in users/{uid}.role (Firestore), not Custom Claims.
     // get() in rules reads directly, bypassing client-facing security rules.
 
     function userRole() {
@@ -21,18 +16,10 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.barangayId;
     }
 
-    // True when the requesting user is the bootstrapped platform admin.
-    // Acts as fallback if their 'role' field is overwritten.
-    function isFirstAdmin() {
-      return request.auth != null
-          && exists(/databases/$(database)/documents/setup/bootstrapped)
-          && get(/databases/$(database)/documents/setup/bootstrapped).data.by == request.auth.uid;
-    }
-
     // superadmin = platform owner of the SaaS.
     function isSuperAdmin() {
       return request.auth != null
-          && (userRole() == 'superadmin' || isFirstAdmin());
+          && userRole() == 'superadmin';
     }
 
     // admin = LGU client who registered an account. Full LGU-level access.
@@ -52,23 +39,64 @@ service cloud.firestore {
               && userBarangayId() == barangayId);
     }
 
+    // editor = LGU staff (LGU-wide access for docs/members)
+    function isEditor(lguId) {
+      return request.auth != null
+          && userRole() == 'editor'
+          && userLguId() == lguId;
+    }
+
+    // barangay_portal = scoped to one barangay within an LGU.
+    function isBarangayPortalUser(lguId) {
+      return request.auth != null
+          && userRole() == 'barangay_portal'
+          && userLguId() == lguId
+          && userBarangayId() != null;
+    }
+
+    // Public profile view increments are limited to +1 on profileViews only.
+    function isPublicMemberViewIncrement() {
+      return request.auth == null
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(['profileViews'])
+          && request.resource.data.profileViews is int
+          && request.resource.data.profileViews
+            == ((resource.data.profileViews is int ? resource.data.profileViews : 0) + 1);
+    }
+
+    function isPublicLegislationViewIncrement() {
+      return request.auth == null
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(['views'])
+          && request.resource.data.views is int
+          && request.resource.data.views
+            == ((resource.data.views is int ? resource.data.views : 0) + 1);
+    }
+
     // True when no superadmin has been bootstrapped yet.
     function isFirstSetup() {
       return !exists(/databases/$(database)/documents/setup/bootstrapped);
     }
 
-    // True when a valid pending invite exists for the given email and role.
-    function hasValidInvite(email, role) {
+    // True when a valid pending invite exists for the signed-in email,
+    // and the requested role/LGU/barangay exactly match the invite.
+    function hasValidInvite(role, lguId, barangayId) {
+      let email = request.auth != null ? request.auth.token.email : null;
       let inv = /databases/$(database)/documents/userInvites/$(email);
-      return exists(inv)
+      return request.auth != null
+          && email != null
+          && exists(inv)
           && get(inv).data.status == 'pending'
-          && get(inv).data.role   == role;
+          && get(inv).data.role   == role
+          && get(inv).data.lguId  == lguId
+          && get(inv).data.barangayId == barangayId;
     }
 
     // ── One-time setup document ───────────────────────────────────────────────
     match /setup/bootstrapped {
       allow read:   if true;
-      allow create: if request.auth != null;
+      allow create: if request.auth != null
+                    && isFirstSetup()
+                    && request.resource.data.by == request.auth.uid
+                    && userRole() == 'superadmin';
       allow update, delete: if isSuperAdmin();
     }
 
@@ -93,10 +121,17 @@ service cloud.firestore {
       //   3. Open registration → claim 'pending'
       allow create: if request.auth != null
                     && request.auth.uid == uid
+                    && request.resource.data.email == request.auth.token.email
                     && (
                       (isFirstSetup() && request.resource.data.role == 'superadmin')
-                      || hasValidInvite(request.resource.data.email, request.resource.data.role)
-                      || request.resource.data.role == 'pending'
+                      || hasValidInvite(
+                        request.resource.data.role,
+                        request.resource.data.lguId,
+                        request.resource.data.barangayId
+                      )
+                      || (request.resource.data.role == 'pending'
+                        && request.resource.data.lguId == null
+                        && request.resource.data.barangayId == null)
                     );
 
       // Self-profile update (name, image, bio, contactEmail, isComplete…).
@@ -137,19 +172,68 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    // ── App Analytics ────────────────────────────────────────────────────────
+    // Public clients can submit anonymous aggregate events.
+    // Only superadmin can read analytics dashboards.
+    match /appAnalyticsDaily/{dateKey} {
+      allow read: if isSuperAdmin();
+      allow create, update: if true;
+      allow delete: if isSuperAdmin();
+    }
+
+    match /appSearchTermsDaily/{termKey} {
+      allow read: if isSuperAdmin();
+      allow create, update: if true;
+      allow delete: if isSuperAdmin();
+    }
+
     // ── Municipal data ────────────────────────────────────────────────────────
+    // Collection-group read support for public document discovery across LGUs.
+    // Required for collectionGroup('legislations') queries from the public page.
+    match /{path=**}/legislations/{docId} {
+      allow read: if true;
+    }
+
     match /lgus/{lguId}/legislations/{docId} {
       allow read:  if true;
-      allow write: if request.auth != null
-                   && userRole() in ['admin', 'editor']
-                   && (isSuperAdmin() || userLguId() == lguId);
+      allow create: if isAdmin(lguId)
+                    || isEditor(lguId)
+                    || (isBarangayPortalUser(lguId)
+                        && request.resource.data.barangayId == userBarangayId());
+      allow update: if isAdmin(lguId)
+                    || isEditor(lguId)
+                    || (isBarangayPortalUser(lguId)
+                        && resource.data.barangayId == userBarangayId()
+                        && request.resource.data.barangayId == userBarangayId())
+                    || isPublicLegislationViewIncrement();
+      allow delete: if isAdmin(lguId)
+                    || isEditor(lguId)
+                    || (isBarangayPortalUser(lguId)
+                        && resource.data.barangayId == userBarangayId());
+    }
+
+    match /lgus/{lguId}/legislationImports/{docId} {
+      allow read, create, update, delete: if isAdmin(lguId)
+                                          || isEditor(lguId)
+                                          || isBarangayPortalUser(lguId);
     }
 
     match /lgus/{lguId}/members/{docId} {
       allow read:  if true;
-      allow write: if request.auth != null
-                   && userRole() in ['admin', 'editor']
-                   && (isSuperAdmin() || userLguId() == lguId);
+      allow create: if isAdmin(lguId)
+                    || isEditor(lguId)
+                    || (isBarangayPortalUser(lguId)
+                        && request.resource.data.barangayId == userBarangayId());
+      allow update: if isAdmin(lguId)
+                    || isEditor(lguId)
+                    || (isBarangayPortalUser(lguId)
+                        && resource.data.barangayId == userBarangayId()
+                        && request.resource.data.barangayId == userBarangayId())
+                    || isPublicMemberViewIncrement();
+      allow delete: if isAdmin(lguId)
+                    || isEditor(lguId)
+                    || (isBarangayPortalUser(lguId)
+                        && resource.data.barangayId == userBarangayId());
     }
 
     match /lgus/{lguId}/settings/{docId} {
@@ -163,7 +247,7 @@ service cloud.firestore {
     match /lgus/{lguId}/activityLog/{entryId} {
       allow read:   if isAdmin(lguId);
       allow create: if request.auth != null
-                    && userRole() in ['admin', 'editor']
+                    && userRole() in ['admin', 'editor', 'barangay_portal']
                     && (isSuperAdmin() || userLguId() == lguId);
       allow update, delete: if false;  // immutable audit log
     }
@@ -177,7 +261,54 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
+    // ── Sticky Profile Requests ─────────────────────────────────────────────
+    // Public users can submit pending requests for premium sticky placement.
+    // Only superadmin can review/read/update/delete.
+    match /stickyProfileRequests/{requestId} {
+      allow read: if isSuperAdmin();
+      allow create: if request.resource.data.keys().hasOnly([
+                        'status',
+                        'months',
+                        'fee',
+                        'transactionNumber',
+                        'memberScopeId',
+                        'memberId',
+                        'lguId',
+                        'memberName',
+                        'memberRole',
+                        'memberImage',
+                        'sourceHost',
+                        'requesterUid',
+                        'requesterEmail',
+                        'createdAt',
+                        'updatedAt'
+                      ])
+                    && request.resource.data.status == 'pending'
+                    && (request.resource.data.months == 1
+                        || request.resource.data.months == 2
+                        || request.resource.data.months == 3)
+                    && (request.resource.data.fee is int || request.resource.data.fee is float)
+                    && request.resource.data.fee >= 0
+                    && request.resource.data.transactionNumber is string
+                    && request.resource.data.transactionNumber.size() >= 4
+                    && request.resource.data.transactionNumber.size() <= 120
+                    && request.resource.data.memberScopeId is string
+                    && request.resource.data.memberScopeId.size() >= 3
+                    && request.resource.data.memberId is string
+                    && request.resource.data.memberId.size() >= 1
+                    && request.resource.data.lguId is string
+                    && request.resource.data.lguId.size() >= 1;
+      allow update, delete: if isSuperAdmin();
+    }
+
     // ── Barangay data ─────────────────────────────────────────────────────────
+    // Main barangay document (used by collectionGroup('barangays')).
+    match /lgus/{lguId}/barangays/{barangayId} {
+      allow read:  if true;
+      allow write: if isBarangayAdmin(lguId, barangayId);
+    }
+
+    // Any nested documents under a barangay document.
     match /lgus/{lguId}/barangays/{barangayId}/{document=**} {
       allow read:  if true;
       allow write: if isBarangayAdmin(lguId, barangayId);

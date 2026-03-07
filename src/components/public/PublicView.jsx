@@ -1,17 +1,30 @@
-import { useState, useMemo } from 'react';
+import { lazy, Suspense, useState, useMemo } from 'react';
 import { normalizeText, normalizeTag } from '../../utils/helpers';
 import DocumentGrid         from './DocumentGrid';
 import MembersSection       from './MembersSection';
-import DocumentDetailsModal from '../modals/DocumentDetailsModal';
-import DocumentNoticeModal  from '../modals/DocumentNoticeModal';
-import DocumentRequestModal from '../modals/DocumentRequestModal';
+
+const DocumentDetailsModal = lazy(() => import('../modals/DocumentDetailsModal'));
+const DocumentNoticeModal = lazy(() => import('../modals/DocumentNoticeModal'));
+const DocumentRequestModal = lazy(() => import('../modals/DocumentRequestModal'));
 
 /**
  * Public landing page — hero search, document grid, members section.
  * Manages the document modal flow: Details → Notice → (open PDF) / Request.
  * TODO (Phase 3): Port full hero HTML from index.html (~lines 132–267).
  */
-export default function PublicView({ documents, members, settings }) {
+export default function PublicView({
+  documents,
+  documentStats,
+  hasMoreDocuments,
+  loadingMoreDocuments,
+  loadMoreDocuments,
+  members,
+  hasMoreMembers,
+  loadingMoreMembers,
+  loadMoreMembers,
+  settings,
+  tenantId,
+}) {
   const [search, setSearch]   = useState('');
   const [typeFilter, setType] = useState('All');
 
@@ -27,12 +40,16 @@ export default function PublicView({ documents, members, settings }) {
 
   const { orgName, municipality, province } = settings || {};
   const cityProvince = [municipality, province].filter(Boolean).join(', ') || 'Argao, Cebu';
+  const memberById = useMemo(
+    () => new Map(members.map(member => [member.id, member])),
+    [members],
+  );
 
   // ─── Derived stats ──────────────────────────────────────────────────────────
-  const totalDocs      = documents.length;
-  const ordinanceCount = documents.filter(d => d.type === 'Ordinance').length;
-  const resCount       = documents.filter(d => d.type === 'Resolution').length;
-  const totalViews     = documents.reduce((acc, d) => acc + (d.views || 0), 0);
+  const totalDocs      = documentStats?.totalDocs ?? documents.length;
+  const ordinanceCount = documentStats?.ordinanceCount ?? documents.filter(d => d.type === 'Ordinance').length;
+  const resCount       = documentStats?.resolutionCount ?? documents.filter(d => d.type === 'Resolution').length;
+  const totalViews     = documentStats?.totalViews ?? documents.reduce((acc, d) => acc + (d.views || 0), 0);
 
   // ─── Filtered documents ─────────────────────────────────────────────────────
   const filtered = useMemo(() => {
@@ -46,6 +63,15 @@ export default function PublicView({ documents, members, settings }) {
       return matchType && matchSearch;
     });
   }, [documents, search, typeFilter]);
+
+  const modalFallback = (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 text-white">
+      <div className="flex items-center gap-3 rounded-2xl bg-slate-900/90 px-5 py-4 text-sm font-semibold">
+        <i className="fas fa-spinner fa-spin" />
+        <span>Loading dialog…</span>
+      </div>
+    </div>
+  );
 
   return (
     <div>
@@ -112,36 +138,52 @@ export default function PublicView({ documents, members, settings }) {
       {/* ── Document grid ─────────────────────────────────────────────────── */}
       <DocumentGrid
         documents={filtered}
-        members={members}
+        memberById={memberById}
+        hasMore={hasMoreDocuments}
+        loadingMore={loadingMoreDocuments}
+        onLoadMore={loadMoreDocuments}
         onClear={() => { setSearch(''); setType('All'); }}
         onViewDetails={openDetails}
       />
 
       {/* ── Members section ───────────────────────────────────────────────── */}
-      <MembersSection members={members} documents={documents} />
+      <MembersSection
+        members={members}
+        documents={documents}
+        hasMore={hasMoreMembers}
+        loadingMore={loadingMoreMembers}
+        onLoadMore={loadMoreMembers}
+      />
 
       {/* ── Modals ────────────────────────────────────────────────────────── */}
       {modal === 'details' && activeDoc && (
-        <DocumentDetailsModal
-          doc={activeDoc}
-          onClose={closeModals}
-          onDownload={openNotice}
-          onRequest={openRequest}
-        />
+        <Suspense fallback={modalFallback}>
+          <DocumentDetailsModal
+            doc={activeDoc}
+            onClose={closeModals}
+            onDownload={openNotice}
+            onRequest={openRequest}
+          />
+        </Suspense>
       )}
       {modal === 'notice' && activeDoc && (
-        <DocumentNoticeModal
-          doc={activeDoc}
-          settings={settings}
-          onClose={closeModals}
-        />
+        <Suspense fallback={modalFallback}>
+          <DocumentNoticeModal
+            doc={activeDoc}
+            tenantId={tenantId}
+            settings={settings}
+            onClose={closeModals}
+          />
+        </Suspense>
       )}
       {modal === 'request' && activeDoc && (
-        <DocumentRequestModal
-          doc={activeDoc}
-          settings={settings}
-          onClose={closeModals}
-        />
+        <Suspense fallback={modalFallback}>
+          <DocumentRequestModal
+            doc={activeDoc}
+            settings={settings}
+            onClose={closeModals}
+          />
+        </Suspense>
       )}
     </div>
   );
